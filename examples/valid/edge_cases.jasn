@@ -37,13 +37,9 @@
   // Keys with dashes must be quoted
   "kebab-case": "requires quotes",
   
-  // Case variations for special floats
-  inf_lower: inf,
-  inf_mixed: Inf,
-  inf_upper: INF,
-  nan_lower: nan,
-  nan_mixed: NaN,
-  nan_upper: NAN,
+  // Special float literals (lowercase only)
+  inf_value: inf,
+  nan_value: nan,
   
   // All radix variations with underscores
   hex: 0xAB_CD_EF_01,

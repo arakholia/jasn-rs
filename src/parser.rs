@@ -48,8 +48,8 @@ fn parse_int(pair: Pair<Rule>) -> Result<Value> {
     let s = pair.as_str();
 
     // Remove underscores and optional '+' prefix
-    let temp = s.replace('_', "");
-    let normalized = temp.strip_prefix('+').unwrap_or(&temp);
+    let normalized = s.replace('_', "");
+    let normalized = normalized.strip_prefix('+').unwrap_or(&normalized);
 
     // Detect and strip sign
     let (is_negative, unsigned_str) = match normalized.strip_prefix('-') {
@@ -79,7 +79,7 @@ fn parse_float(pair: Pair<Rule>) -> Result<Value> {
     let s = pair.as_str();
 
     // Handle special values
-    let value = match s.to_lowercase().as_str() {
+    let value = match s {
         "inf" | "+inf" => f64::INFINITY,
         "-inf" => f64::NEG_INFINITY,
         "nan" | "+nan" | "-nan" => f64::NAN,
@@ -98,7 +98,7 @@ fn parse_string(pair: Pair<Rule>) -> Result<Value> {
     let content = content_pair.as_str();
 
     // Process escape sequences
-    let mut result = String::new();
+    let mut result = String::with_capacity(content.len());
     let mut chars = content.chars();
 
     while let Some(ch) = chars.next() {
@@ -138,15 +138,19 @@ fn parse_unicode_escape(chars: &mut std::str::Chars) -> Result<char> {
 fn parse_binary(pair: Pair<Rule>) -> Result<Value> {
     let s = pair.as_str();
 
-    let bytes = if s.starts_with("b64\"") {
-        let content = &s[4..s.len() - 1]; // Remove b64" and "
-        parse_binary_b64(content)?
-    } else if s.starts_with("h\"") {
-        let content = &s[2..s.len() - 1]; // Remove h" and "
-        parse_binary_hex(content)?
-    } else {
-        let encoding = s.split('"').next().unwrap_or(s);
-        return Err(Error::UnknownBinaryEncoding(encoding.to_string()));
+    let bytes = match s {
+        s if s.starts_with("b64\"") => {
+            let content = &s[4..s.len() - 1]; // Remove b64" and "
+            parse_binary_b64(content)?
+        }
+        s if s.starts_with("h\"") => {
+            let content = &s[2..s.len() - 1]; // Remove h" and "
+            parse_binary_hex(content)?
+        }
+        _ => {
+            let encoding = s.split('"').next().unwrap_or(s);
+            return Err(Error::UnknownBinaryEncoding(encoding.to_string()));
+        }
     };
 
     Ok(Value::Binary(Binary(bytes)))
@@ -260,6 +264,65 @@ mod tests {
         assert_eq!(
             parse("'world'").unwrap(),
             Value::String("world".to_string())
+        );
+    }
+
+    #[test]
+    fn test_parse_string_escapes() {
+        // Basic escapes
+        assert_eq!(
+            parse(r#""a\nb""#).unwrap(),
+            Value::String("a\nb".to_string())
+        );
+        assert_eq!(
+            parse(r#""a\tb""#).unwrap(),
+            Value::String("a\tb".to_string())
+        );
+        assert_eq!(
+            parse(r#""a\rb""#).unwrap(),
+            Value::String("a\rb".to_string())
+        );
+        assert_eq!(
+            parse(r#""a\\b""#).unwrap(),
+            Value::String("a\\b".to_string())
+        );
+        assert_eq!(
+            parse(r#""a\/b""#).unwrap(),
+            Value::String("a/b".to_string())
+        );
+        assert_eq!(
+            parse(r#""a\"b""#).unwrap(),
+            Value::String("a\"b".to_string())
+        );
+        assert_eq!(
+            parse(r#"'a\'b'"#).unwrap(),
+            Value::String("a'b".to_string())
+        );
+        assert_eq!(
+            parse(r#""a\bb""#).unwrap(),
+            Value::String("a\u{0008}b".to_string())
+        );
+        assert_eq!(
+            parse(r#""a\fb""#).unwrap(),
+            Value::String("a\u{000C}b".to_string())
+        );
+
+        // Unicode escapes
+        assert_eq!(
+            parse(r#""\u0041""#).unwrap(),
+            Value::String("A".to_string())
+        );
+        assert_eq!(
+            parse(r#""\u03B1""#).unwrap(),
+            Value::String("α".to_string())
+        );
+        assert_eq!(
+            parse(r#""\u4E2D\u6587""#).unwrap(),
+            Value::String("中文".to_string())
+        );
+        assert_eq!(
+            parse(r#""Hello\u0020World""#).unwrap(),
+            Value::String("Hello World".to_string())
         );
     }
 

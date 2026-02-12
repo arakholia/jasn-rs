@@ -34,8 +34,8 @@ int_part = { digit+ }
 frac_part = { "." ~ digit+ }
 exp_part = { ^"e" ~ sign? ~ digit+ }
 
-infinity = { ^"inf" }
-nan = { ^"nan" }
+infinity = { "inf" }
+nan = { "nan" }
 sign = { "+" | "-" }
 
 // Character classes
