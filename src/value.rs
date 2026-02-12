@@ -1,8 +1,6 @@
-use std::collections::BTreeMap;
+use std::{borrow::Cow, collections::BTreeMap};
 
-/// A wrapper for `Vec<u8>`, until Rust supports specialization.
-#[derive(Debug, Clone, PartialEq)]
-pub struct Binary(pub Vec<u8>);
+use crate::Binary;
 
 /// A value type similar to JSON, but extended with separate integer and binary types.
 #[derive(Debug, Clone, PartialEq)]
@@ -17,60 +15,91 @@ pub enum Value {
     Map(BTreeMap<String, Value>),
 }
 
+impl Default for Value {
+    fn default() -> Self {
+        Value::Null
+    }
+}
+
 impl Value {
+    pub fn is_null(&self) -> bool {
+        matches!(self, Value::Null)
+    }
+
+    pub fn is_bool(&self) -> bool {
+        matches!(self, Value::Bool(_))
+    }
+
+    pub fn is_int(&self) -> bool {
+        matches!(self, Value::Int(_))
+    }
+
+    pub fn is_float(&self) -> bool {
+        matches!(self, Value::Float(_))
+    }
+
+    pub fn is_string(&self) -> bool {
+        matches!(self, Value::String(_))
+    }
+
+    pub fn is_binary(&self) -> bool {
+        matches!(self, Value::Binary(_))
+    }
+
+    pub fn is_list(&self) -> bool {
+        matches!(self, Value::List(_))
+    }
+
+    pub fn is_map(&self) -> bool {
+        matches!(self, Value::Map(_))
+    }
+
     pub fn as_bool(&self) -> Option<bool> {
-        if let Value::Bool(b) = self {
-            Some(*b)
-        } else {
-            None
+        match self {
+            Value::Bool(b) => Some(*b),
+            _ => None,
         }
     }
 
     pub fn as_int(&self) -> Option<i64> {
-        if let Value::Int(i) = self {
-            Some(*i)
-        } else {
-            None
+        match self {
+            Value::Int(i) => Some(*i),
+            _ => None,
         }
     }
 
     pub fn as_float(&self) -> Option<f64> {
-        if let Value::Float(f) = self {
-            Some(*f)
-        } else {
-            None
+        match self {
+            Value::Float(f) => Some(*f),
+            _ => None,
         }
     }
 
     pub fn as_string(&self) -> Option<&str> {
-        if let Value::String(s) = self {
-            Some(s)
-        } else {
-            None
+        match self {
+            Value::String(s) => Some(s),
+            _ => None,
         }
     }
 
     pub fn as_binary(&self) -> Option<&Binary> {
-        if let Value::Binary(b) = self {
-            Some(b)
-        } else {
-            None
+        match self {
+            Value::Binary(b) => Some(b),
+            _ => None,
         }
     }
 
     pub fn as_list(&self) -> Option<&[Value]> {
-        if let Value::List(l) = self {
-            Some(l)
-        } else {
-            None
+        match self {
+            Value::List(l) => Some(l),
+            _ => None,
         }
     }
 
     pub fn as_map(&self) -> Option<&BTreeMap<String, Value>> {
-        if let Value::Map(m) = self {
-            Some(m)
-        } else {
-            None
+        match self {
+            Value::Map(m) => Some(m),
+            _ => None,
         }
     }
 }
@@ -111,6 +140,12 @@ impl From<&str> for Value {
     }
 }
 
+impl<'a> From<Cow<'a, str>> for Value {
+    fn from(value: Cow<'a, str>) -> Self {
+        Value::String(value.into_owned())
+    }
+}
+
 impl From<Binary> for Value {
     fn from(value: Binary) -> Self {
         Value::Binary(value)
@@ -122,6 +157,291 @@ where
     V: Into<Value>,
 {
     fn from(vec: Vec<V>) -> Self {
-        Value::List(vec.into_iter().map(Into::into).collect())
+        vec.into_iter().collect()
+    }
+}
+
+impl<V> From<&[V]> for Value
+where
+    V: Into<Value> + Clone,
+{
+    fn from(slice: &[V]) -> Self {
+        slice.iter().cloned().collect()
+    }
+}
+
+impl<V, const N: usize> From<[V; N]> for Value
+where
+    V: Into<Value>,
+{
+    fn from(arr: [V; N]) -> Self {
+        arr.into_iter().collect()
+    }
+}
+
+impl<V, const N: usize> From<&[V; N]> for Value
+where
+    V: Into<Value> + Clone,
+{
+    fn from(arr: &[V; N]) -> Self {
+        arr.iter().cloned().collect()
+    }
+}
+
+impl<V> FromIterator<V> for Value
+where
+    V: Into<Value>,
+{
+    fn from_iter<I: IntoIterator<Item = V>>(iter: I) -> Self {
+        Value::List(iter.into_iter().map(Into::into).collect())
+    }
+}
+
+impl<K, V> FromIterator<(K, V)> for Value
+where
+    K: Into<String>,
+    V: Into<Value>,
+{
+    fn from_iter<I: IntoIterator<Item = (K, V)>>(iter: I) -> Self {
+        Value::Map(
+            iter.into_iter()
+                .map(|(k, v)| (k.into(), v.into()))
+                .collect(),
+        )
+    }
+}
+
+impl<K, V> From<&[(K, V)]> for Value
+where
+    K: Into<String> + Clone,
+    V: Into<Value> + Clone,
+{
+    fn from(slice: &[(K, V)]) -> Self {
+        slice.iter().cloned().collect()
+    }
+}
+
+impl<K, V, const N: usize> From<[(K, V); N]> for Value
+where
+    K: Into<String>,
+    V: Into<Value>,
+{
+    fn from(arr: [(K, V); N]) -> Self {
+        arr.into_iter().collect()
+    }
+}
+
+impl<K, V, const N: usize> From<&[(K, V); N]> for Value
+where
+    K: Into<String> + Clone,
+    V: Into<Value> + Clone,
+{
+    fn from(arr: &[(K, V); N]) -> Self {
+        arr.iter().cloned().collect()
+    }
+}
+
+impl<V> From<Option<V>> for Value
+where
+    V: Into<Value>,
+{
+    fn from(opt: Option<V>) -> Self {
+        match opt {
+            Some(v) => v.into(),
+            None => Value::Null,
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_is_methods() {
+        let null = Value::Null;
+        assert!(null.is_null());
+        assert!(!null.is_bool());
+        assert!(!null.is_int());
+        assert!(!null.is_float());
+        assert!(!null.is_string());
+        assert!(!null.is_binary());
+        assert!(!null.is_list());
+        assert!(!null.is_map());
+
+        let bool_val = Value::Bool(true);
+        assert!(!bool_val.is_null());
+        assert!(bool_val.is_bool());
+        assert!(!bool_val.is_int());
+
+        let int_val = Value::Int(42);
+        assert!(int_val.is_int());
+        assert!(!int_val.is_float());
+
+        let float_val = Value::Float(3.14);
+        assert!(float_val.is_float());
+        assert!(!float_val.is_int());
+
+        let string_val = Value::String("hello".to_string());
+        assert!(string_val.is_string());
+        assert!(!string_val.is_binary());
+
+        let binary_val = Value::Binary(Binary(vec![1, 2, 3]));
+        assert!(binary_val.is_binary());
+        assert!(!binary_val.is_list());
+
+        let list_val = Value::List(vec![Value::Null]);
+        assert!(list_val.is_list());
+        assert!(!list_val.is_map());
+
+        let map_val = Value::Map(BTreeMap::new());
+        assert!(map_val.is_map());
+        assert!(!map_val.is_null());
+    }
+
+    #[test]
+    fn test_as_methods() {
+        // as_bool
+        assert_eq!(Value::Bool(true).as_bool(), Some(true));
+        assert_eq!(Value::Null.as_bool(), None);
+
+        // as_int
+        assert_eq!(Value::Int(42).as_int(), Some(42));
+        assert_eq!(Value::Float(3.14).as_int(), None);
+
+        // as_float
+        assert_eq!(Value::Float(3.14).as_float(), Some(3.14));
+        assert_eq!(Value::Int(42).as_float(), None);
+
+        // as_string
+        assert_eq!(
+            Value::String("hello".to_string()).as_string(),
+            Some("hello")
+        );
+        assert_eq!(Value::Null.as_string(), None);
+
+        // as_binary
+        let binary = Binary(vec![1, 2, 3]);
+        let binary_val = Value::Binary(binary.clone());
+        assert_eq!(binary_val.as_binary(), Some(&binary));
+        assert_eq!(Value::Null.as_binary(), None);
+
+        // as_list
+        let list = vec![Value::Int(1), Value::Int(2)];
+        let list_val = Value::List(list.clone());
+        assert_eq!(list_val.as_list(), Some(list.as_slice()));
+        assert_eq!(Value::Null.as_list(), None);
+
+        // as_map
+        let mut map = BTreeMap::new();
+        map.insert("key".to_string(), Value::Int(42));
+        let map_val = Value::Map(map.clone());
+        assert_eq!(map_val.as_map(), Some(&map));
+        assert_eq!(Value::Null.as_map(), None);
+    }
+
+    #[test]
+    fn test_from_conversions() {
+        // From primitives
+        assert_eq!(Value::from(()), Value::Null);
+        assert_eq!(Value::from(true), Value::Bool(true));
+        assert_eq!(Value::from(42i64), Value::Int(42));
+        assert_eq!(Value::from(3.14f64), Value::Float(3.14));
+        assert_eq!(
+            Value::from("hello".to_string()),
+            Value::String("hello".to_string())
+        );
+        assert_eq!(Value::from("world"), Value::String("world".to_string()));
+
+        // From Cow
+        let owned: Cow<str> = Cow::Owned("owned".to_string());
+        assert_eq!(Value::from(owned), Value::String("owned".to_string()));
+        let borrowed: Cow<str> = Cow::Borrowed("borrowed");
+        assert_eq!(Value::from(borrowed), Value::String("borrowed".to_string()));
+
+        // From Binary
+        let binary = Binary(vec![1, 2, 3]);
+        assert_eq!(Value::from(binary.clone()), Value::Binary(binary));
+
+        // Value::Binary from byte literal
+        let value = Value::Binary(b"data".into());
+        assert_eq!(value, Value::Binary(Binary(b"data".to_vec())));
+
+        // From Vec
+        let vec = vec![1i64, 2, 3];
+        let list_val = Value::from(vec);
+        assert_eq!(
+            list_val,
+            Value::List(vec![Value::Int(1), Value::Int(2), Value::Int(3)])
+        );
+
+        // From &[V]
+        let slice: &[i64] = &[1, 2, 3];
+        let list_val = Value::from(slice);
+        assert_eq!(
+            list_val,
+            Value::List(vec![Value::Int(1), Value::Int(2), Value::Int(3)])
+        );
+
+        // FromIterator for List
+        let list_val: Value = vec![1i64, 2, 3].into_iter().collect();
+        assert_eq!(
+            list_val,
+            Value::List(vec![Value::Int(1), Value::Int(2), Value::Int(3)])
+        );
+
+        // FromIterator for Map
+        let map_val: Value = vec![("a", 1i64), ("b", 2)].into_iter().collect();
+        let mut expected_map = BTreeMap::new();
+        expected_map.insert("a".to_string(), Value::Int(1));
+        expected_map.insert("b".to_string(), Value::Int(2));
+        assert_eq!(map_val, Value::Map(expected_map));
+
+        // From &[(K, V)]
+        let slice: &[(&str, i64)] = &[("x", 10), ("y", 20)];
+        let map_val = Value::from(slice);
+        let mut expected_map = BTreeMap::new();
+        expected_map.insert("x".to_string(), Value::Int(10));
+        expected_map.insert("y".to_string(), Value::Int(20));
+        assert_eq!(map_val, Value::Map(expected_map));
+
+        // From [V; N] - owned array to List
+        let list_val = Value::from([1i64, 2, 3]);
+        assert_eq!(
+            list_val,
+            Value::List(vec![Value::Int(1), Value::Int(2), Value::Int(3)])
+        );
+
+        // From &[V; N] - array reference to List
+        let arr = [4i64, 5, 6];
+        let list_val = Value::from(&arr);
+        assert_eq!(
+            list_val,
+            Value::List(vec![Value::Int(4), Value::Int(5), Value::Int(6)])
+        );
+
+        // From [(K, V); N] - owned array to Map
+        let map_val = Value::from([("a", 1i64), ("b", 2)]);
+        let mut expected_map = BTreeMap::new();
+        expected_map.insert("a".to_string(), Value::Int(1));
+        expected_map.insert("b".to_string(), Value::Int(2));
+        assert_eq!(map_val, Value::Map(expected_map));
+
+        // From &[(K, V); N] - array reference to Map
+        let arr = [("c", 3i64), ("d", 4)];
+        let map_val = Value::from(&arr);
+        let mut expected_map = BTreeMap::new();
+        expected_map.insert("c".to_string(), Value::Int(3));
+        expected_map.insert("d".to_string(), Value::Int(4));
+        assert_eq!(map_val, Value::Map(expected_map));
+
+        // From Option
+        assert_eq!(Value::from(Some(42i64)), Value::Int(42));
+        assert_eq!(Value::from(None::<i64>), Value::Null);
+    }
+
+    #[test]
+    fn test_default() {
+        assert_eq!(Value::default(), Value::Null);
     }
 }

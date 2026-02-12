@@ -1,5 +1,8 @@
-mod parser;
-mod value;
+mod binary;
+pub use binary::Binary;
 
+mod parser;
 pub use parser::{ParseResult, parse};
-pub use value::{Binary, Value};
+
+mod value;
+pub use value::Value;

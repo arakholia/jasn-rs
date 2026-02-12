@@ -7,7 +7,7 @@ pub struct JasnParser;
 
 use std::collections::BTreeMap;
 
-use crate::value::{Binary, Value};
+use crate::{Binary, Value};
 
 pub type ParseResult<T> = Result<T, String>;
 
