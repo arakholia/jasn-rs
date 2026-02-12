@@ -97,23 +97,25 @@ fn format_float(f: f64, opts: &Options) -> String {
 }
 
 lazy_static! {
-    static ref TIMESTAMP_FORMAT_SECONDS: Vec<format_description::FormatItem<'static>> = 
-        format_description::parse(
+    static ref TIMESTAMP_FORMAT_SECONDS: Vec<format_description::FormatItem<'static>> = format_description::parse(
             "[year]-[month]-[day]T[hour]:[minute]:[second][offset_hour sign:mandatory]:[offset_minute]"
         ).unwrap();
-    
-    static ref TIMESTAMP_FORMAT_MILLIS: Vec<format_description::FormatItem<'static>> = 
-        format_description::parse(
+}
+
+lazy_static! {
+    static ref TIMESTAMP_FORMAT_MILLIS: Vec<format_description::FormatItem<'static>> = format_description::parse(
             "[year]-[month]-[day]T[hour]:[minute]:[second].[subsecond digits:3][offset_hour sign:mandatory]:[offset_minute]"
         ).unwrap();
-    
-    static ref TIMESTAMP_FORMAT_MICROS: Vec<format_description::FormatItem<'static>> = 
-        format_description::parse(
+}
+
+lazy_static! {
+    static ref TIMESTAMP_FORMAT_MICROS: Vec<format_description::FormatItem<'static>> = format_description::parse(
             "[year]-[month]-[day]T[hour]:[minute]:[second].[subsecond digits:6][offset_hour sign:mandatory]:[offset_minute]"
         ).unwrap();
-    
-    static ref TIMESTAMP_FORMAT_NANOS: Vec<format_description::FormatItem<'static>> = 
-        format_description::parse(
+}
+
+lazy_static! {
+    static ref TIMESTAMP_FORMAT_NANOS: Vec<format_description::FormatItem<'static>> = format_description::parse(
             "[year]-[month]-[day]T[hour]:[minute]:[second].[subsecond digits:9][offset_hour sign:mandatory]:[offset_minute]"
         ).unwrap();
 }
