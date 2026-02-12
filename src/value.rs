@@ -3,8 +3,9 @@ use std::{borrow::Cow, collections::BTreeMap};
 use crate::Binary;
 
 /// A value type similar to JSON, but extended with separate integer and binary types.
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Default)]
 pub enum Value {
+    #[default]
     Null,
     Bool(bool),
     Int(i64),
@@ -13,12 +14,6 @@ pub enum Value {
     Binary(Binary),
     List(Vec<Value>),
     Map(BTreeMap<String, Value>),
-}
-
-impl Default for Value {
-    fn default() -> Self {
-        Value::Null
-    }
 }
 
 impl Value {
