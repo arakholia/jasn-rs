@@ -2,6 +2,7 @@ use std::collections::BTreeMap;
 
 use crate::{Binary, Value};
 
+/// Formatting options and configuration.
 pub mod options;
 pub use options::Options;
 use options::{BinaryEncoding, QuoteStyle};

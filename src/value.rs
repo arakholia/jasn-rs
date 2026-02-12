@@ -5,14 +5,22 @@ use crate::Binary;
 /// Represents a valid JASN value.
 #[derive(Debug, Clone, PartialEq, Default)]
 pub enum Value {
+    /// Null value.
     #[default]
     Null,
+    /// Boolean value (true or false).
     Bool(bool),
+    /// 64-bit signed integer.
     Int(i64),
+    /// 64-bit floating-point number.
     Float(f64),
+    /// UTF-8 string.
     String(String),
+    /// Binary data (byte array).
     Binary(Binary),
+    /// Ordered list of values.
     List(Vec<Value>),
+    /// Map of string keys to values.
     Map(BTreeMap<String, Value>),
 }
 
