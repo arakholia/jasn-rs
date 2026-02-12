@@ -1,7 +1,7 @@
 use std::collections::BTreeMap;
 
-use lazy_static::lazy_static;
 use time::format_description;
+use time::macros::format_description as fd;
 
 use crate::{Binary, Value};
 
@@ -96,29 +96,21 @@ fn format_float(f: f64, opts: &Options) -> String {
     }
 }
 
-lazy_static! {
-    static ref TIMESTAMP_FORMAT_SECONDS: Vec<format_description::FormatItem<'static>> = format_description::parse(
-            "[year]-[month]-[day]T[hour]:[minute]:[second][offset_hour sign:mandatory]:[offset_minute]"
-        ).unwrap();
-}
+const TIMESTAMP_FORMAT_SECONDS: &[format_description::FormatItem<'static>] = fd!(
+    "[year]-[month]-[day]T[hour]:[minute]:[second][offset_hour sign:mandatory]:[offset_minute]"
+);
 
-lazy_static! {
-    static ref TIMESTAMP_FORMAT_MILLIS: Vec<format_description::FormatItem<'static>> = format_description::parse(
-            "[year]-[month]-[day]T[hour]:[minute]:[second].[subsecond digits:3][offset_hour sign:mandatory]:[offset_minute]"
-        ).unwrap();
-}
+const TIMESTAMP_FORMAT_MILLIS: &[format_description::FormatItem<'static>] = fd!(
+    "[year]-[month]-[day]T[hour]:[minute]:[second].[subsecond digits:3][offset_hour sign:mandatory]:[offset_minute]"
+);
 
-lazy_static! {
-    static ref TIMESTAMP_FORMAT_MICROS: Vec<format_description::FormatItem<'static>> = format_description::parse(
-            "[year]-[month]-[day]T[hour]:[minute]:[second].[subsecond digits:6][offset_hour sign:mandatory]:[offset_minute]"
-        ).unwrap();
-}
+const TIMESTAMP_FORMAT_MICROS: &[format_description::FormatItem<'static>] = fd!(
+    "[year]-[month]-[day]T[hour]:[minute]:[second].[subsecond digits:6][offset_hour sign:mandatory]:[offset_minute]"
+);
 
-lazy_static! {
-    static ref TIMESTAMP_FORMAT_NANOS: Vec<format_description::FormatItem<'static>> = format_description::parse(
-            "[year]-[month]-[day]T[hour]:[minute]:[second].[subsecond digits:9][offset_hour sign:mandatory]:[offset_minute]"
-        ).unwrap();
-}
+const TIMESTAMP_FORMAT_NANOS: &[format_description::FormatItem<'static>] = fd!(
+    "[year]-[month]-[day]T[hour]:[minute]:[second].[subsecond digits:9][offset_hour sign:mandatory]:[offset_minute]"
+);
 
 fn format_timestamp(t: &crate::Timestamp, opts: &Options) -> String {
     // Select format descriptor based on precision
@@ -140,10 +132,10 @@ fn format_timestamp(t: &crate::Timestamp, opts: &Options) -> String {
             };
             return format!("ts\"{}\"", final_str);
         }
-        TimestampPrecision::Seconds => &TIMESTAMP_FORMAT_SECONDS,
-        TimestampPrecision::Milliseconds => &TIMESTAMP_FORMAT_MILLIS,
-        TimestampPrecision::Microseconds => &TIMESTAMP_FORMAT_MICROS,
-        TimestampPrecision::Nanoseconds => &TIMESTAMP_FORMAT_NANOS,
+        TimestampPrecision::Seconds => TIMESTAMP_FORMAT_SECONDS,
+        TimestampPrecision::Milliseconds => TIMESTAMP_FORMAT_MILLIS,
+        TimestampPrecision::Microseconds => TIMESTAMP_FORMAT_MICROS,
+        TimestampPrecision::Nanoseconds => TIMESTAMP_FORMAT_NANOS,
     };
 
     // Custom formats output +00:00, convert to Z if needed
