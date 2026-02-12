@@ -233,6 +233,49 @@ h""
 8. **Special floats**: `inf`, `nan` with signs
 9. **Comments**: Line comments `//` and block comments `/* */`
 
+## JSON Compatibility
+
+JASN is designed to accept most valid JSON with the following important limitations:
+
+### Integer Range Restriction
+
+**Numbers without decimal points or exponents are parsed as 64-bit signed integers** with range:
+- Minimum: `-9,223,372,036,854,775,808` (-2^63)
+- Maximum: `9,223,372,036,854,775,807` (2^63 - 1)
+
+**Valid JSON documents containing integers outside this range will be rejected** as parse errors.
+
+Examples:
+```jasn
+9223372036854775807   // ✓ Valid (max i64)
+9223372036854775808   // ✗ Parse error (overflow)
+-9223372036854775808  // ✓ Valid (min i64)
+-9223372036854775809  // ✗ Parse error (underflow)
+```
+
+**Workaround:** Use float notation for numbers outside the i64 range:
+```jasn
+9223372036854775808.0   // ✓ Valid as float
+1e20                     // ✓ Valid as float
+```
+
+### Type Distinction
+
+Unlike JSON (where all numbers are typically implemented as doubles), JASN distinguishes:
+- `42` → 64-bit signed integer
+- `42.0` → IEEE 754 binary64 float
+
+This means `42` and `42.0` are **different types** in JASN, though mathematically equivalent.
+
+### Compatibility Summary
+
+- ✓ All valid JSON strings, booleans, null
+- ✓ All JSON objects (maps) and arrays (lists)
+- ✓ All JSON whitespace and escape sequences
+- ✓ JSON numbers within i64 range (may become integer type)
+- ✗ JSON integers outside ±2^63-1 (rejected)
+- ✓ More permissive: allows leading zeros, trailing commas (JSON forbids these)
+
 ## Differences from JSON5
 
 1. **Integer/Float split**: Explicit type distinction based on syntax
