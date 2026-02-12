@@ -1,4 +1,4 @@
-use std::{borrow::Cow, collections::BTreeMap};
+use std::{borrow::Cow, collections::BTreeMap, fmt};
 
 use crate::Binary;
 
@@ -14,6 +14,16 @@ pub enum Value {
     Binary(Binary),
     List(Vec<Value>),
     Map(BTreeMap<String, Value>),
+}
+
+impl fmt::Display for Value {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        if f.alternate() {
+            write!(f, "{}", crate::to_string_pretty(self))
+        } else {
+            write!(f, "{}", crate::to_string(self))
+        }
+    }
 }
 
 impl Value {
