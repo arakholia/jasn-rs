@@ -102,6 +102,25 @@ impl Value {
             _ => None,
         }
     }
+
+    pub fn as_list_mut(&mut self) -> Option<&mut Vec<Value>> {
+        match self {
+            Value::List(l) => Some(l),
+            _ => None,
+        }
+    }
+
+    pub fn as_map_mut(&mut self) -> Option<&mut BTreeMap<String, Value>> {
+        match self {
+            Value::Map(m) => Some(m),
+            _ => None,
+        }
+    }
+
+    /// Takes the value, leaving `Value::Null` in its place.
+    pub fn take(&mut self) -> Value {
+        std::mem::replace(self, Value::Null)
+    }
 }
 
 impl From<()> for Value {
@@ -250,6 +269,42 @@ where
             Some(v) => v.into(),
             None => Value::Null,
         }
+    }
+}
+
+impl PartialEq<str> for Value {
+    fn eq(&self, other: &str) -> bool {
+        self.as_string() == Some(other)
+    }
+}
+
+impl PartialEq<&str> for Value {
+    fn eq(&self, other: &&str) -> bool {
+        self.as_string() == Some(*other)
+    }
+}
+
+impl PartialEq<String> for Value {
+    fn eq(&self, other: &String) -> bool {
+        self.as_string() == Some(other.as_str())
+    }
+}
+
+impl PartialEq<i64> for Value {
+    fn eq(&self, other: &i64) -> bool {
+        self.as_int() == Some(*other)
+    }
+}
+
+impl PartialEq<f64> for Value {
+    fn eq(&self, other: &f64) -> bool {
+        self.as_float() == Some(*other)
+    }
+}
+
+impl PartialEq<bool> for Value {
+    fn eq(&self, other: &bool) -> bool {
+        self.as_bool() == Some(*other)
     }
 }
 
@@ -443,5 +498,86 @@ mod tests {
     #[test]
     fn test_default() {
         assert_eq!(Value::default(), Value::Null);
+    }
+
+    #[test]
+    fn test_mutable_accessors() {
+        // as_list_mut
+        let mut list_val = Value::List(vec![Value::Int(1), Value::Int(2)]);
+        if let Some(list) = list_val.as_list_mut() {
+            list.push(Value::Int(3));
+            list[0] = Value::Int(10);
+        }
+        assert_eq!(
+            list_val,
+            Value::List(vec![Value::Int(10), Value::Int(2), Value::Int(3)])
+        );
+
+        // as_list_mut returns None for non-list
+        let mut int_val = Value::Int(42);
+        assert_eq!(int_val.as_list_mut(), None);
+
+        // as_map_mut
+        let mut map_val = Value::Map(BTreeMap::new());
+        if let Some(map) = map_val.as_map_mut() {
+            map.insert("key".to_string(), Value::Int(42));
+            if let Some(value) = map.get_mut("key") {
+                *value = Value::Int(99);
+            }
+        }
+        let mut expected = BTreeMap::new();
+        expected.insert("key".to_string(), Value::Int(99));
+        assert_eq!(map_val, Value::Map(expected));
+
+        // as_map_mut returns None for non-map
+        assert_eq!(int_val.as_map_mut(), None);
+    }
+
+    #[test]
+    fn test_take() {
+        let mut value = Value::Int(42);
+        let taken = value.take();
+        assert_eq!(taken, Value::Int(42));
+        assert_eq!(value, Value::Null);
+
+        let mut list = Value::List(vec![Value::Int(1), Value::Int(2)]);
+        let taken = list.take();
+        assert_eq!(taken, Value::List(vec![Value::Int(1), Value::Int(2)]));
+        assert_eq!(list, Value::Null);
+
+        // Taking from Null leaves Null
+        let mut null = Value::Null;
+        let taken = null.take();
+        assert_eq!(taken, Value::Null);
+        assert_eq!(null, Value::Null);
+    }
+
+    #[test]
+    fn test_partial_eq_primitives() {
+        // String comparisons
+        let string_val = Value::String("hello".to_string());
+        assert_eq!(string_val, "hello");
+        assert_eq!(string_val, "hello".to_string());
+        assert_ne!(string_val, "world");
+
+        // i64 comparisons
+        let int_val = Value::Int(42);
+        assert_eq!(int_val, 42i64);
+        assert_ne!(int_val, 43i64);
+
+        // f64 comparisons
+        let float_val = Value::Float(3.14);
+        assert_eq!(float_val, 3.14f64);
+        assert_ne!(float_val, 2.71f64);
+
+        // bool comparisons
+        let bool_val = Value::Bool(true);
+        assert_eq!(bool_val, true);
+        assert_ne!(bool_val, false);
+
+        // Non-matching types
+        let int_val = Value::Int(42);
+        assert_ne!(int_val, "42");
+        assert_ne!(string_val, 42i64);
     }
 }
