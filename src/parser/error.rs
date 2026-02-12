@@ -39,6 +39,10 @@ pub enum Error {
     /// Unknown binary encoding.
     #[error("Unknown binary encoding: {0}")]
     UnknownBinaryEncoding(String),
+
+    /// Duplicate key in map.
+    #[error("Duplicate key in map: {0}")]
+    DuplicateKey(String),
 }
 
 /// Result type for parsing operations.

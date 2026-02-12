@@ -22,10 +22,10 @@ boolean = "true" | "false" ;
 
 (* Numbers *)
 integer = [ sign ] , ( decimal_integer | hex_integer | binary_integer | octal_integer ) ;
-decimal_integer = digit , { [ "_" ] , digit } ;
-hex_integer = ( "0x" | "0X" ) , hex_digit , { [ "_" ] , hex_digit } ;
-binary_integer = ( "0b" | "0B" ) , binary_digit , { [ "_" ] , binary_digit } ;
-octal_integer = ( "0o" | "0O" ) , octal_digit , { [ "_" ] , octal_digit } ;
+decimal_integer = digit , { { "_" } , digit } ;
+hex_integer = ( "0x" | "0X" ) , hex_digit , { { "_" } , hex_digit } ;
+binary_integer = ( "0b" | "0B" ) , binary_digit , { { "_" } , binary_digit } ;
+octal_integer = ( "0o" | "0O" ) , octal_digit , { { "_" } , octal_digit } ;
 
 float = [ sign ] , ( infinity | nan | decimal_float | special_float ) ;
 decimal_float = ( int_part , frac_part , [ exp_part ] )
@@ -76,8 +76,7 @@ member_list = member , { [ whitespace ] , "," , [ whitespace ] , member } ;
 member = key , [ whitespace ] , ":" , [ whitespace ] , value ;
 
 key = string | identifier ;
-identifier = id_start , { id_continue } ;  (* excluding reserved words *)
-reserved = ( "null" | "true" | "false" | "inf" | "nan" ) , ? not followed by id_continue ? ;
+identifier = id_start , { id_continue } ;
 id_start = letter | "_" ;
 id_continue = id_start | digit ;
 
@@ -99,7 +98,8 @@ JASN distinguishes between integers and floats at parse time:
 - Hexadecimal notation: `0xFF`, `0x10`, `-0xDEAD_BEEF`
 - Binary notation: `0b1010`, `0b1111_1111`, `-0b1000`
 - Octal notation: `0o755`, `0o644`, `+0o777`
-- Underscores allowed between digits for readability (no double underscores)
+- Underscores allowed between digits for readability (including multiple consecutive: `1__000`, `1___000`)
+- Underscores not allowed at the start or end of the number
 - No decimal point, no exponent
 
 ### Float Type (IEEE 754 binary64)
@@ -227,9 +227,10 @@ h""
 2. **Binary type**: New `b64"..."` and `h"..."` literals for binary data
 3. **Trailing commas**: Allowed in lists and maps
 4. **Single quotes**: Strings can use `'...'` or `"..."`
-5. **Unquoted keys**: Map keys can be identifiers (unless they match reserved words: `null`, `true`, `false`, `inf`, `nan`)
-6. **Multiple radix integers**: `0x` (hex), `0b` (binary), `0o` (octal) prefixes (case-insensitive)
-7. **Liberal numbers**: Leading/trailing decimal points (`.5`, `5.`), explicit sign (`+42`), underscores in integers (`1_000`)
+5. **Unquoted keys**: Map keys can be identifiers, including reserved words (`null`, `true`, `false`, `inf`, `nan`)
+6. **Duplicate keys**: Not allowed in maps (parse error)
+7. **Multiple radix integers**: `0x` (hex), `0b` (binary), `0o` (octal) prefixes (case-insensitive)
+7. **Liberal numbers**: Leading/trailing decimal points (`.5`, `5.`), explicit sign (`+42`), underscores in integers (`1_000`, `1__000`)
 8. **Special floats**: `inf`, `nan` with signs (lowercase only)
 9. **Comments**: Line comments `//` and block comments `/* */`
 

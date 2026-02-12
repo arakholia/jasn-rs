@@ -219,6 +219,12 @@ fn parse_map(pair: Pair<Rule>) -> Result<Value> {
 
         let key = parse_map_key(key_pair)?;
         let value = parse_value(value_pair)?;
+
+        // Check for duplicate keys
+        if map.contains_key(&key) {
+            return Err(Error::DuplicateKey(key));
+        }
+
         map.insert(key, value);
     }
 
@@ -269,6 +275,17 @@ mod tests {
     #[case("0b1010", 10)]
     #[case("0o755", 493)]
     fn test_parse_integer(#[case] input: &str, #[case] expected: i64) {
+        assert_eq!(parse(input).unwrap(), Value::Int(expected));
+    }
+
+    #[rstest]
+    #[case("1__000", 1000)]
+    #[case("1___000", 1000)]
+    #[case("1_000_000", 1000000)]
+    #[case("0xFF__FF", 0xFFFF)]
+    #[case("0b1111__0000", 0b11110000)]
+    #[case("0o777__000", 0o777000)]
+    fn test_parse_integer_multiple_underscores(#[case] input: &str, #[case] expected: i64) {
         assert_eq!(parse(input).unwrap(), Value::Int(expected));
     }
 
@@ -378,5 +395,61 @@ mod tests {
     fn test_parse_map() {
         let result = parse("{\"key\": \"value\"}").unwrap();
         assert!(matches!(result, Value::Map(_)));
+    }
+
+    #[rstest]
+    #[case("{null: 1}", "null")]
+    #[case("{true: 1}", "true")]
+    #[case("{false: 1}", "false")]
+    #[case("{inf: 1}", "inf")]
+    #[case("{nan: 1}", "nan")]
+    fn test_parse_keywords_as_map_keys(#[case] input: &str, #[case] expected_key: &str) {
+        let result = parse(input).unwrap();
+        match result {
+            Value::Map(map) => {
+                assert!(
+                    map.contains_key(expected_key),
+                    "Map should contain key '{}'",
+                    expected_key
+                );
+                assert_eq!(map.len(), 1);
+            }
+            _ => panic!("Expected Map value"),
+        }
+    }
+
+    #[rstest]
+    #[case(r#"{a: 1, a: 2}"#, "a")]
+    #[case(r#"{"key": 1, "key": 2}"#, "key")]
+    #[case(r#"{a: 1, "a": 2}"#, "a")]
+    #[case(r#"{null: 1, null: 2}"#, "null")]
+    fn test_parse_duplicate_keys_rejected(#[case] input: &str, #[case] duplicate_key: &str) {
+        let result = parse(input);
+        assert!(
+            result.is_err(),
+            "Expected error for duplicate key '{}'",
+            duplicate_key
+        );
+        match result {
+            Err(Error::DuplicateKey(key)) => {
+                assert_eq!(key, duplicate_key, "Error should mention the duplicate key");
+            }
+            _ => panic!("Expected DuplicateKey error, got: {:?}", result),
+        }
+    }
+
+    #[test]
+    fn test_parse_map_allows_different_keys() {
+        // These should be allowed - different keys
+        let result = parse(r#"{a: 1, b: 2, c: 3}"#).unwrap();
+        match result {
+            Value::Map(map) => {
+                assert_eq!(map.len(), 3);
+                assert!(map.contains_key("a"));
+                assert!(map.contains_key("b"));
+                assert!(map.contains_key("c"));
+            }
+            _ => panic!("Expected Map value"),
+        }
     }
 }
