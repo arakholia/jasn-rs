@@ -313,7 +313,7 @@ mod tests {
     #[case(Value::Null, "null")]
     #[case(Value::Bool(true), "bool")]
     #[case(Value::Int(42), "int")]
-    #[case(Value::Float(3.14), "float")]
+    #[case(Value::Float(2.5), "float")]
     #[case(Value::String("hello".to_string()), "string")]
     #[case(Value::Binary(Binary(vec![1, 2, 3])), "binary")]
     #[case(Value::List(vec![Value::Null]), "list")]
@@ -338,12 +338,12 @@ mod tests {
     #[test]
     fn test_as_int() {
         assert_eq!(Value::Int(42).as_int(), Some(42));
-        assert_eq!(Value::Float(3.14).as_int(), None);
+        assert_eq!(Value::Float(2.5).as_int(), None);
     }
 
     #[test]
     fn test_as_float() {
-        assert_eq!(Value::Float(3.14).as_float(), Some(3.14));
+        assert_eq!(Value::Float(2.5).as_float(), Some(2.5));
         assert_eq!(Value::Int(42).as_float(), None);
     }
 
@@ -385,7 +385,7 @@ mod tests {
     #[case(Value::from(()), Value::Null)]
     #[case(Value::from(true), Value::Bool(true))]
     #[case(Value::from(42i64), Value::Int(42))]
-    #[case(Value::from(3.14f64), Value::Float(3.14))]
+    #[case(Value::from(2.5f64), Value::Float(2.5))]
     #[case(Value::from("hello".to_string()), Value::String("hello".to_string()))]
     #[case(Value::from("world"), Value::String("world".to_string()))]
     fn test_from_primitives(#[case] actual: Value, #[case] expected: Value) {
@@ -557,9 +557,9 @@ mod tests {
 
     #[test]
     fn test_partial_eq_float() {
-        let float_val = Value::Float(3.14);
-        assert_eq!(float_val, 3.14f64);
-        assert_ne!(float_val, 2.71f64);
+        let float_val = Value::Float(2.5);
+        assert_eq!(float_val, 2.5f64);
+        assert_ne!(float_val, 1.5f64);
     }
 
     #[test]

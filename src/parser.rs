@@ -247,7 +247,7 @@ mod tests {
     }
 
     #[rstest]
-    #[case("3.14", 3.14)]
+    #[case("2.5", 2.5)]
     #[case("1e10", 1e10)]
     fn test_parse_float_numbers(#[case] input: &str, #[case] expected: f64) {
         assert_eq!(parse(input).unwrap(), Value::Float(expected));
