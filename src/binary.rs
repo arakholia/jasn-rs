@@ -197,22 +197,25 @@ impl<'a> IntoIterator for &'a mut Binary {
 
 #[cfg(test)]
 mod tests {
+    use rstest::rstest;
+
     use super::*;
+
+    #[rstest]
+    #[case(Binary::from(vec![1u8, 2, 3]), vec![1, 2, 3])]
+    #[case(Binary::from(b"hello"), b"hello".to_vec())]
+    #[case(Binary::from(b"world"), b"world".to_vec())]
+    #[case(Binary::from([1u8, 2, 3]), vec![1, 2, 3])]
+    fn test_binary_from_conversions(#[case] binary: Binary, #[case] expected: Vec<u8>) {
+        assert_eq!(binary, Binary(expected));
+    }
 
     #[test]
     fn test_binary_conversions() {
-        // Binary from Vec<u8>
-        let binary = Binary::from(vec![1u8, 2, 3]);
-        assert_eq!(binary, Binary(vec![1, 2, 3]));
-
-        // Binary from &[u8]
-        let bytes: &[u8] = b"hello";
+        // Binary from &[u8] (slice reference)
+        let bytes: &[u8] = b"slice";
         let binary = Binary::from(bytes);
-        assert_eq!(binary, Binary(b"hello".to_vec()));
-
-        // Binary from byte literal &[u8; N]
-        let binary = Binary::from(b"world");
-        assert_eq!(binary, Binary(b"world".to_vec()));
+        assert_eq!(binary, Binary(b"slice".to_vec()));
 
         // Binary to Vec<u8>
         let binary = Binary(vec![1, 2, 3]);
@@ -240,10 +243,6 @@ mod tests {
         let mut binary = Binary(vec![4, 5, 6]);
         binary[1] = 88;
         assert_eq!(&*binary, &[4, 88, 6]);
-
-        // Binary from owned array [u8; N]
-        let binary = Binary::from([1u8, 2, 3]);
-        assert_eq!(binary, Binary(vec![1, 2, 3]));
     }
 
     #[test]
@@ -261,6 +260,18 @@ mod tests {
         // Binary::default()
         let binary = Binary::default();
         assert_eq!(binary, Binary::new());
+    }
+
+    #[rstest]
+    #[case(Binary::new(), 0, true)]
+    #[case(Binary::from(vec![1, 2, 3]), 3, false)]
+    fn test_binary_length_check(
+        #[case] binary: Binary,
+        #[case] len: usize,
+        #[case] is_empty: bool,
+    ) {
+        assert_eq!(binary.len(), len);
+        assert_eq!(binary.is_empty(), is_empty);
     }
 
     #[test]
@@ -326,21 +337,33 @@ mod tests {
         assert_eq!(&*binary, &[1, 2, 3, 4, 5]);
     }
 
+    #[rstest]
+    #[case(Binary::from(vec![1u8, 2, 3]), &[1u8, 2, 3] as &[u8], true)]
+    #[case(Binary::from(vec![1u8, 2, 3]), &[1u8, 2] as &[u8], false)]
+    #[case(Binary::from(b"hello"), b"hello" as &[u8], true)]
+    #[case(Binary::from(b"hello"), b"world" as &[u8], false)]
+    fn test_binary_slice_eq(#[case] binary: Binary, #[case] slice: &[u8], #[case] should_eq: bool) {
+        if should_eq {
+            assert_eq!(binary, slice);
+        } else {
+            assert_ne!(binary, slice);
+        }
+    }
+
+    #[rstest]
+    #[case(Binary::from(vec![1u8, 2, 3]), vec![1u8, 2, 3], true)]
+    #[case(Binary::from(vec![1u8, 2, 3]), vec![1u8, 2], false)]
+    fn test_binary_vec_eq(#[case] binary: Binary, #[case] vec: Vec<u8>, #[case] should_eq: bool) {
+        if should_eq {
+            assert_eq!(binary, vec);
+        } else {
+            assert_ne!(binary, vec);
+        }
+    }
+
     #[test]
     fn test_binary_partial_eq() {
         let binary = Binary::from(vec![1u8, 2, 3]);
-
-        // PartialEq<[u8]>
-        assert_eq!(binary, [1, 2, 3]);
-        assert_ne!(binary, [1, 2]);
-
-        // PartialEq<&[u8]>
-        let slice: &[u8] = &[1, 2, 3];
-        assert_eq!(binary, slice);
-
-        // PartialEq<Vec<u8>>
-        assert_eq!(binary, vec![1u8, 2, 3]);
-        assert_ne!(binary, vec![1u8, 2]);
 
         // PartialEq<[u8; N]>
         assert_eq!(binary, [1u8, 2, 3]);
@@ -349,12 +372,6 @@ mod tests {
         // PartialEq<&[u8; N]>
         let arr: &[u8; 3] = &[1, 2, 3];
         assert_eq!(binary, arr);
-
-        // Byte literals
-        let binary = Binary::from(b"hello");
-        assert_eq!(binary, b"hello");
-        assert_eq!(binary, b"hello".as_slice());
-        assert_ne!(binary, b"world");
     }
 
     #[test]

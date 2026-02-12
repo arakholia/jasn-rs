@@ -305,84 +305,75 @@ impl PartialEq<bool> for Value {
 
 #[cfg(test)]
 mod tests {
+    use rstest::rstest;
+
     use super::*;
 
-    #[test]
-    fn test_is_methods() {
-        let null = Value::Null;
-        assert!(null.is_null());
-        assert!(!null.is_bool());
-        assert!(!null.is_int());
-        assert!(!null.is_float());
-        assert!(!null.is_string());
-        assert!(!null.is_binary());
-        assert!(!null.is_list());
-        assert!(!null.is_map());
-
-        let bool_val = Value::Bool(true);
-        assert!(!bool_val.is_null());
-        assert!(bool_val.is_bool());
-        assert!(!bool_val.is_int());
-
-        let int_val = Value::Int(42);
-        assert!(int_val.is_int());
-        assert!(!int_val.is_float());
-
-        let float_val = Value::Float(3.14);
-        assert!(float_val.is_float());
-        assert!(!float_val.is_int());
-
-        let string_val = Value::String("hello".to_string());
-        assert!(string_val.is_string());
-        assert!(!string_val.is_binary());
-
-        let binary_val = Value::Binary(Binary(vec![1, 2, 3]));
-        assert!(binary_val.is_binary());
-        assert!(!binary_val.is_list());
-
-        let list_val = Value::List(vec![Value::Null]);
-        assert!(list_val.is_list());
-        assert!(!list_val.is_map());
-
-        let map_val = Value::Map(BTreeMap::new());
-        assert!(map_val.is_map());
-        assert!(!map_val.is_null());
+    #[rstest]
+    #[case(Value::Null, "null")]
+    #[case(Value::Bool(true), "bool")]
+    #[case(Value::Int(42), "int")]
+    #[case(Value::Float(3.14), "float")]
+    #[case(Value::String("hello".to_string()), "string")]
+    #[case(Value::Binary(Binary(vec![1, 2, 3])), "binary")]
+    #[case(Value::List(vec![Value::Null]), "list")]
+    #[case(Value::Map(BTreeMap::new()), "map")]
+    fn test_is_methods(#[case] value: Value, #[case] value_type: &str) {
+        assert_eq!(value.is_null(), value_type == "null");
+        assert_eq!(value.is_bool(), value_type == "bool");
+        assert_eq!(value.is_int(), value_type == "int");
+        assert_eq!(value.is_float(), value_type == "float");
+        assert_eq!(value.is_string(), value_type == "string");
+        assert_eq!(value.is_binary(), value_type == "binary");
+        assert_eq!(value.is_list(), value_type == "list");
+        assert_eq!(value.is_map(), value_type == "map");
     }
 
     #[test]
-    fn test_as_methods() {
-        // as_bool
+    fn test_as_bool() {
         assert_eq!(Value::Bool(true).as_bool(), Some(true));
         assert_eq!(Value::Null.as_bool(), None);
+    }
 
-        // as_int
+    #[test]
+    fn test_as_int() {
         assert_eq!(Value::Int(42).as_int(), Some(42));
         assert_eq!(Value::Float(3.14).as_int(), None);
+    }
 
-        // as_float
+    #[test]
+    fn test_as_float() {
         assert_eq!(Value::Float(3.14).as_float(), Some(3.14));
         assert_eq!(Value::Int(42).as_float(), None);
+    }
 
-        // as_string
+    #[test]
+    fn test_as_string() {
         assert_eq!(
             Value::String("hello".to_string()).as_string(),
             Some("hello")
         );
         assert_eq!(Value::Null.as_string(), None);
+    }
 
-        // as_binary
+    #[test]
+    fn test_as_binary() {
         let binary = Binary(vec![1, 2, 3]);
         let binary_val = Value::Binary(binary.clone());
         assert_eq!(binary_val.as_binary(), Some(&binary));
         assert_eq!(Value::Null.as_binary(), None);
+    }
 
-        // as_list
+    #[test]
+    fn test_as_list() {
         let list = vec![Value::Int(1), Value::Int(2)];
         let list_val = Value::List(list.clone());
         assert_eq!(list_val.as_list(), Some(list.as_slice()));
         assert_eq!(Value::Null.as_list(), None);
+    }
 
-        // as_map
+    #[test]
+    fn test_as_map() {
         let mut map = BTreeMap::new();
         map.insert("key".to_string(), Value::Int(42));
         let map_val = Value::Map(map.clone());
@@ -390,18 +381,20 @@ mod tests {
         assert_eq!(Value::Null.as_map(), None);
     }
 
+    #[rstest]
+    #[case(Value::from(()), Value::Null)]
+    #[case(Value::from(true), Value::Bool(true))]
+    #[case(Value::from(42i64), Value::Int(42))]
+    #[case(Value::from(3.14f64), Value::Float(3.14))]
+    #[case(Value::from("hello".to_string()), Value::String("hello".to_string()))]
+    #[case(Value::from("world"), Value::String("world".to_string()))]
+    fn test_from_primitives(#[case] actual: Value, #[case] expected: Value) {
+        assert_eq!(actual, expected);
+    }
+
     #[test]
     fn test_from_conversions() {
-        // From primitives
-        assert_eq!(Value::from(()), Value::Null);
-        assert_eq!(Value::from(true), Value::Bool(true));
-        assert_eq!(Value::from(42i64), Value::Int(42));
-        assert_eq!(Value::from(3.14f64), Value::Float(3.14));
-        assert_eq!(
-            Value::from("hello".to_string()),
-            Value::String("hello".to_string())
-        );
-        assert_eq!(Value::from("world"), Value::String("world".to_string()));
+        // From primitives - tested via rstest above
 
         // From Cow
         let owned: Cow<str> = Cow::Owned("owned".to_string());
@@ -548,30 +541,38 @@ mod tests {
     }
 
     #[test]
-    fn test_partial_eq_primitives() {
-        // String comparisons
+    fn test_partial_eq_string() {
         let string_val = Value::String("hello".to_string());
         assert_eq!(string_val, "hello");
         assert_eq!(string_val, "hello".to_string());
         assert_ne!(string_val, "world");
+    }
 
-        // i64 comparisons
+    #[test]
+    fn test_partial_eq_int() {
         let int_val = Value::Int(42);
         assert_eq!(int_val, 42i64);
         assert_ne!(int_val, 43i64);
+    }
 
-        // f64 comparisons
+    #[test]
+    fn test_partial_eq_float() {
         let float_val = Value::Float(3.14);
         assert_eq!(float_val, 3.14f64);
         assert_ne!(float_val, 2.71f64);
+    }
 
-        // bool comparisons
+    #[test]
+    fn test_partial_eq_bool() {
         let bool_val = Value::Bool(true);
         assert_eq!(bool_val, true);
         assert_ne!(bool_val, false);
+    }
 
-        // Non-matching types
+    #[test]
+    fn test_partial_eq_mismatched_types() {
         let int_val = Value::Int(42);
+        let string_val = Value::String("hello".to_string());
         assert_ne!(int_val, "42");
         assert_ne!(string_val, 42i64);
     }
