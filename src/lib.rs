@@ -1,2 +1,5 @@
+mod parser;
 mod value;
-pub use value::Value;
+
+pub use parser::{ParseResult, parse};
+pub use value::{Binary, Value};
