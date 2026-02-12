@@ -24,6 +24,9 @@ pub struct Options {
 
     /// Escape all non-ASCII characters as \uXXXX sequences.
     pub escape_unicode: bool,
+
+    /// Use 'Z' for UTC timestamps instead of '+00:00'.
+    pub use_zulu: bool,
 }
 
 impl Default for Options {
@@ -44,6 +47,7 @@ impl Options {
             leading_plus: false,
             sort_keys: false,
             escape_unicode: true,
+            use_zulu: true,
         }
     }
 
@@ -58,6 +62,7 @@ impl Options {
             leading_plus: false,
             sort_keys: true,
             escape_unicode: false,
+            use_zulu: true,
         }
     }
 
@@ -106,6 +111,12 @@ impl Options {
     /// Sets whether to escape non-ASCII characters as \uXXXX.
     pub fn with_escape_unicode(mut self, enable: bool) -> Self {
         self.escape_unicode = enable;
+        self
+    }
+
+    /// Sets whether to use 'Z' for UTC timestamps instead of '+00:00'.
+    pub fn with_use_zulu(mut self, enable: bool) -> Self {
+        self.use_zulu = enable;
         self
     }
 }

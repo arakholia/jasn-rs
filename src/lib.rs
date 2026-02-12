@@ -47,4 +47,4 @@ pub use value::{Timestamp, Value};
 
 /// Formatting JASN values to strings with custom options.
 pub mod formatter;
-pub use formatter::{to_string, to_string_pretty};
+pub use formatter::{to_string, to_string_opts, to_string_pretty};

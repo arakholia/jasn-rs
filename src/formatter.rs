@@ -44,10 +44,17 @@ fn format_with_opts(value: &Value, opts: &Options, depth: usize) -> String {
         }
         Value::Binary(b) => format_binary(b, opts.binary_encoding),
         Value::Timestamp(t) => {
-            // Format as RFC3339 with automatic precision and Z for UTC
-            let formatted = t
+            // Format as RFC3339 (always uses Z for UTC timestamps)
+            let mut formatted = t
                 .format(&time::format_description::well_known::Rfc3339)
                 .unwrap_or_else(|_| t.to_string());
+
+            // If use_zulu is false, replace Z with +00:00 for UTC timestamps
+            if !opts.use_zulu && formatted.ends_with('Z') {
+                formatted.pop(); // Remove 'Z'
+                formatted.push_str("+00:00");
+            }
+
             format!("ts\"{}\"", formatted)
         }
         Value::List(items) => {
@@ -559,5 +566,39 @@ mod tests {
                 panic!("Expected String value");
             }
         }
+    }
+
+    #[test]
+    fn test_format_timestamp() {
+        use crate::Timestamp;
+
+        let ts = Timestamp::from_unix_timestamp(1234567890).unwrap();
+        let value = Value::Timestamp(ts);
+
+        // Default (use_zulu = true) - should use Z notation
+        let result = to_string(&value);
+        assert_eq!(result, "ts\"2009-02-13T23:31:30Z\"");
+
+        // With use_zulu = true explicitly
+        let opts = Options::compact().with_use_zulu(true);
+        let result = to_string_opts(&value, &opts);
+        assert_eq!(result, "ts\"2009-02-13T23:31:30Z\"");
+
+        // With use_zulu = false - should use +00:00 notation
+        let opts = Options::compact().with_use_zulu(false);
+        let result = to_string_opts(&value, &opts);
+        assert_eq!(result, "ts\"2009-02-13T23:31:30+00:00\"");
+
+        // Test with fractional seconds
+        let ts_frac = Timestamp::from_unix_timestamp_nanos(1234567890_123456789).unwrap();
+        let value_frac = Value::Timestamp(ts_frac);
+
+        let opts_z = Options::compact().with_use_zulu(true);
+        let result = to_string_opts(&value_frac, &opts_z);
+        assert_eq!(result, "ts\"2009-02-13T23:31:30.123456789Z\"");
+
+        let opts_offset = Options::compact().with_use_zulu(false);
+        let result = to_string_opts(&value_frac, &opts_offset);
+        assert_eq!(result, "ts\"2009-02-13T23:31:30.123456789+00:00\"");
     }
 }
