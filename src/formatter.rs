@@ -1,0 +1,377 @@
+use std::collections::BTreeMap;
+
+use crate::{Binary, Value};
+
+mod options;
+pub use options::*;
+
+pub fn to_string(value: &Value) -> String {
+    format_value(value)
+}
+
+pub fn to_string_pretty(value: &Value) -> String {
+    let options = FormatOptions::pretty();
+    format_with_options(value, &options, 0)
+}
+
+/// Formats a JASN value with custom formatting options.
+pub fn to_string_with_options(value: &Value, options: &FormatOptions) -> String {
+    format_with_options(value, options, 0)
+}
+
+fn format_value(value: &Value) -> String {
+    match value {
+        Value::Null => "null".to_string(),
+        Value::Bool(b) => b.to_string(),
+        Value::Int(i) => i.to_string(),
+        Value::Float(f) => format_float(*f),
+        Value::String(s) => format_string(s, '"'),
+        Value::Binary(b) => format_binary(b, BinaryEncoding::Base64),
+        Value::List(items) => format_list_compact(items),
+        Value::Map(map) => format_map_compact(map),
+    }
+}
+
+fn format_with_options(value: &Value, options: &FormatOptions, depth: usize) -> String {
+    match value {
+        Value::Null => "null".to_string(),
+        Value::Bool(b) => b.to_string(),
+        Value::Int(i) => i.to_string(),
+        Value::Float(f) => format_float(*f),
+        Value::String(s) => {
+            let quote = match options.quote_style {
+                QuoteStyle::Double => '"',
+                QuoteStyle::Single => '\'',
+                QuoteStyle::PreferDouble => {
+                    if s.contains('"') && !s.contains('\'') {
+                        '\''
+                    } else {
+                        '"'
+                    }
+                }
+            };
+            format_string(s, quote)
+        }
+        Value::Binary(b) => format_binary(b, options.binary_encoding),
+        Value::List(items) => {
+            if options.indent.is_empty() {
+                format_list_compact(items)
+            } else {
+                format_list_pretty(items, options, depth)
+            }
+        }
+        Value::Map(map) => {
+            if options.indent.is_empty() {
+                format_map_compact(map)
+            } else {
+                format_map_pretty(map, options, depth)
+            }
+        }
+    }
+}
+
+fn format_float(f: f64) -> String {
+    if f.is_infinite() {
+        if f.is_sign_negative() {
+            "-inf".to_string()
+        } else {
+            "inf".to_string()
+        }
+    } else if f.is_nan() {
+        "nan".to_string()
+    } else if f.fract() == 0.0 && f.abs() < 1e15 {
+        // Ensure we always have a decimal point to distinguish from integers
+        format!("{:.1}", f)
+    } else {
+        f.to_string()
+    }
+}
+
+fn format_string(s: &str, quote: char) -> String {
+    let mut result = String::with_capacity(s.len() + 2);
+    result.push(quote);
+
+    for ch in s.chars() {
+        match ch {
+            '"' if quote == '"' => result.push_str("\\\""),
+            '\'' if quote == '\'' => result.push_str("\\'"),
+            '\\' => result.push_str("\\\\"),
+            '/' => result.push_str("\\/"),
+            '\n' => result.push_str("\\n"),
+            '\t' => result.push_str("\\t"),
+            '\r' => result.push_str("\\r"),
+            '\x08' => result.push_str("\\b"),
+            '\x0C' => result.push_str("\\f"),
+            c if c.is_control() => {
+                use std::fmt::Write;
+                write!(&mut result, "\\u{:04x}", c as u32).unwrap();
+            }
+            c => result.push(c),
+        }
+    }
+
+    result.push(quote);
+    result
+}
+
+fn format_binary(binary: &Binary, encoding: BinaryEncoding) -> String {
+    match encoding {
+        BinaryEncoding::Base64 => {
+            use base64::{Engine as _, engine::general_purpose};
+            let encoded = general_purpose::STANDARD.encode(&binary.0);
+            format!("b64\"{}\"", encoded)
+        }
+        BinaryEncoding::Hex => {
+            let hex: String = binary.0.iter().map(|b| format!("{:02x}", b)).collect();
+            format!("h\"{}\"", hex)
+        }
+        BinaryEncoding::Compact => {
+            // Choose hex if it's shorter or equal length
+            use base64::{Engine as _, engine::general_purpose};
+            let b64_len = general_purpose::STANDARD.encode(&binary.0).len();
+            let hex_len = binary.0.len() * 2;
+
+            if hex_len <= b64_len {
+                format_binary(binary, BinaryEncoding::Hex)
+            } else {
+                format_binary(binary, BinaryEncoding::Base64)
+            }
+        }
+    }
+}
+
+fn format_list_compact(items: &[Value]) -> String {
+    if items.is_empty() {
+        return "[]".to_string();
+    }
+
+    let formatted: Vec<String> = items.iter().map(format_value).collect();
+    format!("[{}]", formatted.join(","))
+}
+
+fn format_list_pretty(items: &[Value], options: &FormatOptions, depth: usize) -> String {
+    if items.is_empty() {
+        return "[]".to_string();
+    }
+
+    let indent = options.indent.repeat(depth);
+    let item_indent = options.indent.repeat(depth + 1);
+    let mut result = String::from("[\n");
+
+    for (i, item) in items.iter().enumerate() {
+        result.push_str(&item_indent);
+        result.push_str(&format_with_options(item, options, depth + 1));
+        if i < items.len() - 1 || options.trailing_commas {
+            result.push(',');
+        }
+        result.push('\n');
+    }
+
+    result.push_str(&indent);
+    result.push(']');
+    result
+}
+
+fn format_map_compact(map: &BTreeMap<String, Value>) -> String {
+    if map.is_empty() {
+        return "{}".to_string();
+    }
+
+    let formatted: Vec<String> = map
+        .iter()
+        .map(|(k, v)| format!("{}:{}", format_string(k, '"'), format_value(v)))
+        .collect();
+    format!("{{{}}}", formatted.join(","))
+}
+
+fn format_map_pretty(
+    map: &BTreeMap<String, Value>,
+    options: &FormatOptions,
+    depth: usize,
+) -> String {
+    if map.is_empty() {
+        return "{}".to_string();
+    }
+
+    let indent = options.indent.repeat(depth);
+    let item_indent = options.indent.repeat(depth + 1);
+    let mut result = String::from("{\n");
+
+    let entries: Vec<_> = map.iter().collect();
+    for (i, (key, value)) in entries.iter().enumerate() {
+        result.push_str(&item_indent);
+
+        // Format key (possibly unquoted)
+        if options.unquoted_keys && can_be_unquoted(key) {
+            result.push_str(key);
+        } else {
+            let quote = match options.quote_style {
+                QuoteStyle::Double => '"',
+                QuoteStyle::Single => '\'',
+                QuoteStyle::PreferDouble => {
+                    if key.contains('"') && !key.contains('\'') {
+                        '\''
+                    } else {
+                        '"'
+                    }
+                }
+            };
+            result.push_str(&format_string(key, quote));
+        }
+
+        result.push_str(": ");
+        result.push_str(&format_with_options(value, options, depth + 1));
+
+        if i < entries.len() - 1 || options.trailing_commas {
+            result.push(',');
+        }
+        result.push('\n');
+    }
+
+    result.push_str(&indent);
+    result.push('}');
+    result
+}
+
+fn can_be_unquoted(key: &str) -> bool {
+    if key.is_empty() {
+        return false;
+    }
+
+    // Reserved keywords cannot be unquoted
+    if matches!(key, "null" | "true" | "false" | "inf" | "nan") {
+        return false;
+    }
+
+    let mut chars = key.chars();
+    let first = chars.next().unwrap();
+
+    // Must start with letter or underscore
+    if !first.is_ascii_alphabetic() && first != '_' {
+        return false;
+    }
+
+    // Rest must be alphanumeric or underscore
+    chars.all(|c| c.is_ascii_alphanumeric() || c == '_')
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::parse;
+
+    #[test]
+    fn test_format_primitives() {
+        assert_eq!(to_string(&Value::Null), "null");
+        assert_eq!(to_string(&Value::Bool(true)), "true");
+        assert_eq!(to_string(&Value::Bool(false)), "false");
+        assert_eq!(to_string(&Value::Int(42)), "42");
+        assert_eq!(to_string(&Value::Int(-123)), "-123");
+    }
+
+    #[test]
+    fn test_format_float() {
+        assert_eq!(to_string(&Value::Float(3.0)), "3.0");
+        assert_eq!(to_string(&Value::Float(2.5)), "2.5");
+        assert_eq!(to_string(&Value::Float(f64::INFINITY)), "inf");
+        assert_eq!(to_string(&Value::Float(f64::NEG_INFINITY)), "-inf");
+        assert!(to_string(&Value::Float(f64::NAN)).contains("nan"));
+    }
+
+    #[test]
+    fn test_format_string() {
+        assert_eq!(to_string(&Value::String("hello".to_string())), "\"hello\"");
+        assert_eq!(
+            to_string(&Value::String("hello\nworld".to_string())),
+            "\"hello\\nworld\""
+        );
+        assert_eq!(
+            to_string(&Value::String("tab\there".to_string())),
+            "\"tab\\there\""
+        );
+    }
+
+    #[test]
+    fn test_format_binary() {
+        let binary = Binary(vec![72, 101, 108, 108, 111]); // "Hello"
+        assert_eq!(to_string(&Value::Binary(binary)), "b64\"SGVsbG8=\"");
+    }
+
+    #[test]
+    fn test_format_list() {
+        let list = vec![Value::Int(1), Value::Int(2), Value::Int(3)];
+        assert_eq!(to_string(&Value::List(list)), "[1,2,3]");
+
+        assert_eq!(to_string(&Value::List(vec![])), "[]");
+    }
+
+    #[test]
+    fn test_format_map() {
+        let mut map = BTreeMap::new();
+        map.insert("name".to_string(), Value::String("Alice".to_string()));
+        map.insert("age".to_string(), Value::Int(30));
+
+        let formatted = to_string(&Value::Map(map));
+        assert!(formatted.contains("\"age\":30"));
+        assert!(formatted.contains("\"name\":\"Alice\""));
+    }
+
+    #[test]
+    fn test_round_trip() {
+        // Null
+        let null = Value::Null;
+        assert_eq!(parse(&to_string(&null)).unwrap(), null);
+
+        // Bool
+        let bool_val = Value::Bool(true);
+        assert_eq!(parse(&to_string(&bool_val)).unwrap(), bool_val);
+
+        // Int
+        let int_val = Value::Int(42);
+        assert_eq!(parse(&to_string(&int_val)).unwrap(), int_val);
+
+        // Float
+        let float_val = Value::Float(2.5);
+        assert_eq!(parse(&to_string(&float_val)).unwrap(), float_val);
+
+        // String
+        let string_val = Value::String("hello world".to_string());
+        assert_eq!(parse(&to_string(&string_val)).unwrap(), string_val);
+
+        // List
+        let list_val = Value::List(vec![Value::Int(1), Value::Int(2)]);
+        assert_eq!(parse(&to_string(&list_val)).unwrap(), list_val);
+
+        // Map
+        let mut map = BTreeMap::new();
+        map.insert("key".to_string(), Value::Int(42));
+        let map_val = Value::Map(map);
+        assert_eq!(parse(&to_string(&map_val)).unwrap(), map_val);
+    }
+
+    #[test]
+    fn test_pretty_format() {
+        let mut map = BTreeMap::new();
+        map.insert("name".to_string(), Value::String("Alice".to_string()));
+        map.insert("age".to_string(), Value::Int(30));
+
+        let pretty = to_string_pretty(&Value::Map(map));
+        assert!(pretty.contains('\n'));
+        assert!(pretty.contains("  "));
+    }
+
+    #[test]
+    fn test_can_be_unquoted() {
+        assert!(can_be_unquoted("hello"));
+        assert!(can_be_unquoted("_private"));
+        assert!(can_be_unquoted("key123"));
+        assert!(can_be_unquoted("_"));
+
+        assert!(!can_be_unquoted(""));
+        assert!(!can_be_unquoted("123"));
+        assert!(!can_be_unquoted("null"));
+        assert!(!can_be_unquoted("true"));
+        assert!(!can_be_unquoted("false"));
+        assert!(!can_be_unquoted("kebab-case"));
+    }
+}
