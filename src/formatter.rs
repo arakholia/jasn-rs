@@ -24,8 +24,8 @@ fn format_with_options(value: &Value, options: &FormatOptions, depth: usize) -> 
     match value {
         Value::Null => "null".to_string(),
         Value::Bool(b) => b.to_string(),
-        Value::Int(i) => i.to_string(),
-        Value::Float(f) => format_float(*f),
+        Value::Int(i) => format_int(*i, options),
+        Value::Float(f) => format_float(*f, options),
         Value::String(s) => {
             let quote = match options.quote_style {
                 QuoteStyle::Double => '"',
@@ -58,8 +58,16 @@ fn format_with_options(value: &Value, options: &FormatOptions, depth: usize) -> 
     }
 }
 
-fn format_float(f: f64) -> String {
-    if f.is_infinite() {
+fn format_int(i: i64, options: &FormatOptions) -> String {
+    if options.leading_plus && i >= 0 {
+        format!("+{}", i)
+    } else {
+        i.to_string()
+    }
+}
+
+fn format_float(f: f64, options: &FormatOptions) -> String {
+    let base_string = if f.is_infinite() {
         if f.is_sign_negative() {
             "-inf".to_string()
         } else {
@@ -72,6 +80,13 @@ fn format_float(f: f64) -> String {
         format!("{:.1}", f)
     } else {
         f.to_string()
+    };
+
+    // Add leading plus for positive numbers (including +inf, but not nan)
+    if options.leading_plus && !f.is_nan() && !base_string.starts_with('-') {
+        format!("+{}", base_string)
+    } else {
+        base_string
     }
 }
 
@@ -371,5 +386,42 @@ mod tests {
         assert!(!can_be_unquoted("true"));
         assert!(!can_be_unquoted("false"));
         assert!(!can_be_unquoted("kebab-case"));
+    }
+
+    #[test]
+    fn test_leading_plus() {
+        let opts = FormatOptions::compact().with_leading_plus(true);
+
+        // Positive integers get a plus sign
+        assert_eq!(to_string_opts(&Value::Int(42), &opts), "+42");
+
+        // Zero gets a plus sign
+        assert_eq!(to_string_opts(&Value::Int(0), &opts), "+0");
+
+        // Negative integers keep their minus sign
+        assert_eq!(to_string_opts(&Value::Int(-42), &opts), "-42");
+
+        // Positive floats get a plus sign
+        assert_eq!(to_string_opts(&Value::Float(2.5), &opts), "+2.5");
+
+        // Negative floats keep their minus sign
+        assert_eq!(to_string_opts(&Value::Float(-2.5), &opts), "-2.5");
+
+        // Positive infinity gets a plus sign
+        assert_eq!(to_string_opts(&Value::Float(f64::INFINITY), &opts), "+inf");
+
+        // Negative infinity keeps its minus
+        assert_eq!(
+            to_string_opts(&Value::Float(f64::NEG_INFINITY), &opts),
+            "-inf"
+        );
+
+        // NaN doesn't get a plus sign
+        assert_eq!(to_string_opts(&Value::Float(f64::NAN), &opts), "nan");
+
+        // Default (no leading_plus) should not add plus signs
+        let default_opts = FormatOptions::compact();
+        assert_eq!(to_string_opts(&Value::Int(42), &default_opts), "42");
+        assert_eq!(to_string_opts(&Value::Float(2.5), &default_opts), "2.5");
     }
 }

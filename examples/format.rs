@@ -37,13 +37,14 @@ fn main() {
 
     // Custom format options
     println!(
-        "=== Custom Format (Single Quotes, Hex Binary, 4-Space Indent, No Trailing Commas, Quoted Keys) ==="
+        "=== Custom Format (Single Quotes, Hex Binary, 4-Space Indent, No Trailing Commas, Quoted Keys, Leading Plus) ==="
     );
     let custom_options = FormatOptions::pretty()
         .with_quote_style(QuoteStyle::Single)
         .with_binary_encoding(BinaryEncoding::Hex)
         .with_indent("    ")
         .with_trailing_commas(false)
-        .with_unquoted_keys(false);
+        .with_unquoted_keys(false)
+        .with_leading_plus(true);
     println!("{}", to_string_opts(&value, &custom_options));
 }

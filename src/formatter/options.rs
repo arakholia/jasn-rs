@@ -15,6 +15,9 @@ pub struct FormatOptions {
 
     /// Use unquoted keys in maps when possible.
     pub unquoted_keys: bool,
+
+    /// Add leading plus sign to positive numbers (+42, +3.14, +inf).
+    pub leading_plus: bool,
 }
 
 impl Default for FormatOptions {
@@ -32,6 +35,7 @@ impl FormatOptions {
             quote_style: QuoteStyle::Double,
             binary_encoding: BinaryEncoding::Base64,
             unquoted_keys: true,
+            leading_plus: false,
         }
     }
 
@@ -43,6 +47,7 @@ impl FormatOptions {
             quote_style: QuoteStyle::Double,
             binary_encoding: BinaryEncoding::Base64,
             unquoted_keys: true,
+            leading_plus: false,
         }
     }
 
@@ -73,6 +78,12 @@ impl FormatOptions {
     /// Sets whether to use unquoted keys.
     pub fn with_unquoted_keys(mut self, enable: bool) -> Self {
         self.unquoted_keys = enable;
+        self
+    }
+
+    /// Sets whether to add leading plus sign to positive numbers.
+    pub fn with_leading_plus(mut self, enable: bool) -> Self {
+        self.leading_plus = enable;
         self
     }
 }
