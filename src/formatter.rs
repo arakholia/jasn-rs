@@ -43,20 +43,7 @@ fn format_with_opts(value: &Value, opts: &Options, depth: usize) -> String {
             format_string(s, quote, opts.escape_unicode)
         }
         Value::Binary(b) => format_binary(b, opts.binary_encoding),
-        Value::Timestamp(t) => {
-            // Format as RFC3339 (always uses Z for UTC timestamps)
-            let mut formatted = t
-                .format(&time::format_description::well_known::Rfc3339)
-                .unwrap_or_else(|_| t.to_string());
-
-            // If use_zulu is false, replace Z with +00:00 for UTC timestamps
-            if !opts.use_zulu && formatted.ends_with('Z') {
-                formatted.pop(); // Remove 'Z'
-                formatted.push_str("+00:00");
-            }
-
-            format!("ts\"{}\"", formatted)
-        }
+        Value::Timestamp(t) => format_timestamp(t, opts),
         Value::List(items) => {
             if opts.indent.is_empty() {
                 format_list_compact(items, opts)
@@ -103,6 +90,102 @@ fn format_float(f: f64, opts: &Options) -> String {
         format!("+{}", base_string)
     } else {
         base_string
+    }
+}
+
+fn format_timestamp(t: &crate::Timestamp, opts: &Options) -> String {
+    use options::TimestampPrecision;
+
+    // First, format using RFC3339 to get the base representation
+    let base = t
+        .format(&time::format_description::well_known::Rfc3339)
+        .unwrap_or_else(|_| t.to_string());
+
+    // Apply precision adjustments
+    let with_precision = match opts.timestamp_precision {
+        TimestampPrecision::Auto => base,
+        TimestampPrecision::Seconds => strip_fractional_seconds(&base),
+        TimestampPrecision::Milliseconds => adjust_precision(&base, 3),
+        TimestampPrecision::Microseconds => adjust_precision(&base, 6),
+        TimestampPrecision::Nanoseconds => adjust_precision(&base, 9),
+    };
+
+    // Apply use_zulu setting
+    let final_str = if !opts.use_zulu && with_precision.ends_with('Z') {
+        let mut s = with_precision;
+        s.pop();
+        s.push_str("+00:00");
+        s
+    } else {
+        with_precision
+    };
+
+    format!("ts\"{}\"", final_str)
+}
+
+/// Strip fractional seconds from timestamp string
+fn strip_fractional_seconds(s: &str) -> String {
+    if let Some(dot_pos) = s.find('.') {
+        if let Some(tz_start) = s[dot_pos..].find(|c| c == 'Z' || c == '+' || c == '-') {
+            format!("{}{}", &s[..dot_pos], &s[dot_pos + tz_start..])
+        } else {
+            s.to_string()
+        }
+    } else {
+        s.to_string()
+    }
+}
+
+/// Adjust fractional seconds precision in timestamp string
+fn adjust_precision(s: &str, digits: usize) -> String {
+    // Parse format: YYYY-MM-DDTHH:MM:SS[.FFFFFFFFF](Z|±HH:MM)
+    if let Some(dot_pos) = s.find('.') {
+        // Already has fractional part
+        if let Some(tz_start) = s[dot_pos..].find(|c| c == 'Z' || c == '+' || c == '-') {
+            let tz_start_abs = dot_pos + tz_start;
+            let date_time_part = &s[..dot_pos];
+            let frac_part = &s[dot_pos + 1..tz_start_abs];
+            let tz_part = &s[tz_start_abs..];
+
+            // Truncate or pad fractional part
+            let adjusted_frac = if frac_part.len() >= digits {
+                &frac_part[..digits]
+            } else {
+                // Need to pad with zeros
+                return format!(
+                    "{}.{:0<width$}{}",
+                    date_time_part,
+                    frac_part,
+                    tz_part,
+                    width = digits
+                );
+            };
+
+            format!("{}.{}{}", date_time_part, adjusted_frac, tz_part)
+        } else {
+            s.to_string()
+        }
+    } else {
+        // No fractional part, need to add it with all zeros
+        // Find timezone indicator - search after the time part (after 'T')
+        if let Some(t_pos) = s.find('T') {
+            // Look for timezone after the 'T' (which marks start of time)
+            let time_part = &s[t_pos..];
+            if let Some(tz_pos_rel) = time_part.rfind(|c| c == 'Z' || c == '+' || c == '-') {
+                let tz_pos = t_pos + tz_pos_rel;
+                format!(
+                    "{}.{:0<width$}{}",
+                    &s[..tz_pos],
+                    "",
+                    &s[tz_pos..],
+                    width = digits
+                )
+            } else {
+                s.to_string()
+            }
+        } else {
+            s.to_string()
+        }
     }
 }
 
@@ -600,5 +683,46 @@ mod tests {
         let opts_offset = Options::compact().with_use_zulu(false);
         let result = to_string_opts(&value_frac, &opts_offset);
         assert_eq!(result, "ts\"2009-02-13T23:31:30.123456789+00:00\"");
+
+        // Test precision options with fractional seconds
+        use options::TimestampPrecision;
+
+        // Auto precision (keeps all fractional digits)
+        let opts = Options::compact().with_timestamp_precision(TimestampPrecision::Auto);
+        let result = to_string_opts(&value_frac, &opts);
+        assert_eq!(result, "ts\"2009-02-13T23:31:30.123456789Z\"");
+
+        // Seconds precision (no fractional part)
+        let opts = Options::compact().with_timestamp_precision(TimestampPrecision::Seconds);
+        let result = to_string_opts(&value_frac, &opts);
+        assert_eq!(result, "ts\"2009-02-13T23:31:30Z\"");
+
+        // Milliseconds precision (3 digits)
+        let opts = Options::compact().with_timestamp_precision(TimestampPrecision::Milliseconds);
+        let result = to_string_opts(&value_frac, &opts);
+        assert_eq!(result, "ts\"2009-02-13T23:31:30.123Z\"");
+
+        // Microseconds precision (6 digits)
+        let opts = Options::compact().with_timestamp_precision(TimestampPrecision::Microseconds);
+        let result = to_string_opts(&value_frac, &opts);
+        assert_eq!(result, "ts\"2009-02-13T23:31:30.123456Z\"");
+
+        // Nanoseconds precision (9 digits)
+        let opts = Options::compact().with_timestamp_precision(TimestampPrecision::Nanoseconds);
+        let result = to_string_opts(&value_frac, &opts);
+        assert_eq!(result, "ts\"2009-02-13T23:31:30.123456789Z\"");
+
+        // Test precision with use_zulu=false
+        let opts = Options::compact()
+            .with_timestamp_precision(TimestampPrecision::Milliseconds)
+            .with_use_zulu(false);
+        let result = to_string_opts(&value_frac, &opts);
+        assert_eq!(result, "ts\"2009-02-13T23:31:30.123+00:00\"");
+
+        // Test precision padding (timestamp without fractional seconds)
+        // When formatted with higher precision, should add zeros
+        let opts = Options::compact().with_timestamp_precision(TimestampPrecision::Milliseconds);
+        let result = to_string_opts(&value, &opts);
+        assert_eq!(result, "ts\"2009-02-13T23:31:30.000Z\"");
     }
 }
