@@ -80,8 +80,7 @@ map = { "{" ~ (member ~ ("," ~ member)* ~ ","?)? ~ "}" }
 member = { key ~ ":" ~ value }
 
 key = { string | identifier }
-identifier = @{ !reserved ~ id_start ~ id_continue* }
-reserved = { ("null" | "true" | "false" | "inf" | "nan") ~ !id_continue }
+identifier = @{ id_start ~ id_continue* }
 id_start = { 'a'..'z' | 'A'..'Z' | "_" }
 id_continue = { id_start | digit }
 

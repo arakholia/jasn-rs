@@ -76,8 +76,7 @@ member_list = member , { [ whitespace ] , "," , [ whitespace ] , member } ;
 member = key , [ whitespace ] , ":" , [ whitespace ] , value ;
 
 key = string | identifier ;
-identifier = id_start , { id_continue } ;  (* excluding reserved words *)
-reserved = ( "null" | "true" | "false" | "inf" | "nan" ) , ? not followed by id_continue ? ;
+identifier = id_start , { id_continue } ;
 id_start = letter | "_" ;
 id_continue = id_start | digit ;
 
@@ -227,8 +226,9 @@ h""
 2. **Binary type**: New `b64"..."` and `h"..."` literals for binary data
 3. **Trailing commas**: Allowed in lists and maps
 4. **Single quotes**: Strings can use `'...'` or `"..."`
-5. **Unquoted keys**: Map keys can be identifiers (unless they match reserved words: `null`, `true`, `false`, `inf`, `nan`)
-6. **Multiple radix integers**: `0x` (hex), `0b` (binary), `0o` (octal) prefixes (case-insensitive)
+5. **Unquoted keys**: Map keys can be identifiers, including reserved words (`null`, `true`, `false`, `inf`, `nan`)
+6. **Duplicate keys**: Not allowed in maps (parse error)
+7. **Multiple radix integers**: `0x` (hex), `0b` (binary), `0o` (octal) prefixes (case-insensitive)
 7. **Liberal numbers**: Leading/trailing decimal points (`.5`, `5.`), explicit sign (`+42`), underscores in integers (`1_000`)
 8. **Special floats**: `inf`, `nan` with signs (lowercase only)
 9. **Comments**: Line comments `//` and block comments `/* */`

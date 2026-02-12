@@ -96,15 +96,14 @@ h"48656c6c6f"            // hex encoded
 2. **Binary Type**: New `b64"..."` and `h"..."` literals for byte arrays
 3. **Comments**: `//` and `/* */` are supported
 4. **Trailing Commas**: Allowed in arrays and objects
-5. **Unquoted Keys**: Object keys can be identifiers (unless reserved)
+5. **Unquoted Keys**: Object keys can be identifiers, including reserved words (`null`, `true`, `false`, `inf`, `nan`)
 6. **Multiple Radixes**: `0x`, `0b`, `0o` integer literals
 7. **Liberal Floats**: `.5`, `5.`, `inf`, `nan` are valid
+8. **Duplicate Keys**: Explicitly disallowed - parsing fails on duplicate keys in maps
 
 ## Under Consideration
 - **Digit Case Matching**: Require digit capitalization to match base specifier (`0xff` and `0XFF` valid, but not `0xFF`)
 - **Double Underscores**: Allow consecutive underscores in numeric literals (`1__000`)
-- **Keywords as Keys**: Allow reserved words as unquoted map keys (`{null: value}`)
-- **Duplicate Key Handling**: Explicitly disallow duplicate keys in maps (currently undefined)
 - **Multiline Strings**: Support for multiline string literals with proper indentation handling
 - **Timestamp Type**: Native timestamp type using `ts"..."` syntax adhering to ISO 8601 or RFC 3339
 

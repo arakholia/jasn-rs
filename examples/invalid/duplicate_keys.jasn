@@ -1,0 +1,5 @@
+// Duplicate keys are not allowed
+{
+  key: 1,
+  key: 2
+}

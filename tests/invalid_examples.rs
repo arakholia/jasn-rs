@@ -45,10 +45,10 @@ fn test_invalid_underscore_in_numbers(#[case] input: &str) {
 }
 
 #[rstest]
-#[case("{null: 1}")]
-#[case("{true: 1}")]
-#[case("{false: 1}")]
-fn test_unquoted_keyword_key(#[case] input: &str) {
+#[case(r#"{a: 1, a: 2}"#)]
+#[case(r#"{"key": 1, "key": 2}"#)]
+#[case(r#"{null: 1, null: 2}"#)]
+fn test_duplicate_keys(#[case] input: &str) {
     assert!(parse(input).is_err());
 }
 
