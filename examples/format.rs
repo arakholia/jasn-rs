@@ -27,6 +27,10 @@ fn main() {
     person.insert("pi".to_string(), Value::Float(std::f64::consts::PI));
     person.insert("temperature".to_string(), Value::Float(f64::NEG_INFINITY));
     person.insert("ferris".to_string(), Value::String("🦀".to_string()));
+    person.insert(
+        "timestamp".to_string(),
+        Value::Timestamp(jasn::Timestamp::from_unix_timestamp(1234567890).unwrap()),
+    );
 
     let value = Value::Map(person);
 

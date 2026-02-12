@@ -5,7 +5,8 @@
 //! # Features
 //! 1. **Explicit Integer Types**: Distinguish between integers and floats (2 vs 2.0).
 //! 2. **Binary Data**: Support for base64 and hex-encoded binary data
-//! 3. Permissive syntax, similar to JSON5
+//! 3. **Timestamps**: ISO8601/RFC3339 timestamps with `ts"..."` syntax
+//! 4. Permissive syntax, similar to JSON5
 //!
 //! # Example
 //! ```
@@ -42,8 +43,8 @@ mod parser;
 pub use parser::{Error as ParseError, Result as ParseResult, parse};
 
 mod value;
-pub use value::Value;
+pub use value::{Timestamp, Value};
 
 /// Formatting JASN values to strings with custom options.
 pub mod formatter;
-pub use formatter::{to_string, to_string_pretty};
+pub use formatter::{to_string, to_string_opts, to_string_pretty};

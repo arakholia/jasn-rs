@@ -1,11 +1,14 @@
 use std::collections::BTreeMap;
 
+use time::format_description;
+use time::macros::format_description as fd;
+
 use crate::{Binary, Value};
 
 /// Formatting options and configuration.
 pub mod options;
 pub use options::Options;
-use options::{BinaryEncoding, QuoteStyle};
+use options::{BinaryEncoding, QuoteStyle, TimestampPrecision};
 
 /// Formats a JASN value into a compact string (no unnecessary whitespace).
 pub fn to_string(value: &Value) -> String {
@@ -43,6 +46,7 @@ fn format_with_opts(value: &Value, opts: &Options, depth: usize) -> String {
             format_string(s, quote, opts.escape_unicode)
         }
         Value::Binary(b) => format_binary(b, opts.binary_encoding),
+        Value::Timestamp(t) => format_timestamp(t, opts),
         Value::List(items) => {
             if opts.indent.is_empty() {
                 format_list_compact(items, opts)
@@ -90,6 +94,62 @@ fn format_float(f: f64, opts: &Options) -> String {
     } else {
         base_string
     }
+}
+
+const TIMESTAMP_FORMAT_SECONDS: &[format_description::FormatItem<'static>] = fd!(
+    "[year]-[month]-[day]T[hour]:[minute]:[second][offset_hour sign:mandatory]:[offset_minute]"
+);
+
+const TIMESTAMP_FORMAT_MILLIS: &[format_description::FormatItem<'static>] = fd!(
+    "[year]-[month]-[day]T[hour]:[minute]:[second].[subsecond digits:3][offset_hour sign:mandatory]:[offset_minute]"
+);
+
+const TIMESTAMP_FORMAT_MICROS: &[format_description::FormatItem<'static>] = fd!(
+    "[year]-[month]-[day]T[hour]:[minute]:[second].[subsecond digits:6][offset_hour sign:mandatory]:[offset_minute]"
+);
+
+const TIMESTAMP_FORMAT_NANOS: &[format_description::FormatItem<'static>] = fd!(
+    "[year]-[month]-[day]T[hour]:[minute]:[second].[subsecond digits:9][offset_hour sign:mandatory]:[offset_minute]"
+);
+
+fn format_timestamp(t: &crate::Timestamp, opts: &Options) -> String {
+    // Select format descriptor based on precision
+    let format: &[format_description::FormatItem<'_>] = match opts.timestamp_precision {
+        TimestampPrecision::Auto => {
+            // Use RFC3339 which includes fractional seconds when present
+            let formatted = t
+                .format(&time::format_description::well_known::Rfc3339)
+                .unwrap_or_else(|_| t.to_string());
+
+            // RFC3339 uses Z for UTC, convert to +00:00 if needed
+            let final_str = if !opts.use_zulu && formatted.ends_with('Z') {
+                let mut s = formatted;
+                s.pop();
+                s.push_str("+00:00");
+                s
+            } else {
+                formatted
+            };
+            return format!("ts\"{}\"", final_str);
+        }
+        TimestampPrecision::Seconds => TIMESTAMP_FORMAT_SECONDS,
+        TimestampPrecision::Milliseconds => TIMESTAMP_FORMAT_MILLIS,
+        TimestampPrecision::Microseconds => TIMESTAMP_FORMAT_MICROS,
+        TimestampPrecision::Nanoseconds => TIMESTAMP_FORMAT_NANOS,
+    };
+
+    // Custom formats output +00:00, convert to Z if needed
+    let formatted = t.format(format).unwrap_or_else(|_| t.to_string());
+    let final_str = if opts.use_zulu && formatted.ends_with("+00:00") {
+        let mut s = formatted;
+        s.truncate(s.len() - 6);
+        s.push('Z');
+        s
+    } else {
+        formatted
+    };
+
+    format!("ts\"{}\"", final_str)
 }
 
 fn format_string(s: &str, quote: char, escape_unicode: bool) -> String {
@@ -295,24 +355,32 @@ fn can_be_unquoted(key: &str) -> bool {
 
 #[cfg(test)]
 mod tests {
+    use rstest::rstest;
+
     use super::*;
     use crate::parse;
 
-    #[test]
-    fn test_format_primitives() {
-        assert_eq!(to_string(&Value::Null), "null");
-        assert_eq!(to_string(&Value::Bool(true)), "true");
-        assert_eq!(to_string(&Value::Bool(false)), "false");
-        assert_eq!(to_string(&Value::Int(42)), "42");
-        assert_eq!(to_string(&Value::Int(-123)), "-123");
+    #[rstest]
+    #[case(Value::Null, "null")]
+    #[case(Value::Bool(true), "true")]
+    #[case(Value::Bool(false), "false")]
+    #[case(Value::Int(42), "42")]
+    #[case(Value::Int(-123), "-123")]
+    fn test_format_primitives(#[case] value: Value, #[case] expected: &str) {
+        assert_eq!(to_string(&value), expected);
+    }
+
+    #[rstest]
+    #[case(3.0, "3.0")]
+    #[case(2.5, "2.5")]
+    #[case(f64::INFINITY, "inf")]
+    #[case(f64::NEG_INFINITY, "-inf")]
+    fn test_format_float(#[case] value: f64, #[case] expected: &str) {
+        assert_eq!(to_string(&Value::Float(value)), expected);
     }
 
     #[test]
-    fn test_format_float() {
-        assert_eq!(to_string(&Value::Float(3.0)), "3.0");
-        assert_eq!(to_string(&Value::Float(2.5)), "2.5");
-        assert_eq!(to_string(&Value::Float(f64::INFINITY)), "inf");
-        assert_eq!(to_string(&Value::Float(f64::NEG_INFINITY)), "-inf");
+    fn test_format_float_nan() {
         assert!(to_string(&Value::Float(f64::NAN)).contains("nan"));
     }
 
@@ -399,56 +467,41 @@ mod tests {
         assert!(pretty.contains("  "));
     }
 
-    #[test]
-    fn test_can_be_unquoted() {
-        assert!(can_be_unquoted("hello"));
-        assert!(can_be_unquoted("_private"));
-        assert!(can_be_unquoted("key123"));
-        assert!(can_be_unquoted("_"));
-
-        assert!(!can_be_unquoted(""));
-        assert!(!can_be_unquoted("123"));
-        assert!(!can_be_unquoted("null"));
-        assert!(!can_be_unquoted("true"));
-        assert!(!can_be_unquoted("false"));
-        assert!(!can_be_unquoted("kebab-case"));
+    #[rstest]
+    #[case("hello", true)]
+    #[case("_private", true)]
+    #[case("key123", true)]
+    #[case("_", true)]
+    #[case("", false)]
+    #[case("123", false)]
+    #[case("null", false)]
+    #[case("true", false)]
+    #[case("false", false)]
+    #[case("kebab-case", false)]
+    fn test_can_be_unquoted(#[case] input: &str, #[case] expected: bool) {
+        assert_eq!(can_be_unquoted(input), expected);
     }
 
-    #[test]
-    fn test_leading_plus() {
+    #[rstest]
+    #[case(Value::Int(42), "+42")]
+    #[case(Value::Int(0), "+0")]
+    #[case(Value::Int(-42), "-42")]
+    #[case(Value::Float(2.5), "+2.5")]
+    #[case(Value::Float(-2.5), "-2.5")]
+    #[case(Value::Float(f64::INFINITY), "+inf")]
+    #[case(Value::Float(f64::NEG_INFINITY), "-inf")]
+    #[case(Value::Float(f64::NAN), "nan")]
+    fn test_leading_plus(#[case] value: Value, #[case] expected: &str) {
         let opts = Options::compact().with_leading_plus(true);
+        assert_eq!(to_string_opts(&value, &opts), expected);
+    }
 
-        // Positive integers get a plus sign
-        assert_eq!(to_string_opts(&Value::Int(42), &opts), "+42");
-
-        // Zero gets a plus sign
-        assert_eq!(to_string_opts(&Value::Int(0), &opts), "+0");
-
-        // Negative integers keep their minus sign
-        assert_eq!(to_string_opts(&Value::Int(-42), &opts), "-42");
-
-        // Positive floats get a plus sign
-        assert_eq!(to_string_opts(&Value::Float(2.5), &opts), "+2.5");
-
-        // Negative floats keep their minus sign
-        assert_eq!(to_string_opts(&Value::Float(-2.5), &opts), "-2.5");
-
-        // Positive infinity gets a plus sign
-        assert_eq!(to_string_opts(&Value::Float(f64::INFINITY), &opts), "+inf");
-
-        // Negative infinity keeps its minus
-        assert_eq!(
-            to_string_opts(&Value::Float(f64::NEG_INFINITY), &opts),
-            "-inf"
-        );
-
-        // NaN doesn't get a plus sign
-        assert_eq!(to_string_opts(&Value::Float(f64::NAN), &opts), "nan");
-
-        // Default (no leading_plus) should not add plus signs
-        let default_opts = Options::compact();
-        assert_eq!(to_string_opts(&Value::Int(42), &default_opts), "42");
-        assert_eq!(to_string_opts(&Value::Float(2.5), &default_opts), "2.5");
+    #[rstest]
+    #[case(Value::Int(42), "42")]
+    #[case(Value::Float(2.5), "2.5")]
+    fn test_no_leading_plus(#[case] value: Value, #[case] expected: &str) {
+        let opts = Options::compact();
+        assert_eq!(to_string_opts(&value, &opts), expected);
     }
 
     #[test]
@@ -500,57 +553,122 @@ mod tests {
         assert_eq!(result, "\"café\"");
     }
 
-    #[test]
-    fn test_surrogate_pair_encoding() {
+    #[rstest]
+    #[case("😀", "\"\\ud83d\\ude00\"")]
+    #[case("👍", "\"\\ud83d\\udc4d\"")]
+    #[case("𝄞", "\"\\ud834\\udd1e\"")]
+    #[case("😀😁😂", "\"\\ud83d\\ude00\\ud83d\\ude01\\ud83d\\ude02\"")]
+    #[case("Hello 😀 World", "\"Hello \\ud83d\\ude00 World\"")]
+    #[case("中文", "\"\\u4e2d\\u6587\"")]
+    fn test_surrogate_pair_encoding(#[case] input: &str, #[case] expected: &str) {
         let opts = Options::compact().with_escape_unicode(true);
+        let value = Value::String(input.to_string());
+        assert_eq!(to_string_opts(&value, &opts), expected);
+    }
 
-        // Various emoji that require surrogate pairs
-        let grinning = Value::String("😀".to_string());
-        assert_eq!(to_string_opts(&grinning, &opts), "\"\\ud83d\\ude00\"");
+    #[rstest]
+    #[case("😀")]
+    #[case("🌍")]
+    #[case("👍")]
+    #[case("𝄞")]
+    #[case("Hello 😀 World")]
+    #[case("😀😁😂")]
+    fn test_surrogate_pair_round_trip(#[case] original: &str) {
+        let opts = Options::compact().with_escape_unicode(true);
+        let value = Value::String(original.to_string());
+        let formatted = to_string_opts(&value, &opts);
+        let parsed = crate::parse(&formatted).expect("Failed to parse");
 
-        let thumbs_up = Value::String("👍".to_string());
-        assert_eq!(to_string_opts(&thumbs_up, &opts), "\"\\ud83d\\udc4d\"");
-
-        // Musical note (U+1D11E)
-        let music = Value::String("𝄞".to_string());
-        assert_eq!(to_string_opts(&music, &opts), "\"\\ud834\\udd1e\"");
-
-        // Multiple emoji
-        let multiple = Value::String("😀😁😂".to_string());
-        assert_eq!(
-            to_string_opts(&multiple, &opts),
-            "\"\\ud83d\\ude00\\ud83d\\ude01\\ud83d\\ude02\""
-        );
-
-        // Mixed ASCII and emoji
-        let mixed = Value::String("Hello 😀 World".to_string());
-        assert_eq!(
-            to_string_opts(&mixed, &opts),
-            "\"Hello \\ud83d\\ude00 World\""
-        );
-
-        // BMP characters should not use surrogate pairs
-        let bmp = Value::String("中文".to_string());
-        assert_eq!(to_string_opts(&bmp, &opts), "\"\\u4e2d\\u6587\"");
+        if let Value::String(s) = parsed {
+            assert_eq!(s, original, "Round-trip failed for: {}", original);
+        } else {
+            panic!("Expected String value");
+        }
     }
 
     #[test]
-    fn test_surrogate_pair_round_trip() {
-        // Test that encoding and parsing gives us back the original
-        let opts = Options::compact().with_escape_unicode(true);
+    fn test_format_timestamp_default() {
+        use crate::Timestamp;
 
-        let test_cases = vec!["😀", "🌍", "👍", "𝄞", "Hello 😀 World", "😀😁😂"];
+        let ts = Timestamp::from_unix_timestamp(1234567890).unwrap();
+        let value = Value::Timestamp(ts);
 
-        for original in test_cases {
-            let value = Value::String(original.to_string());
-            let formatted = to_string_opts(&value, &opts);
-            let parsed = crate::parse(&formatted).expect("Failed to parse");
+        // Default (use_zulu = true) - should use Z notation
+        let result = to_string(&value);
+        assert_eq!(result, "ts\"2009-02-13T23:31:30Z\"");
+    }
 
-            if let Value::String(s) = parsed {
-                assert_eq!(s, original, "Round-trip failed for: {}", original);
-            } else {
-                panic!("Expected String value");
-            }
-        }
+    #[rstest]
+    #[case(true, "ts\"2009-02-13T23:31:30Z\"")]
+    #[case(false, "ts\"2009-02-13T23:31:30+00:00\"")]
+    fn test_format_timestamp_zulu(#[case] use_zulu: bool, #[case] expected: &str) {
+        use crate::Timestamp;
+
+        let ts = Timestamp::from_unix_timestamp(1234567890).unwrap();
+        let value = Value::Timestamp(ts);
+        let opts = Options::compact().with_use_zulu(use_zulu);
+        let result = to_string_opts(&value, &opts);
+        assert_eq!(result, expected);
+    }
+
+    #[rstest]
+    #[case(true, "ts\"2009-02-13T23:31:30.123456789Z\"")]
+    #[case(false, "ts\"2009-02-13T23:31:30.123456789+00:00\"")]
+    fn test_format_timestamp_fractional_zulu(#[case] use_zulu: bool, #[case] expected: &str) {
+        use crate::Timestamp;
+
+        let ts = Timestamp::from_unix_timestamp_nanos(1234567890123456789).unwrap();
+        let value = Value::Timestamp(ts);
+        let opts = Options::compact().with_use_zulu(use_zulu);
+        let result = to_string_opts(&value, &opts);
+        assert_eq!(result, expected);
+    }
+
+    #[rstest]
+    #[case(TimestampPrecision::Auto, "ts\"2009-02-13T23:31:30.123456789Z\"")]
+    #[case(TimestampPrecision::Seconds, "ts\"2009-02-13T23:31:30Z\"")]
+    #[case(TimestampPrecision::Milliseconds, "ts\"2009-02-13T23:31:30.123Z\"")]
+    #[case(TimestampPrecision::Microseconds, "ts\"2009-02-13T23:31:30.123456Z\"")]
+    #[case(
+        TimestampPrecision::Nanoseconds,
+        "ts\"2009-02-13T23:31:30.123456789Z\""
+    )]
+    fn test_format_timestamp_precision(
+        #[case] precision: TimestampPrecision,
+        #[case] expected: &str,
+    ) {
+        use crate::Timestamp;
+
+        let ts = Timestamp::from_unix_timestamp_nanos(1234567890123456789).unwrap();
+        let value = Value::Timestamp(ts);
+        let opts = Options::compact().with_timestamp_precision(precision);
+        let result = to_string_opts(&value, &opts);
+        assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn test_format_timestamp_precision_with_offset() {
+        use crate::Timestamp;
+
+        let ts = Timestamp::from_unix_timestamp_nanos(1234567890123456789).unwrap();
+        let value = Value::Timestamp(ts);
+        let opts = Options::compact()
+            .with_timestamp_precision(TimestampPrecision::Milliseconds)
+            .with_use_zulu(false);
+        let result = to_string_opts(&value, &opts);
+        assert_eq!(result, "ts\"2009-02-13T23:31:30.123+00:00\"");
+    }
+
+    #[test]
+    fn test_format_timestamp_precision_padding() {
+        use crate::Timestamp;
+
+        // Test precision padding (timestamp without fractional seconds)
+        // When formatted with higher precision, should add zeros
+        let ts = Timestamp::from_unix_timestamp(1234567890).unwrap();
+        let value = Value::Timestamp(ts);
+        let opts = Options::compact().with_timestamp_precision(TimestampPrecision::Milliseconds);
+        let result = to_string_opts(&value, &opts);
+        assert_eq!(result, "ts\"2009-02-13T23:31:30.000Z\"");
     }
 }

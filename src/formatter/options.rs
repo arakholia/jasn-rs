@@ -24,6 +24,12 @@ pub struct Options {
 
     /// Escape all non-ASCII characters as \uXXXX sequences.
     pub escape_unicode: bool,
+
+    /// Use 'Z' for UTC timestamps instead of '+00:00'.
+    pub use_zulu: bool,
+
+    /// Precision for timestamp fractional seconds.
+    pub timestamp_precision: TimestampPrecision,
 }
 
 impl Default for Options {
@@ -44,6 +50,8 @@ impl Options {
             leading_plus: false,
             sort_keys: false,
             escape_unicode: true,
+            use_zulu: true,
+            timestamp_precision: TimestampPrecision::Auto,
         }
     }
 
@@ -58,6 +66,8 @@ impl Options {
             leading_plus: false,
             sort_keys: true,
             escape_unicode: false,
+            use_zulu: true,
+            timestamp_precision: TimestampPrecision::Auto,
         }
     }
 
@@ -108,6 +118,18 @@ impl Options {
         self.escape_unicode = enable;
         self
     }
+
+    /// Sets whether to use 'Z' for UTC timestamps instead of '+00:00'.
+    pub fn with_use_zulu(mut self, enable: bool) -> Self {
+        self.use_zulu = enable;
+        self
+    }
+
+    /// Sets the precision for timestamp fractional seconds.
+    pub fn with_timestamp_precision(mut self, precision: TimestampPrecision) -> Self {
+        self.timestamp_precision = precision;
+        self
+    }
 }
 
 /// Quote style for strings and map keys.
@@ -131,6 +153,25 @@ pub enum BinaryEncoding {
 
     /// Always use hex: h"..."
     Hex,
+}
+
+/// Precision for timestamp fractional seconds.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum TimestampPrecision {
+    /// Automatically use minimum necessary digits (default).
+    Auto,
+
+    /// No fractional seconds (whole seconds only).
+    Seconds,
+
+    /// Milliseconds (3 decimal places).
+    Milliseconds,
+
+    /// Microseconds (6 decimal places).
+    Microseconds,
+
+    /// Nanoseconds (9 decimal places).
+    Nanoseconds,
 }
 
 #[cfg(test)]
