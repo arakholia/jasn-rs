@@ -1,0 +1,5 @@
+// Unclosed object
+{
+  key: "value",
+  nested: {
+    bad: "no close"

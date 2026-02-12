@@ -1,0 +1,4 @@
+// Uppercase NaN (should be lowercase)
+{
+  bad: NaN
+}

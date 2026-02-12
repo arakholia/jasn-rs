@@ -1,0 +1,4 @@
+// Invalid hex binary with lowercase prefix
+{
+  bad: H"DEADBEEF"
+}

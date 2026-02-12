@@ -1,0 +1,4 @@
+// Uppercase NULL (should be lowercase)
+{
+  bad: NULL
+}

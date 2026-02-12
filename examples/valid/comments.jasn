@@ -1,0 +1,22 @@
+// Example demonstrating comment support
+{
+  // Single-line comments use double slashes
+  name: "JASN",
+  
+  /* Block comments
+     can span multiple lines */
+  version: 1,
+  
+  items: [
+    1,  // trailing comment
+    2,  /* inline block comment */ 3,
+  ],
+  
+  /* Nested structures work */
+  config: {
+    enabled: true,  // boolean value
+  },
+  
+  // Comments can appear almost anywhere
+  end: "done", // even at the end of a line
+}

@@ -1,0 +1,5 @@
+// Unterminated block comment
+{
+  /* This comment is never closed
+  value: 123
+}

@@ -1,0 +1,4 @@
+// Uppercase False (should be lowercase)
+{
+  bad: False
+}

@@ -1,0 +1,4 @@
+// Leading underscores in numbers are forbidden (after sign/prefix)
+{
+  bad_number: _1000
+}

@@ -1,0 +1,89 @@
+// JASN Grammar for Pest Parser
+// Whitespace and comments are automatically skipped between tokens
+
+WHITESPACE = _{ " " | "\t" | "\r" | "\n" }
+
+COMMENT = _{ line_comment | block_comment }
+line_comment = { "//" ~ (!"\n" ~ ANY)* }
+block_comment = { "/*" ~ (!"*/" ~ ANY)* ~ "*/" }
+
+// Root value
+value = { null | boolean | float | integer | string | binary | list | map }
+
+// Primitives
+null = { "null" }
+boolean = { "true" | "false" }
+
+// Numbers - Float must be tried before integer to handle cases like "5."
+integer = @{ sign? ~ (hex_integer | binary_integer | octal_integer | decimal_integer) }
+
+decimal_integer = { digit ~ (("_")? ~ digit)* }
+hex_integer = { ^"0x" ~ hex_digit ~ (("_")? ~ hex_digit)* }
+binary_integer = { ^"0b" ~ binary_digit ~ (("_")? ~ binary_digit)* }
+octal_integer = { ^"0o" ~ octal_digit ~ (("_")? ~ octal_digit)* }
+
+float = @{ sign? ~ (infinity | nan | decimal_float | special_float) }
+
+decimal_float = {
+    (int_part ~ frac_part ~ exp_part?)
+  | (int_part ~ exp_part)
+  | (frac_part ~ exp_part?)
+}
+special_float = { int_part ~ "." }
+int_part = { digit+ }
+frac_part = { "." ~ digit+ }
+exp_part = { ^"e" ~ sign? ~ digit+ }
+
+infinity = { "inf" }
+nan = { "nan" }
+sign = { "+" | "-" }
+
+// Character classes
+digit = { '0'..'9' }
+binary_digit = { '0'..'1' }
+octal_digit = { '0'..'7' }
+hex_digit = { '0'..'9' | 'a'..'f' | 'A'..'F' }
+
+// Strings
+string = ${ double_quoted_string | single_quoted_string }
+double_quoted_string = { "\"" ~ double_string_content ~ "\"" }
+single_quoted_string = { "'" ~ single_string_content ~ "'" }
+
+double_string_content = @{ (escape_sequence | double_string_char)* }
+single_string_content = @{ (escape_sequence | single_string_char)* }
+
+double_string_char = { !("\"" | "\\" | NEWLINE) ~ ANY }
+single_string_char = { !("'" | "\\" | NEWLINE) ~ ANY }
+
+escape_sequence = {
+    "\\" ~ (
+        "\"" | "'" | "\\" | "/" | "b" | "f" | "n" | "r" | "t"
+      | unicode_escape
+    )
+}
+unicode_escape = { "u" ~ hex_digit ~ hex_digit ~ hex_digit ~ hex_digit }
+
+// Binary data
+binary = { base64_binary | hex_binary }
+base64_binary = ${ "b64\"" ~ base64_content ~ "\"" }
+hex_binary = ${ "h\"" ~ hex_content ~ "\"" }
+
+base64_content = @{ base64_char* }
+hex_content = @{ hex_digit* }
+base64_char = { 'A'..'Z' | 'a'..'z' | '0'..'9' | "+" | "/" | "=" }
+
+// Lists (arrays)
+list = { "[" ~ (value ~ ("," ~ value)* ~ ","?)? ~ "]" }
+
+// Maps (objects)
+map = { "{" ~ (member ~ ("," ~ member)* ~ ","?)? ~ "}" }
+member = { key ~ ":" ~ value }
+
+key = { string | identifier }
+identifier = @{ !reserved ~ id_start ~ id_continue* }
+reserved = { ("null" | "true" | "false" | "inf" | "nan") ~ !id_continue }
+id_start = { 'a'..'z' | 'A'..'Z' | "_" }
+id_continue = { id_start | digit }
+
+// Top-level rule
+jasn = { SOI ~ value ~ EOI }

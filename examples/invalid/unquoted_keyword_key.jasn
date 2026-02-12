@@ -1,0 +1,4 @@
+// Keywords cannot be used as unquoted keys
+{
+  null: "this should fail"
+}

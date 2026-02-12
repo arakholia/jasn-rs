@@ -1,0 +1,4 @@
+// Hex binary must have even number of digits
+{
+  bad_hex: h"ABC"
+}
