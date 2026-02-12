@@ -6,10 +6,12 @@ pub mod options;
 pub use options::Options;
 use options::{BinaryEncoding, QuoteStyle};
 
+/// Formats a JASN value into a compact string (no unnecessary whitespace).
 pub fn to_string(value: &Value) -> String {
     format_with_opts(value, &Options::compact(), 0)
 }
 
+/// Formats a JASN value into a pretty-printed string with indentation and newlines.
 pub fn to_string_pretty(value: &Value) -> String {
     format_with_opts(value, &Options::pretty(), 0)
 }

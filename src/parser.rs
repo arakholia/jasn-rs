@@ -12,7 +12,7 @@ pub use error::{Error, Result};
 ///
 /// Vibe-coded, and likely extremely inefficient.
 #[derive(Parser)]
-#[grammar = "grammar.pest"]
+#[grammar = "parser/grammar.pest"]
 struct JasnParser;
 
 /// Parse a JASN string into a Value

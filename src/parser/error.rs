@@ -1,5 +1,6 @@
 use super::Rule;
 
+/// Errors that can occur during parsing.
 #[derive(Debug, thiserror::Error)]
 #[non_exhaustive]
 pub enum Error {
@@ -40,4 +41,5 @@ pub enum Error {
     UnknownBinaryEncoding(String),
 }
 
+/// Result type for parsing operations.
 pub type Result<T> = std::result::Result<T, Error>;

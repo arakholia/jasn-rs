@@ -2,7 +2,7 @@ use std::{borrow::Cow, collections::BTreeMap, fmt};
 
 use crate::Binary;
 
-/// A value type similar to JSON, but extended with separate integer and binary types.
+/// Represents a valid JASN value.
 #[derive(Debug, Clone, PartialEq, Default)]
 pub enum Value {
     #[default]
@@ -27,38 +27,47 @@ impl fmt::Display for Value {
 }
 
 impl Value {
+    /// Returns true if the value is [`Self::Null`].
     pub fn is_null(&self) -> bool {
         matches!(self, Value::Null)
     }
 
+    /// Returns true if the value is [`Self::Bool`].
     pub fn is_bool(&self) -> bool {
         matches!(self, Value::Bool(_))
     }
 
+    /// Returns true if the value is [`Self::Int`].
     pub fn is_int(&self) -> bool {
         matches!(self, Value::Int(_))
     }
 
+    /// Returns true if the value is [`Self::Float`].
     pub fn is_float(&self) -> bool {
         matches!(self, Value::Float(_))
     }
 
+    /// Returns true if the value is [`Self::String`].
     pub fn is_string(&self) -> bool {
         matches!(self, Value::String(_))
     }
 
+    /// Returns true if the value is [`Self::Binary`].
     pub fn is_binary(&self) -> bool {
         matches!(self, Value::Binary(_))
     }
 
+    /// Returns true if the value is [`Self::List`].
     pub fn is_list(&self) -> bool {
         matches!(self, Value::List(_))
     }
 
+    /// Returns true if the value is [`Self::Map`].
     pub fn is_map(&self) -> bool {
         matches!(self, Value::Map(_))
     }
 
+    /// Returns the [`bool`] value if this is a [`Self::Bool`], otherwise `None`.
     pub fn as_bool(&self) -> Option<bool> {
         match self {
             Value::Bool(b) => Some(*b),
@@ -66,6 +75,7 @@ impl Value {
         }
     }
 
+    /// Returns the [`i64`] value if this is a [`Self::Int`], otherwise `None`.
     pub fn as_int(&self) -> Option<i64> {
         match self {
             Value::Int(i) => Some(*i),
@@ -73,6 +83,7 @@ impl Value {
         }
     }
 
+    /// Returns the [`f64`] value if this is a [`Self::Float`], otherwise `None`.
     pub fn as_float(&self) -> Option<f64> {
         match self {
             Value::Float(f) => Some(*f),
@@ -80,6 +91,7 @@ impl Value {
         }
     }
 
+    /// Returns the [`str`] if this is a [`Self::String`], otherwise `None`.
     pub fn as_string(&self) -> Option<&str> {
         match self {
             Value::String(s) => Some(s),
@@ -87,6 +99,7 @@ impl Value {
         }
     }
 
+    /// Returns the [`Binary`] if this is a [`Self::Binary`], otherwise `None`.
     pub fn as_binary(&self) -> Option<&Binary> {
         match self {
             Value::Binary(b) => Some(b),
@@ -94,6 +107,7 @@ impl Value {
         }
     }
 
+    /// Returns the list of values if this is a [`Self::List`], otherwise `None`.
     pub fn as_list(&self) -> Option<&[Value]> {
         match self {
             Value::List(l) => Some(l),
@@ -101,6 +115,7 @@ impl Value {
         }
     }
 
+    /// Returns the map of key-value pairs if this is a [`Self::Map`], otherwise `None`.
     pub fn as_map(&self) -> Option<&BTreeMap<String, Value>> {
         match self {
             Value::Map(m) => Some(m),
@@ -108,6 +123,7 @@ impl Value {
         }
     }
 
+    /// Returns a mutable reference to the list of values if this is a [`Self::List`], otherwise `None`.
     pub fn as_list_mut(&mut self) -> Option<&mut Vec<Value>> {
         match self {
             Value::List(l) => Some(l),
@@ -115,6 +131,7 @@ impl Value {
         }
     }
 
+    /// Returns a mutable reference to the map of key-value pairs if this is a [`Self::Map`], otherwise `None`.
     pub fn as_map_mut(&mut self) -> Option<&mut BTreeMap<String, Value>> {
         match self {
             Value::Map(m) => Some(m),
@@ -122,7 +139,7 @@ impl Value {
         }
     }
 
-    /// Takes the value, leaving `Value::Null` in its place.
+    /// Takes the value, leaving [`Self::Null`] in its place.
     pub fn take(&mut self) -> Value {
         std::mem::replace(self, Value::Null)
     }
