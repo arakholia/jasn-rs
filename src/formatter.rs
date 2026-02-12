@@ -1,6 +1,7 @@
 use std::collections::BTreeMap;
 
 use crate::{Binary, Value};
+use time::format_description;
 
 /// Formatting options and configuration.
 pub mod options;
@@ -96,97 +97,59 @@ fn format_float(f: f64, opts: &Options) -> String {
 fn format_timestamp(t: &crate::Timestamp, opts: &Options) -> String {
     use options::TimestampPrecision;
 
-    // First, format using RFC3339 to get the base representation
-    let base = t
-        .format(&time::format_description::well_known::Rfc3339)
-        .unwrap_or_else(|_| t.to_string());
-
-    // Apply precision adjustments
-    let with_precision = match opts.timestamp_precision {
-        TimestampPrecision::Auto => base,
-        TimestampPrecision::Seconds => strip_fractional_seconds(&base),
-        TimestampPrecision::Milliseconds => adjust_precision(&base, 3),
-        TimestampPrecision::Microseconds => adjust_precision(&base, 6),
-        TimestampPrecision::Nanoseconds => adjust_precision(&base, 9),
+    // Create format descriptor based on precision
+    let format = match opts.timestamp_precision {
+        TimestampPrecision::Auto => {
+            // Use RFC3339 which includes fractional seconds when present
+            let formatted = t
+                .format(&time::format_description::well_known::Rfc3339)
+                .unwrap_or_else(|_| t.to_string());
+            
+            // RFC3339 uses Z for UTC, convert to +00:00 if needed
+            let final_str = if !opts.use_zulu && formatted.ends_with('Z') {
+                let mut s = formatted;
+                s.pop();
+                s.push_str("+00:00");
+                s
+            } else {
+                formatted
+            };
+            return format!("ts\"{}\"", final_str);
+        }
+        TimestampPrecision::Seconds => {
+            format_description::parse(
+                "[year]-[month]-[day]T[hour]:[minute]:[second][offset_hour sign:mandatory]:[offset_minute]"
+            ).unwrap()
+        }
+        TimestampPrecision::Milliseconds => {
+            format_description::parse(
+                "[year]-[month]-[day]T[hour]:[minute]:[second].[subsecond digits:3][offset_hour sign:mandatory]:[offset_minute]"
+            ).unwrap()
+        }
+        TimestampPrecision::Microseconds => {
+            format_description::parse(
+                "[year]-[month]-[day]T[hour]:[minute]:[second].[subsecond digits:6][offset_hour sign:mandatory]:[offset_minute]"
+            ).unwrap()
+        }
+        TimestampPrecision::Nanoseconds => {
+            format_description::parse(
+                "[year]-[month]-[day]T[hour]:[minute]:[second].[subsecond digits:9][offset_hour sign:mandatory]:[offset_minute]"
+            ).unwrap()
+        }
     };
 
-    // Apply use_zulu setting
-    let final_str = if !opts.use_zulu && with_precision.ends_with('Z') {
-        let mut s = with_precision;
-        s.pop();
-        s.push_str("+00:00");
+    // Custom formats output +00:00, convert to Z if needed
+    let formatted = t.format(&format).unwrap_or_else(|_| t.to_string());
+    let final_str = if opts.use_zulu && formatted.ends_with("+00:00") {
+        let mut s = formatted;
+        s.truncate(s.len() - 6);
+        s.push('Z');
         s
     } else {
-        with_precision
+        formatted
     };
-
+    
     format!("ts\"{}\"", final_str)
-}
-
-/// Strip fractional seconds from timestamp string
-fn strip_fractional_seconds(s: &str) -> String {
-    if let Some(dot_pos) = s.find('.') {
-        if let Some(tz_start) = s[dot_pos..].find(|c| c == 'Z' || c == '+' || c == '-') {
-            format!("{}{}", &s[..dot_pos], &s[dot_pos + tz_start..])
-        } else {
-            s.to_string()
-        }
-    } else {
-        s.to_string()
-    }
-}
-
-/// Adjust fractional seconds precision in timestamp string
-fn adjust_precision(s: &str, digits: usize) -> String {
-    // Parse format: YYYY-MM-DDTHH:MM:SS[.FFFFFFFFF](Z|±HH:MM)
-    if let Some(dot_pos) = s.find('.') {
-        // Already has fractional part
-        if let Some(tz_start) = s[dot_pos..].find(|c| c == 'Z' || c == '+' || c == '-') {
-            let tz_start_abs = dot_pos + tz_start;
-            let date_time_part = &s[..dot_pos];
-            let frac_part = &s[dot_pos + 1..tz_start_abs];
-            let tz_part = &s[tz_start_abs..];
-
-            // Truncate or pad fractional part
-            let adjusted_frac = if frac_part.len() >= digits {
-                &frac_part[..digits]
-            } else {
-                // Need to pad with zeros
-                return format!(
-                    "{}.{:0<width$}{}",
-                    date_time_part,
-                    frac_part,
-                    tz_part,
-                    width = digits
-                );
-            };
-
-            format!("{}.{}{}", date_time_part, adjusted_frac, tz_part)
-        } else {
-            s.to_string()
-        }
-    } else {
-        // No fractional part, need to add it with all zeros
-        // Find timezone indicator - search after the time part (after 'T')
-        if let Some(t_pos) = s.find('T') {
-            // Look for timezone after the 'T' (which marks start of time)
-            let time_part = &s[t_pos..];
-            if let Some(tz_pos_rel) = time_part.rfind(|c| c == 'Z' || c == '+' || c == '-') {
-                let tz_pos = t_pos + tz_pos_rel;
-                format!(
-                    "{}.{:0<width$}{}",
-                    &s[..tz_pos],
-                    "",
-                    &s[tz_pos..],
-                    width = digits
-                )
-            } else {
-                s.to_string()
-            }
-        } else {
-            s.to_string()
-        }
-    }
 }
 
 fn format_string(s: &str, quote: char, escape_unicode: bool) -> String {
