@@ -27,17 +27,16 @@ hex_integer = ( "0x" | "0X" ) , hex_digit , { [ "_" ] , hex_digit } ;
 binary_integer = ( "0b" | "0B" ) , binary_digit , { [ "_" ] , binary_digit } ;
 octal_integer = ( "0o" | "0O" ) , octal_digit , { [ "_" ] , octal_digit } ;
 
-float = [ sign ] , ( decimal_float | special_float | infinity | nan ) ;
+float = [ sign ] , ( infinity | nan | decimal_float | special_float ) ;
 decimal_float = ( int_part , frac_part , [ exp_part ] )
-              | ( int_part , frac_part )
               | ( int_part , exp_part )
               | ( frac_part , [ exp_part ] ) ;
 int_part = digit , { digit } ;
-frac_part = "." , [ digit , { digit } ] ;
+frac_part = "." , digit , { digit } ;
 exp_part = ( "e" | "E" ) , [ sign ] , digit , { digit } ;
 special_float = int_part , "." ;  (* Trailing dot: "5." *)
-infinity = "inf" | "Inf" | "INF" ;
-nan = "nan" | "NaN" | "NAN" ;
+infinity = "inf" ;
+nan = "nan" ;
 
 sign = "+" | "-" ;
 digit = "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" ;
@@ -77,7 +76,8 @@ member_list = member , { [ whitespace ] , "," , [ whitespace ] , member } ;
 member = key , [ whitespace ] , ":" , [ whitespace ] , value ;
 
 key = string | identifier ;
-identifier = id_start , { id_continue } ;
+identifier = id_start , { id_continue } ;  (* excluding reserved words *)
+reserved = ( "null" | "true" | "false" | "inf" | "nan" ) , ? not followed by id_continue ? ;
 id_start = letter | "_" ;
 id_continue = id_start | digit ;
 
@@ -105,7 +105,7 @@ JASN distinguishes between integers and floats at parse time:
 ### Float Type (IEEE 754 binary64)
 - Contains decimal point: `42.0`, `.5`, `5.`
 - Contains exponent: `1e10`, `2.5e-3`, `5E+2`
-- Special values: `inf`, `+inf`, `-inf`, `nan` (case-insensitive)
+- Special values: `inf`, `+inf`, `-inf`, `nan` (lowercase only)
 
 ## Examples
 
@@ -227,10 +227,10 @@ h""
 2. **Binary type**: New `b64"..."` and `h"..."` literals for binary data
 3. **Trailing commas**: Allowed in lists and maps
 4. **Single quotes**: Strings can use `'...'` or `"..."`
-5. **Unquoted keys**: Map keys can be identifiers
-6. **Multiple radix integers**: `0x` (hex), `0b` (binary), `0o` (octal) prefixes
+5. **Unquoted keys**: Map keys can be identifiers (unless they match reserved words: `null`, `true`, `false`, `inf`, `nan`)
+6. **Multiple radix integers**: `0x` (hex), `0b` (binary), `0o` (octal) prefixes (case-insensitive)
 7. **Liberal numbers**: Leading/trailing decimal points (`.5`, `5.`), explicit sign (`+42`), underscores in integers (`1_000`)
-8. **Special floats**: `inf`, `nan` with signs
+8. **Special floats**: `inf`, `nan` with signs (lowercase only)
 9. **Comments**: Line comments `//` and block comments `/* */`
 
 ## JSON Compatibility
