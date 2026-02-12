@@ -625,7 +625,7 @@ mod tests {
     fn test_format_timestamp_fractional_zulu(#[case] use_zulu: bool, #[case] expected: &str) {
         use crate::Timestamp;
 
-        let ts = Timestamp::from_unix_timestamp_nanos(1234567890_123456789).unwrap();
+        let ts = Timestamp::from_unix_timestamp_nanos(1234567890123456789).unwrap();
         let value = Value::Timestamp(ts);
         let opts = Options::compact().with_use_zulu(use_zulu);
         let result = to_string_opts(&value, &opts);
@@ -647,7 +647,7 @@ mod tests {
     ) {
         use crate::Timestamp;
 
-        let ts = Timestamp::from_unix_timestamp_nanos(1234567890_123456789).unwrap();
+        let ts = Timestamp::from_unix_timestamp_nanos(1234567890123456789).unwrap();
         let value = Value::Timestamp(ts);
         let opts = Options::compact().with_timestamp_precision(precision);
         let result = to_string_opts(&value, &opts);
@@ -658,7 +658,7 @@ mod tests {
     fn test_format_timestamp_precision_with_offset() {
         use crate::Timestamp;
 
-        let ts = Timestamp::from_unix_timestamp_nanos(1234567890_123456789).unwrap();
+        let ts = Timestamp::from_unix_timestamp_nanos(1234567890123456789).unwrap();
         let value = Value::Timestamp(ts);
         let opts = Options::compact()
             .with_timestamp_precision(TimestampPrecision::Milliseconds)
