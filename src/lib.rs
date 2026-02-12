@@ -5,7 +5,8 @@
 //! # Features
 //! 1. **Explicit Integer Types**: Distinguish between integers and floats (2 vs 2.0).
 //! 2. **Binary Data**: Support for base64 and hex-encoded binary data
-//! 3. Permissive syntax, similar to JSON5
+//! 3. **Timestamps**: ISO8601/RFC3339 timestamps with `ts"..."` syntax
+//! 4. Permissive syntax, similar to JSON5
 //!
 //! # Example
 //! ```
@@ -34,6 +35,9 @@
 //! ```
 
 #![warn(missing_docs)]
+
+// Re-export chrono types for timestamp support
+pub use chrono::{DateTime, Utc};
 
 mod binary;
 pub use binary::Binary;

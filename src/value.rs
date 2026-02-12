@@ -1,5 +1,7 @@
 use std::{borrow::Cow, collections::BTreeMap, fmt};
 
+use chrono::{DateTime, Utc};
+
 use crate::Binary;
 
 /// Represents a valid JASN value.
@@ -18,6 +20,8 @@ pub enum Value {
     String(String),
     /// Binary data (byte array).
     Binary(Binary),
+    /// Timestamp with timezone (ISO8601/RFC3339 compatible).
+    Timestamp(DateTime<Utc>),
     /// Ordered list of values.
     List(Vec<Value>),
     /// Map of string keys to values.
@@ -63,6 +67,11 @@ impl Value {
     /// Returns true if the value is [`Self::Binary`].
     pub fn is_binary(&self) -> bool {
         matches!(self, Value::Binary(_))
+    }
+
+    /// Returns true if the value is [`Self::Timestamp`].
+    pub fn is_timestamp(&self) -> bool {
+        matches!(self, Value::Timestamp(_))
     }
 
     /// Returns true if the value is [`Self::List`].
@@ -111,6 +120,14 @@ impl Value {
     pub fn as_binary(&self) -> Option<&Binary> {
         match self {
             Value::Binary(b) => Some(b),
+            _ => None,
+        }
+    }
+
+    /// Returns the [`DateTime<Utc>`] timestamp value if this is a [`Self::Timestamp`], otherwise `None`.
+    pub fn as_timestamp(&self) -> Option<&DateTime<Utc>> {
+        match self {
+            Value::Timestamp(t) => Some(t),
             _ => None,
         }
     }
@@ -198,6 +215,12 @@ impl<'a> From<Cow<'a, str>> for Value {
 impl From<Binary> for Value {
     fn from(value: Binary) -> Self {
         Value::Binary(value)
+    }
+}
+
+impl From<DateTime<Utc>> for Value {
+    fn from(value: DateTime<Utc>) -> Self {
+        Value::Timestamp(value)
     }
 }
 
@@ -351,6 +374,7 @@ mod tests {
     #[case(Value::Float(2.5), "float")]
     #[case(Value::String("hello".to_string()), "string")]
     #[case(Value::Binary(Binary(vec![1, 2, 3])), "binary")]
+    #[case(Value::Timestamp(DateTime::from_timestamp(1234567890, 0).unwrap()), "timestamp")]
     #[case(Value::List(vec![Value::Null]), "list")]
     #[case(Value::Map(BTreeMap::new()), "map")]
     fn test_is_methods(#[case] value: Value, #[case] value_type: &str) {
@@ -360,6 +384,7 @@ mod tests {
         assert_eq!(value.is_float(), value_type == "float");
         assert_eq!(value.is_string(), value_type == "string");
         assert_eq!(value.is_binary(), value_type == "binary");
+        assert_eq!(value.is_timestamp(), value_type == "timestamp");
         assert_eq!(value.is_list(), value_type == "list");
         assert_eq!(value.is_map(), value_type == "map");
     }
@@ -397,6 +422,14 @@ mod tests {
         let binary_val = Value::Binary(binary.clone());
         assert_eq!(binary_val.as_binary(), Some(&binary));
         assert_eq!(Value::Null.as_binary(), None);
+    }
+
+    #[test]
+    fn test_as_timestamp() {
+        let ts = DateTime::from_timestamp(1234567890, 0).unwrap();
+        let ts_val = Value::Timestamp(ts);
+        assert_eq!(ts_val.as_timestamp(), Some(&ts));
+        assert_eq!(Value::Int(42).as_timestamp(), None);
     }
 
     #[test]
@@ -440,6 +473,10 @@ mod tests {
         // From Binary
         let binary = Binary(vec![1, 2, 3]);
         assert_eq!(Value::from(binary.clone()), Value::Binary(binary));
+
+        // From DateTime<Utc>
+        let dt = DateTime::from_timestamp(1234567890, 0).unwrap();
+        assert_eq!(Value::from(dt), Value::Timestamp(dt));
 
         // Value::Binary from byte literal
         let value = Value::Binary(b"data".into());

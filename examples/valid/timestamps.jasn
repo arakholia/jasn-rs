@@ -1,0 +1,27 @@
+// Example showing various timestamp formats
+{
+  // Basic timestamps
+  simple: ts"2024-01-15T12:30:45Z",
+  with_millis: ts"2024-01-15T12:30:45.123Z",
+  with_nanos: ts"2024-01-15T12:30:45.123456789Z",
+  
+  // Timezone offsets
+  utc_offset: ts"2024-01-15T12:30:45+00:00",
+  eastern_time: ts"2024-01-15T12:30:45-05:00",
+  
+  // Variable fractional seconds
+  one_digit: ts"2024-01-15T12:30:45.5Z",
+  seven_digits: ts"2024-01-15T12:30:45.1234567Z",
+  
+  // Event log example
+  events: [
+    {
+      timestamp: ts"2024-01-15T10:00:00Z",
+      event: "startup"
+    },
+    {
+      timestamp: ts"2024-01-15T10:05:30.5Z",
+      event: "user_login"
+    }
+  ]
+}

@@ -43,6 +43,10 @@ pub enum Error {
     /// Duplicate key in map.
     #[error("Duplicate key in map: {0}")]
     DuplicateKey(String),
+
+    /// Invalid timestamp format.
+    #[error("Invalid timestamp '{0}': {1}")]
+    InvalidTimestamp(String, String),
 }
 
 /// Result type for parsing operations.

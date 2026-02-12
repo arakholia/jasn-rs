@@ -1,5 +1,6 @@
 use std::{collections::BTreeMap, result::Result as StdResult};
 
+use chrono::{DateTime, Utc};
 use pest::{Parser, iterators::Pair};
 use pest_derive::Parser;
 
@@ -38,6 +39,7 @@ fn parse_value(pair: Pair<Rule>) -> Result<Value> {
         Rule::float => parse_float(rule),
         Rule::string => parse_string(rule),
         Rule::binary => parse_binary(rule),
+        Rule::timestamp => parse_timestamp(rule),
         Rule::list => parse_list(rule),
         Rule::map => parse_map(rule),
         _ => unreachable!("Unexpected rule: {:?}", rule.as_rule()),
@@ -199,6 +201,20 @@ fn parse_binary_hex(content: &str) -> Result<Vec<u8>> {
         .map(|i| u8::from_str_radix(&content[i..i + 2], 16))
         .collect::<StdResult<Vec<u8>, _>>()
         .map_err(Into::into)
+}
+
+fn parse_timestamp(pair: Pair<Rule>) -> Result<Value> {
+    let s = pair.as_str();
+
+    // Extract the content between ts" and "
+    let content = &s[3..s.len() - 1]; // Remove ts" and "
+
+    // Parse using chrono's RFC3339 parser
+    let dt = DateTime::parse_from_rfc3339(content)
+        .map_err(|e| Error::InvalidTimestamp(content.to_string(), e.to_string()))?;
+
+    // Convert to UTC
+    Ok(Value::Timestamp(dt.with_timezone(&Utc)))
 }
 
 fn parse_list(pair: Pair<Rule>) -> Result<Value> {
@@ -383,6 +399,39 @@ mod tests {
     fn test_parse_binary(#[case] input: &str, #[case] expected: &[u8]) {
         let result = parse(input).unwrap();
         assert!(matches!(result, Value::Binary(ref b) if b.0 == expected));
+    }
+
+    #[rstest]
+    #[case("ts\"2024-01-15T12:30:45Z\"")]
+    #[case("ts\"2024-01-15T12:30:45.123Z\"")]
+    #[case("ts\"2024-01-15T12:30:45.123456789Z\"")]
+    #[case("ts\"2024-01-15T12:30:45+00:00\"")]
+    #[case("ts\"2024-01-15T12:30:45-05:00\"")]
+    #[case("ts\"2024-01-15T12:30:45.5Z\"")]
+    #[case("ts\"2024-01-15T12:30:45.1234567Z\"")]
+    #[case("ts\"2009-02-13T23:31:30+00:00\"")]
+    fn test_parse_timestamp(#[case] input: &str) {
+        let result = parse(input).unwrap();
+        assert!(matches!(result, Value::Timestamp(_)));
+    }
+
+    #[test]
+    fn test_parse_timestamp_values() {
+        // Test specific timestamp value
+        let result = parse("ts\"2009-02-13T23:31:30Z\"").unwrap();
+        if let Value::Timestamp(dt) = result {
+            assert_eq!(dt.timestamp(), 1234567890);
+        } else {
+            panic!("Expected timestamp value");
+        }
+
+        // Test with fractional seconds
+        let result = parse("ts\"2009-02-13T23:31:30.5Z\"").unwrap();
+        assert!(matches!(result, Value::Timestamp(_)));
+
+        // Test with timezone offset
+        let result = parse("ts\"2024-01-15T12:30:45-05:00\"").unwrap();
+        assert!(matches!(result, Value::Timestamp(_)));
     }
 
     #[test]

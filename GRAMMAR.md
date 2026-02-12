@@ -6,6 +6,7 @@ JASN (Just Another Serialization Notation) extends JSON with explicit integer an
 
 - **Integers**: Distinct 64-bit signed integer type, supporting decimal, hexadecimal, binary, and octal notation
 - **Binary**: Byte array type with base64 (`b64"..."`) and hex (`h"..."`) encoding
+- **Timestamps**: ISO8601/RFC3339 timestamp literals with `ts"..."` syntax
 - **JSON5 Features**: Trailing commas, single quotes, unquoted keys, liberal number parsing, comments
 - **Comments**: Line comments (`//`) and block comments (`/* */`)
 
@@ -13,7 +14,7 @@ JASN (Just Another Serialization Notation) extends JSON with explicit integer an
 
 ```ebnf
 (* Root *)
-value = null | boolean | integer | float | string | binary | list | map ;
+value = null | boolean | integer | float | string | binary | timestamp | list | map ;
 
 (* Primitives *)
 null = "null" ;
@@ -65,6 +66,10 @@ letter = "A" | "B" | "C" | "D" | "E" | "F" | "G" | "H" | "I" | "J" | "K" | "L" |
        | "N" | "O" | "P" | "Q" | "R" | "S" | "T" | "U" | "V" | "W" | "X" | "Y" | "Z"
        | "a" | "b" | "c" | "d" | "e" | "f" | "g" | "h" | "i" | "j" | "k" | "l" | "m"
        | "n" | "o" | "p" | "q" | "r" | "s" | "t" | "u" | "v" | "w" | "x" | "y" | "z" ;
+
+(* Timestamps *)
+timestamp = "ts" , '"' , iso8601_datetime , '"' ;
+iso8601_datetime = ? ISO 8601 / RFC 3339 formatted datetime string ? ;
 
 (* Lists *)
 list = "[" , [ whitespace ] , [ value_list ] , [ "," ] , [ whitespace ] , "]" ;
@@ -154,6 +159,14 @@ h"DEADBEEF"
 h""
 ```
 
+### Timestamps
+```jasn
+ts"2024-01-15T12:30:45.123Z"
+ts"2024-01-15T12:30:45Z"
+ts"2024-01-15T12:30:45-05:00"
+ts"2024-12-31T23:59:59.999999999Z"
+```
+
 ### Strings
 ```jasn
 "double quotes"
@@ -225,7 +238,8 @@ h""
 
 1. **Integer type**: Numbers without decimal point/exponent are 64-bit signed integers, not double-precision floats
 2. **Binary type**: New `b64"..."` and `h"..."` literals for binary data
-3. **Trailing commas**: Allowed in lists and maps
+3. **Timestamp type**: New `ts"..."` literals for ISO8601/RFC3339 timestamps
+4. **Trailing commas**: Allowed in lists and maps
 4. **Single quotes**: Strings can use `'...'` or `"..."`
 5. **Unquoted keys**: Map keys can be identifiers, including reserved words (`null`, `true`, `false`, `inf`, `nan`)
 6. **Duplicate keys**: Not allowed in maps (parse error)

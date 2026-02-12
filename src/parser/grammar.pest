@@ -8,7 +8,7 @@ line_comment = { "//" ~ (!"\n" ~ ANY)* }
 block_comment = { "/*" ~ (!"*/" ~ ANY)* ~ "*/" }
 
 // Root value
-value = { null | boolean | float | integer | string | binary | list | map }
+value = { null | boolean | float | integer | string | binary | timestamp | list | map }
 
 // Primitives
 null = { "null" }
@@ -71,6 +71,16 @@ hex_binary = ${ "h\"" ~ hex_content ~ "\"" }
 base64_content = @{ base64_char* }
 hex_content = @{ hex_digit* }
 base64_char = { 'A'..'Z' | 'a'..'z' | '0'..'9' | "+" | "/" | "=" }
+
+// Timestamp data (ISO8601/RFC3339)
+timestamp = ${ "ts\"" ~ timestamp_content ~ "\"" }
+timestamp_content = @{
+    digit{4} ~ "-" ~ digit{2} ~ "-" ~ digit{2} ~
+    "T" ~
+    digit{2} ~ ":" ~ digit{2} ~ ":" ~ digit{2} ~
+    ("." ~ digit{1,9})? ~
+    ("Z" | (("+" | "-") ~ digit{2} ~ ":" ~ digit{2}))
+}
 
 // Lists (arrays)
 list = { "[" ~ (value ~ ("," ~ value)* ~ ","?)? ~ "]" }
