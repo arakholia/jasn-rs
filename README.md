@@ -6,7 +6,6 @@ While JSON is widely used, it has limitations such as treating all numbers as fl
 JASN addresses these issues by introducing distinct integer types and convenient syntax features inspired by JSON5.
 
 ## Features
-
 - **Distinct Types**: Separate `i64` integers and `f64` floats (not everything is a float!)
 - **Raw Binary Data**: Native support for binary data with `b64"..."` (base64) and `h"..."` (hex) literals
 - **Comments**: Line (`//`) and block (`/* */`) comments
@@ -15,7 +14,6 @@ JASN addresses these issues by introducing distinct integer types and convenient
 - **Liberal Numbers**: Permissive decimal points (`.5`, `5.`), underscores (`1_000_000`), `inf`, `-inf`, `nan` support
 
 ## Quick Start
-
 ```rust
 use jasn::parse;
 
@@ -40,7 +38,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 See [basic.jasn](examples/valid/basic.jasn) for summary of supported features and syntax.
 
 ## Data Model
-
 ```rust
 pub enum Value {
     Null,
@@ -55,11 +52,9 @@ pub enum Value {
 ```
 
 ## Grammar
-
 See [GRAMMAR.md](GRAMMAR.md) for the complete formal specification.
 
 ### Examples
-
 **Integers** (distinct from floats):
 ```jasn
 42
@@ -97,7 +92,6 @@ h"48656c6c6f"            // hex encoded
 ```
 
 ## Differences from JSON
-
 1. **Integer Type**: Numbers without decimal points are `i64`, not `f64`
 2. **Binary Type**: New `b64"..."` and `h"..."` literals for byte arrays
 3. **Comments**: `//` and `/* */` are supported
@@ -106,6 +100,9 @@ h"48656c6c6f"            // hex encoded
 6. **Multiple Radixes**: `0x`, `0b`, `0o` integer literals
 7. **Liberal Floats**: `.5`, `5.`, `inf`, `nan` are valid
 
-## License
+## Planned Features
+1. **Serde Integration**: Support for `serde` serialization/deserialization
+2. **JAML**: A YAML-inspired syntax using the same data model as JASN
 
+## License
 MIT License - see [LICENSE](LICENSE) file for details.
