@@ -100,6 +100,14 @@ h"48656c6c6f"            // hex encoded
 6. **Multiple Radixes**: `0x`, `0b`, `0o` integer literals
 7. **Liberal Floats**: `.5`, `5.`, `inf`, `nan` are valid
 
+## Under Consideration
+- **Digit Case Matching**: Require digit capitalization to match base specifier (`0xff` and `0XFF` valid, but not `0xFF`)
+- **Double Underscores**: Allow consecutive underscores in numeric literals (`1__000`)
+- **Keywords as Keys**: Allow reserved words as unquoted map keys (`{null: value}`)
+- **Duplicate Key Handling**: Explicitly disallow duplicate keys in maps (currently undefined)
+- **Multiline Strings**: Support for multiline string literals with proper indentation handling
+- **Timestamp Type**: Native timestamp type using `ts"..."` syntax adhering to ISO 8601 or RFC 3339
+
 ## Planned Features
 1. **Serde Integration**: Support for `serde` serialization/deserialization
 2. **JAML**: A YAML-inspired syntax using the same data model as JASN
