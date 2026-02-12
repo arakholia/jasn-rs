@@ -212,8 +212,7 @@ fn parse_timestamp(pair: Pair<Rule>) -> Result<Value> {
     let dt = Timestamp::parse(content, &time::format_description::well_known::Rfc3339)
         .map_err(|e| Error::InvalidTimestamp(content.to_string(), e.to_string()))?;
 
-    // Convert to UTC
-    Ok(Value::Timestamp(dt.to_offset(time::UtcOffset::UTC)))
+    Ok(Value::Timestamp(dt))
 }
 
 fn parse_list(pair: Pair<Rule>) -> Result<Value> {
