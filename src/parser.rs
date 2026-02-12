@@ -2,9 +2,8 @@ use std::{collections::BTreeMap, result::Result as StdResult};
 
 use pest::{Parser, iterators::Pair};
 use pest_derive::Parser;
-use time::OffsetDateTime;
 
-use crate::{Binary, Value};
+use crate::{Binary, Timestamp, Value};
 
 mod error;
 pub use error::{Error, Result};
@@ -210,7 +209,7 @@ fn parse_timestamp(pair: Pair<Rule>) -> Result<Value> {
     let content = &s[3..s.len() - 1]; // Remove ts" and "
 
     // Parse using time's RFC3339 parser
-    let dt = OffsetDateTime::parse(content, &time::format_description::well_known::Rfc3339)
+    let dt = Timestamp::parse(content, &time::format_description::well_known::Rfc3339)
         .map_err(|e| Error::InvalidTimestamp(content.to_string(), e.to_string()))?;
 
     // Convert to UTC

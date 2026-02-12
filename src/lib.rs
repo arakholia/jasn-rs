@@ -36,9 +36,6 @@
 
 #![warn(missing_docs)]
 
-// Re-export time types for timestamp support
-pub use time::OffsetDateTime;
-
 mod binary;
 pub use binary::Binary;
 
@@ -46,7 +43,7 @@ mod parser;
 pub use parser::{Error as ParseError, Result as ParseResult, parse};
 
 mod value;
-pub use value::Value;
+pub use value::{Timestamp, Value};
 
 /// Formatting JASN values to strings with custom options.
 pub mod formatter;
