@@ -1,13 +1,14 @@
 use std::collections::BTreeMap;
 
-use crate::{Binary, Value};
 use lazy_static::lazy_static;
 use time::format_description;
+
+use crate::{Binary, Value};
 
 /// Formatting options and configuration.
 pub mod options;
 pub use options::Options;
-use options::{BinaryEncoding, QuoteStyle};
+use options::{BinaryEncoding, QuoteStyle, TimestampPrecision};
 
 /// Formats a JASN value into a compact string (no unnecessary whitespace).
 pub fn to_string(value: &Value) -> String {
@@ -118,8 +119,6 @@ lazy_static! {
 }
 
 fn format_timestamp(t: &crate::Timestamp, opts: &Options) -> String {
-    use options::TimestampPrecision;
-
     // Select format descriptor based on precision
     let format: &[format_description::FormatItem<'_>] = match opts.timestamp_precision {
         TimestampPrecision::Auto => {
@@ -127,7 +126,7 @@ fn format_timestamp(t: &crate::Timestamp, opts: &Options) -> String {
             let formatted = t
                 .format(&time::format_description::well_known::Rfc3339)
                 .unwrap_or_else(|_| t.to_string());
-            
+
             // RFC3339 uses Z for UTC, convert to +00:00 if needed
             let final_str = if !opts.use_zulu && formatted.ends_with('Z') {
                 let mut s = formatted;
@@ -155,7 +154,7 @@ fn format_timestamp(t: &crate::Timestamp, opts: &Options) -> String {
     } else {
         formatted
     };
-    
+
     format!("ts\"{}\"", final_str)
 }
 
@@ -653,9 +652,6 @@ mod tests {
         let opts_offset = Options::compact().with_use_zulu(false);
         let result = to_string_opts(&value_frac, &opts_offset);
         assert_eq!(result, "ts\"2009-02-13T23:31:30.123456789+00:00\"");
-
-        // Test precision options with fractional seconds
-        use options::TimestampPrecision;
 
         // Auto precision (keeps all fractional digits)
         let opts = Options::compact().with_timestamp_precision(TimestampPrecision::Auto);
