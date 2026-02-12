@@ -1,0 +1,4 @@
+// Double underscores in numbers are forbidden
+{
+  bad_number: 1__000
+}

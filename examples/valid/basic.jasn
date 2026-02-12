@@ -1,0 +1,91 @@
+// Basic JASN example demonstrating all types
+{
+  // Null
+  nothing: null,
+  
+  // Booleans
+  active: true,
+  disabled: false,
+  
+  // Integers (decimal)
+  count: 42,
+  negative: -123,
+  positive: +99,
+  with_underscores: 1_000_000,
+  
+  // Integers (hex)
+  hex_value: 0xFF,
+  hex_upper: 0XDEADBEEF,
+  hex_with_underscores: 0xDEAD_BEEF,
+  
+  // Integers (binary)
+  binary_value: 0b1010,
+  binary_upper: 0B11111111,
+  binary_with_underscores: 0b1111_1111,
+  
+  // Integers (octal)
+  octal_value: 0o755,
+  octal_upper: 0O644,
+  octal_with_underscores: 0o100_000,
+  
+  // Floats
+  pi: 3.14159,
+  negative_float: -2.5,
+  leading_dot: .5,
+  trailing_dot: 5.,
+  with_exponent: 1e10,
+  negative_exponent: 2.5e-3,
+  positive_exponent: 5E+2,
+  
+  // Special floats
+  infinity: inf,
+  negative_infinity: -inf,
+  positive_infinity: +inf,
+  not_a_number: nan,
+  
+  // Strings (double quotes)
+  name: "Alice",
+  message: "Hello, World!",
+  
+  // Strings (single quotes)
+  'single-quoted': 'value',
+  
+  // Strings with escapes
+  escaped: "quote: \" backslash: \\ newline: \n",
+  unicode: "\u0041\u0042\u0043",
+  
+  // Binary (base64)
+  data_b64: b64"SGVsbG8gV29ybGQh",
+  empty_b64: b64"",
+  padded_b64: b64"AQIDBA==",
+  
+  // Binary (hex)
+  data_hex: h"48656c6c6f20576f726c6421",
+  empty_hex: h"",
+  mixed_case_hex: h"DeadBeef",
+  
+  // Lists
+  numbers: [1, 2, 3, 4, 5],
+  mixed: [42, "hello", true, null],
+  empty: [],
+  
+  // Nested lists
+  matrix: [
+    [1, 2, 3],
+    [4, 5, 6],
+    [7, 8, 9],
+  ],
+  
+  // Maps
+  config: {
+    timeout: 30,
+    retries: 5,
+    enabled: true,
+  },
+  
+  // Unquoted keys
+  unquoted_key: "value",
+  _private: "underscore prefix",
+  camelCase: "mixed case",
+  snake_case: "with underscore",
+}

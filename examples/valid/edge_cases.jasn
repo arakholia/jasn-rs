@@ -1,0 +1,53 @@
+// Edge cases and unusual but valid JASN
+{
+  /* Comments work in block form too */
+  
+  // Leading zeros are fine in non-octal contexts
+  just_zero: 0,
+  
+  // Multiple underscores (but not consecutive)
+  many_underscores: 1_2_3_4_5,
+  
+  // Minimum and maximum for visual reference
+  min_like: -9223372036854775808,
+  max_like: 9223372036854775807,
+  
+  // Very small float
+  tiny: .0000001,
+  
+  // Float that looks like it could be integer
+  whole_float: 42.0,
+  
+  // Empty structures
+  empty_list: [],
+  empty_map: {},
+  empty_string: "",
+  empty_binary_b64: b64"",
+  empty_binary_hex: h"",
+  
+  // Single element
+  single_list: [1],
+  single_map: {a: 1},
+  
+  // Quoted keys that look like keywords
+  "null": "not actually null",
+  "true": "not actually true",
+  "inf": "not actually infinity",
+  
+  // Keys with dashes must be quoted
+  "kebab-case": "requires quotes",
+  
+  // Case variations for special floats
+  inf_lower: inf,
+  inf_mixed: Inf,
+  inf_upper: INF,
+  nan_lower: nan,
+  nan_mixed: NaN,
+  nan_upper: NAN,
+  
+  // All radix variations with underscores
+  hex: 0xAB_CD_EF_01,
+  bin: 0b1010_1010_1010_1010,
+  oct: 0o123_456_777,
+  dec: 123_456_789,
+}

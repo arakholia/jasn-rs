@@ -6,8 +6,8 @@ JASN (Just Another Serialization Notation) extends JSON with explicit integer an
 
 - **Integers**: Distinct 64-bit signed integer type, supporting decimal, hexadecimal, binary, and octal notation
 - **Binary**: Byte array type with base64 (`b64"..."`) and hex (`h"..."`) encoding
-- **JSON5 Features**: Trailing commas, single quotes, unquoted keys, liberal number parsing
-- **No Comments**: Not supported in initial version
+- **JSON5 Features**: Trailing commas, single quotes, unquoted keys, liberal number parsing, comments
+- **Comments**: Line comments (`//`) and block comments (`/* */`)
 
 ## EBNF Grammar
 
@@ -83,6 +83,11 @@ id_continue = id_start | digit ;
 
 (* Whitespace *)
 whitespace = { " " | "\t" | "\n" | "\r" } ;
+
+(* Comments *)
+line_comment = "//" , { ? any character except newline ? } , ( "\n" | end_of_file ) ;
+block_comment = "/*" , { ? any character ? - ( "*/" ) } , "*/" ;
+comment = line_comment | block_comment ;
 ```
 
 ## Type Resolution Rules
@@ -188,22 +193,29 @@ h""
 
 ### Complex Example
 ```jasn
+// Configuration file example
 {
+  // Version information
   version: 1,
-  count: 0x100,
+  count: 0x100,  // Hex integer
   ratio: 3.14,
   name: "JASN Example",
   active: true,
   metadata: null,
+  
+  /* Binary data can be encoded
+     in multiple formats */
   binary_data: b64"SGVsbG8=",
+  
   items: [
-    { id: 1, value: 10.5, },
-    { id: 2, value: 20.0, },
-    { id: 3, value: .5, },
+    { id: 1, value: 10.5, },  // First item
+    { id: 2, value: 20.0, },  // Second item
+    { id: 3, value: .5, },    // Third item
   ],
+  
   config: {
-    timeout: 30,
-    'max-retries': 5,
+    timeout: 30,           // seconds
+    'max-retries': 5,      /* quoted key with dash */
     enabled: true,
   },
 }
@@ -219,16 +231,18 @@ h""
 6. **Multiple radix integers**: `0x` (hex), `0b` (binary), `0o` (octal) prefixes
 7. **Liberal numbers**: Leading/trailing decimal points (`.5`, `5.`), explicit sign (`+42`), underscores in integers (`1_000`)
 8. **Special floats**: `inf`, `nan` with signs
+9. **Comments**: Line comments `//` and block comments `/* */`
 
 ## Differences from JSON5
 
-1. **No comments**: Not supported (yet)
-2. **Integer/Float split**: Explicit type distinction based on syntax
-3. **Binary literals**: New `b64"..."` and `h"..."` types
-4. **Multi-line strings**: Not supported (standard JSON escaping only)
-5. **Infinity/NaN**: Supported with simpler syntax (`inf`, `nan` vs `Infinity`, `NaN`)
+1. **Integer/Float split**: Explicit type distinction based on syntax
+2. **Binary literals**: New `b64"..."` and `h"..."` types
+3. **Multi-line strings**: Not supported (standard JSON escaping only)
+4. **Infinity/NaN**: Supported with simpler syntax (`inf`, `nan` vs `Infinity`, `NaN`)
+5. **Additional integer radixes**: Binary (`0b`) and octal (`0o`) literals beyond JSON5
 
 ## Future Considerations
 
 - Additional binary encodings: `b"..."` for Python-style b-strings
-- Comments: `//` line and `/* */` block comments
+- Multi-line strings with proper indentation handling
+- BigInt support for arbitrary precision integers

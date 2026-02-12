@@ -1,0 +1,4 @@
+// Bare decimal point without any digits
+{
+  bad: .
+}

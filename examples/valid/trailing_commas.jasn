@@ -1,0 +1,28 @@
+// Demonstrating trailing comma support
+{
+  // List with trailing comma
+  items: [
+    1,
+    2,
+    3,
+  ],
+  
+  // Map with trailing comma
+  config: {
+    a: 1,
+    b: 2,
+    c: 3,
+  },
+  
+  // Nested structures with trailing commas
+  nested: {
+    list: [
+      {x: 1, y: 2,},
+      {x: 3, y: 4,},
+    ],
+    map: {
+      first: [1, 2, 3,],
+      second: [4, 5, 6,],
+    },
+  },
+}
