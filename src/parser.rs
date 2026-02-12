@@ -279,6 +279,17 @@ mod tests {
     }
 
     #[rstest]
+    #[case("1__000", 1000)]
+    #[case("1___000", 1000)]
+    #[case("1_000_000", 1000000)]
+    #[case("0xFF__FF", 0xFFFF)]
+    #[case("0b1111__0000", 0b11110000)]
+    #[case("0o777__000", 0o777000)]
+    fn test_parse_integer_multiple_underscores(#[case] input: &str, #[case] expected: i64) {
+        assert_eq!(parse(input).unwrap(), Value::Int(expected));
+    }
+
+    #[rstest]
     #[case("2.5", 2.5)]
     #[case("1e10", 1e10)]
     fn test_parse_float_numbers(#[case] input: &str, #[case] expected: f64) {

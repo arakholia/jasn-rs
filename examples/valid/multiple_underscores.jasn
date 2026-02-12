@@ -1,0 +1,9 @@
+// Multiple underscores are allowed in numeric literals
+{
+  double: 1__000,
+  triple: 1___000,
+  many: 1_____000_____000,
+  hex: 0xFF__FF,
+  binary: 0b1111__0000,
+  octal: 0o777__000,
+}

@@ -103,7 +103,6 @@ h"48656c6c6f"            // hex encoded
 
 ## Under Consideration
 - **Digit Case Matching**: Require digit capitalization to match base specifier (`0xff` and `0XFF` valid, but not `0xFF`)
-- **Double Underscores**: Allow consecutive underscores in numeric literals (`1__000`)
 - **Multiline Strings**: Support for multiline string literals with proper indentation handling
 - **Timestamp Type**: Native timestamp type using `ts"..."` syntax adhering to ISO 8601 or RFC 3339
 

@@ -37,7 +37,6 @@ fn test_all_invalid_examples() {
 }
 
 #[rstest]
-#[case("1__000")]
 #[case("1000_")]
 #[case("_1000")]
 fn test_invalid_underscore_in_numbers(#[case] input: &str) {
