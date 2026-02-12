@@ -62,7 +62,7 @@ fn assert_values_equal(left: &jasn::Value, right: &jasn::Value, context: &str) {
             for (key, lv) in l.iter() {
                 let rv = r
                     .get(key)
-                    .expect(&format!("Missing key '{}' in {}", key, context));
+                    .unwrap_or_else(|| panic!("Missing key '{}' in {}", key, context));
                 assert_values_equal(lv, rv, &format!("{}.{}", context, key));
             }
         }

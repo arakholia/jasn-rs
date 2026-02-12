@@ -6,7 +6,8 @@ mod options;
 pub use options::*;
 
 pub fn to_string(value: &Value) -> String {
-    format_value(value)
+    let options = FormatOptions::compact();
+    format_with_options(value, &options, 0)
 }
 
 pub fn to_string_pretty(value: &Value) -> String {
@@ -15,21 +16,8 @@ pub fn to_string_pretty(value: &Value) -> String {
 }
 
 /// Formats a JASN value with custom formatting options.
-pub fn to_string_with_options(value: &Value, options: &FormatOptions) -> String {
+pub fn to_string_opts(value: &Value, options: &FormatOptions) -> String {
     format_with_options(value, options, 0)
-}
-
-fn format_value(value: &Value) -> String {
-    match value {
-        Value::Null => "null".to_string(),
-        Value::Bool(b) => b.to_string(),
-        Value::Int(i) => i.to_string(),
-        Value::Float(f) => format_float(*f),
-        Value::String(s) => format_string(s, '"'),
-        Value::Binary(b) => format_binary(b, BinaryEncoding::Base64),
-        Value::List(items) => format_list_compact(items),
-        Value::Map(map) => format_map_compact(map),
-    }
 }
 
 fn format_with_options(value: &Value, options: &FormatOptions, depth: usize) -> String {
@@ -55,14 +43,14 @@ fn format_with_options(value: &Value, options: &FormatOptions, depth: usize) -> 
         Value::Binary(b) => format_binary(b, options.binary_encoding),
         Value::List(items) => {
             if options.indent.is_empty() {
-                format_list_compact(items)
+                format_list_compact(items, options)
             } else {
                 format_list_pretty(items, options, depth)
             }
         }
         Value::Map(map) => {
             if options.indent.is_empty() {
-                format_map_compact(map)
+                format_map_compact(map, options)
             } else {
                 format_map_pretty(map, options, depth)
             }
@@ -125,27 +113,18 @@ fn format_binary(binary: &Binary, encoding: BinaryEncoding) -> String {
             let hex: String = binary.0.iter().map(|b| format!("{:02x}", b)).collect();
             format!("h\"{}\"", hex)
         }
-        BinaryEncoding::Compact => {
-            // Choose hex if it's shorter or equal length
-            use base64::{Engine as _, engine::general_purpose};
-            let b64_len = general_purpose::STANDARD.encode(&binary.0).len();
-            let hex_len = binary.0.len() * 2;
-
-            if hex_len <= b64_len {
-                format_binary(binary, BinaryEncoding::Hex)
-            } else {
-                format_binary(binary, BinaryEncoding::Base64)
-            }
-        }
     }
 }
 
-fn format_list_compact(items: &[Value]) -> String {
+fn format_list_compact(items: &[Value], options: &FormatOptions) -> String {
     if items.is_empty() {
         return "[]".to_string();
     }
 
-    let formatted: Vec<String> = items.iter().map(format_value).collect();
+    let formatted: Vec<String> = items
+        .iter()
+        .map(|item| format_with_options(item, options, 0))
+        .collect();
     format!("[{}]", formatted.join(","))
 }
 
@@ -172,14 +151,32 @@ fn format_list_pretty(items: &[Value], options: &FormatOptions, depth: usize) ->
     result
 }
 
-fn format_map_compact(map: &BTreeMap<String, Value>) -> String {
+fn format_map_compact(map: &BTreeMap<String, Value>, options: &FormatOptions) -> String {
     if map.is_empty() {
         return "{}".to_string();
     }
 
     let formatted: Vec<String> = map
         .iter()
-        .map(|(k, v)| format!("{}:{}", format_string(k, '"'), format_value(v)))
+        .map(|(k, v)| {
+            let key_str = if options.unquoted_keys && can_be_unquoted(k) {
+                k.to_string()
+            } else {
+                let quote = match options.quote_style {
+                    QuoteStyle::Double => '"',
+                    QuoteStyle::Single => '\'',
+                    QuoteStyle::PreferDouble => {
+                        if k.contains('"') && !k.contains('\'') {
+                            '\''
+                        } else {
+                            '"'
+                        }
+                    }
+                };
+                format_string(k, quote)
+            };
+            format!("{}:{}", key_str, format_with_options(v, options, 0))
+        })
         .collect();
     format!("{{{}}}", formatted.join(","))
 }
@@ -312,8 +309,9 @@ mod tests {
         map.insert("age".to_string(), Value::Int(30));
 
         let formatted = to_string(&Value::Map(map));
-        assert!(formatted.contains("\"age\":30"));
-        assert!(formatted.contains("\"name\":\"Alice\""));
+        // Compact format uses unquoted keys to save bytes
+        assert!(formatted.contains("age:30"));
+        assert!(formatted.contains("name:\"Alice\""));
     }
 
     #[test]

@@ -2,7 +2,7 @@ use std::collections::BTreeMap;
 
 use jasn::{
     Binary, Value,
-    formatter::{BinaryEncoding, FormatOptions, QuoteStyle, to_string_with_options},
+    formatter::{BinaryEncoding, FormatOptions, QuoteStyle, to_string_opts},
     to_string, to_string_pretty,
 };
 
@@ -31,28 +31,19 @@ fn main() {
     println!();
 
     // Pretty format (default)
-    println!("=== Pretty Format (Default) ===");
+    println!("=== Pretty Format ===");
     println!("{}", to_string_pretty(&value));
     println!();
 
     // Custom format options
-    println!("=== Custom Format (Single Quotes, Hex Binary, Tab Indent) ===");
+    println!(
+        "=== Custom Format (Single Quotes, Hex Binary, 4-Space Indent, No Trailing Commas, Quoted Keys) ==="
+    );
     let custom_options = FormatOptions::pretty()
         .with_quote_style(QuoteStyle::Single)
         .with_binary_encoding(BinaryEncoding::Hex)
-        .with_indent("\t")
+        .with_indent("    ")
+        .with_trailing_commas(false)
         .with_unquoted_keys(false);
-    println!("{}", to_string_with_options(&value, &custom_options));
-    println!();
-
-    // Compact binary encoding
-    println!("=== Compact Binary (Chooses Shortest) ===");
-    let opts = FormatOptions::pretty().with_binary_encoding(BinaryEncoding::Compact);
-    println!("{}", to_string_with_options(&value, &opts));
-    println!();
-
-    // No trailing commas
-    println!("=== No Trailing Commas ===");
-    let opts = FormatOptions::pretty().with_trailing_commas(false);
-    println!("{}", to_string_with_options(&value, &opts));
+    println!("{}", to_string_opts(&value, &custom_options));
 }

@@ -24,14 +24,14 @@ impl Default for FormatOptions {
 }
 
 impl FormatOptions {
-    /// Creates options for compact output (no whitespace).
+    /// Creates options for compact output.
     pub fn compact() -> Self {
         Self {
             indent: String::new(),
             trailing_commas: false,
             quote_style: QuoteStyle::Double,
             binary_encoding: BinaryEncoding::Base64,
-            unquoted_keys: false,
+            unquoted_keys: true,
         }
     }
 
@@ -98,9 +98,6 @@ pub enum BinaryEncoding {
 
     /// Always use hex: h"..."
     Hex,
-
-    /// Choose the more compact encoding
-    Compact,
 }
 
 #[cfg(test)]
@@ -112,7 +109,7 @@ mod tests {
         let opts = FormatOptions::compact();
         assert!(opts.indent.is_empty());
         assert!(!opts.trailing_commas);
-        assert!(!opts.unquoted_keys);
+        assert!(opts.unquoted_keys);
     }
 
     #[test]
