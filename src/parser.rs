@@ -132,6 +132,32 @@ fn parse_unicode_escape(chars: &mut std::str::Chars) -> Result<char> {
     }
     let code =
         u32::from_str_radix(&hex, 16).map_err(|_| Error::InvalidUnicodeEscape(hex.clone()))?;
+
+    // Check if this is a high surrogate (0xD800-0xDBFF)
+    if (0xD800..=0xDBFF).contains(&code) {
+        // This should be followed by a low surrogate
+        // Peek ahead for \uXXXX pattern
+        let saved_chars = chars.clone();
+        if chars.next() == Some('\\') && chars.next() == Some('u') {
+            let low_hex: String = chars.take(4).collect();
+            if low_hex.len() == 4
+                && let Ok(low_code) = u32::from_str_radix(&low_hex, 16)
+            {
+                // Check if this is a low surrogate (0xDC00-0xDFFF)
+                if (0xDC00..=0xDFFF).contains(&low_code) {
+                    // Combine surrogates into actual codepoint
+                    let high = code - 0xD800;
+                    let low = low_code - 0xDC00;
+                    let codepoint = 0x10000 + (high << 10) + low;
+                    return char::from_u32(codepoint)
+                        .ok_or(Error::InvalidUnicodeCodepoint(codepoint));
+                }
+            }
+        }
+        // Not a valid surrogate pair, restore position and error
+        *chars = saved_chars;
+    }
+
     char::from_u32(code).ok_or(Error::InvalidUnicodeCodepoint(code))
 }
 
@@ -296,6 +322,40 @@ mod tests {
     #[case(r#""Hello\u0020World""#, "Hello World")]
     fn test_parse_string_escapes(#[case] input: &str, #[case] expected: &str) {
         assert_eq!(parse(input).unwrap(), Value::String(expected.to_string()));
+    }
+
+    #[rstest]
+    // Emoji using UTF-16 surrogate pairs
+    #[case(r#""\ud83d\ude00""#, "😀")] // Grinning face
+    #[case(r#""\ud83c\udf0d""#, "🌍")] // Earth globe
+    #[case(r#""\ud83d\udc4d""#, "👍")] // Thumbs up
+    // Musical note (U+1D11E)
+    #[case(r#""\ud834\udd1e""#, "𝄞")]
+    // Surrogate pairs with surrounding text
+    #[case(r#""Hello \ud83d\ude00 World""#, "Hello 😀 World")]
+    // Multiple surrogate pairs
+    #[case(r#""\ud83d\ude00\ud83d\ude01\ud83d\ude02""#, "😀😁😂")]
+    fn test_parse_surrogate_pairs(#[case] input: &str, #[case] expected: &str) {
+        assert_eq!(parse(input).unwrap(), Value::String(expected.to_string()));
+    }
+
+    #[test]
+    fn test_parse_invalid_surrogate_pairs() {
+        // Lone high surrogate (no following low surrogate)
+        let result = parse(r#""\ud83d""#);
+        assert!(result.is_err());
+
+        // High surrogate followed by regular character
+        let result = parse(r#""\ud83dA""#);
+        assert!(result.is_err());
+
+        // High surrogate followed by another high surrogate
+        let result = parse(r#""\ud83d\ud83d""#);
+        assert!(result.is_err());
+
+        // Low surrogate without preceding high surrogate
+        let result = parse(r#""\ude00""#);
+        assert!(result.is_err());
     }
 
     #[rstest]

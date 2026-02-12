@@ -2,7 +2,11 @@ use std::collections::BTreeMap;
 
 use jasn::{
     Binary, Value,
-    formatter::{BinaryEncoding, FormatOptions, QuoteStyle, to_string_opts},
+    formatter::{
+        Options,
+        options::{BinaryEncoding, QuoteStyle},
+        to_string_opts,
+    },
     to_string, to_string_pretty,
 };
 
@@ -22,6 +26,7 @@ fn main() {
     );
     person.insert("pi".to_string(), Value::Float(std::f64::consts::PI));
     person.insert("temperature".to_string(), Value::Float(f64::NEG_INFINITY));
+    person.insert("ferris".to_string(), Value::String("🦀".to_string()));
 
     let value = Value::Map(person);
 
@@ -37,14 +42,16 @@ fn main() {
 
     // Custom format options
     println!(
-        "=== Custom Format (Single Quotes, Hex Binary, 4-Space Indent, No Trailing Commas, Quoted Keys, Leading Plus) ==="
+        "=== Custom Format (Single Quotes, Hex Binary, 4-Space Indent, No Trailing Commas, Quoted Keys, Leading Plus, Sorted Keys, Unicode Escape) ==="
     );
-    let custom_options = FormatOptions::pretty()
+    let custom_options = Options::pretty()
         .with_quote_style(QuoteStyle::Single)
         .with_binary_encoding(BinaryEncoding::Hex)
         .with_indent("    ")
         .with_trailing_commas(false)
         .with_unquoted_keys(false)
-        .with_leading_plus(true);
+        .with_leading_plus(true)
+        .with_sort_keys(true)
+        .with_escape_unicode(true);
     println!("{}", to_string_opts(&value, &custom_options));
 }

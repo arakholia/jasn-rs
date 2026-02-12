@@ -1,6 +1,6 @@
 /// Formatting options for JASN output.
 #[derive(Debug, Clone)]
-pub struct FormatOptions {
+pub struct Options {
     /// Indentation string (e.g., "  " or "\t"). Empty string means compact output.
     pub indent: String,
 
@@ -18,15 +18,21 @@ pub struct FormatOptions {
 
     /// Add leading plus sign to positive numbers (+42, +3.14, +inf).
     pub leading_plus: bool,
+
+    /// Sort map keys alphabetically for consistent output.
+    pub sort_keys: bool,
+
+    /// Escape all non-ASCII characters as \uXXXX sequences.
+    pub escape_unicode: bool,
 }
 
-impl Default for FormatOptions {
+impl Default for Options {
     fn default() -> Self {
         Self::pretty()
     }
 }
 
-impl FormatOptions {
+impl Options {
     /// Creates options for compact output.
     pub fn compact() -> Self {
         Self {
@@ -36,6 +42,8 @@ impl FormatOptions {
             binary_encoding: BinaryEncoding::Base64,
             unquoted_keys: true,
             leading_plus: false,
+            sort_keys: false,
+            escape_unicode: true,
         }
     }
 
@@ -48,6 +56,8 @@ impl FormatOptions {
             binary_encoding: BinaryEncoding::Base64,
             unquoted_keys: true,
             leading_plus: false,
+            sort_keys: true,
+            escape_unicode: false,
         }
     }
 
@@ -86,6 +96,18 @@ impl FormatOptions {
         self.leading_plus = enable;
         self
     }
+
+    /// Sets whether to sort map keys alphabetically.
+    pub fn with_sort_keys(mut self, enable: bool) -> Self {
+        self.sort_keys = enable;
+        self
+    }
+
+    /// Sets whether to escape non-ASCII characters as \uXXXX.
+    pub fn with_escape_unicode(mut self, enable: bool) -> Self {
+        self.escape_unicode = enable;
+        self
+    }
 }
 
 /// Quote style for strings and map keys.
@@ -117,7 +139,7 @@ mod tests {
 
     #[test]
     fn test_compact_options() {
-        let opts = FormatOptions::compact();
+        let opts = Options::compact();
         assert!(opts.indent.is_empty());
         assert!(!opts.trailing_commas);
         assert!(opts.unquoted_keys);
@@ -125,7 +147,7 @@ mod tests {
 
     #[test]
     fn test_pretty_options() {
-        let opts = FormatOptions::pretty();
+        let opts = Options::pretty();
         assert_eq!(opts.indent, "  ");
         assert!(opts.trailing_commas);
         assert!(opts.unquoted_keys);
@@ -133,7 +155,7 @@ mod tests {
 
     #[test]
     fn test_builder_pattern() {
-        let opts = FormatOptions::compact()
+        let opts = Options::compact()
             .with_indent("\t")
             .with_trailing_commas(true)
             .with_quote_style(QuoteStyle::Single);
