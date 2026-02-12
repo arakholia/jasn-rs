@@ -187,38 +187,31 @@ fn parse_map(pair: Pair<Rule>) -> Result<Value> {
         let key_pair = inner.next().unwrap();
         let value_pair = inner.next().unwrap();
 
-        let key = match key_pair.as_rule() {
-            Rule::key => {
-                // key is a wrapper rule, extract the actual string or identifier
-                let actual_key = key_pair.into_inner().next().unwrap();
-                match actual_key.as_rule() {
-                    Rule::string => {
-                        if let Value::String(s) = parse_string(actual_key)? {
-                            s
-                        } else {
-                            unreachable!()
-                        }
-                    }
-                    Rule::identifier => actual_key.as_str().to_string(),
-                    _ => unreachable!("Unexpected key rule: {:?}", actual_key.as_rule()),
-                }
-            }
-            Rule::string => {
-                if let Value::String(s) = parse_string(key_pair)? {
-                    s
-                } else {
-                    unreachable!()
-                }
-            }
-            Rule::identifier => key_pair.as_str().to_string(),
-            _ => unreachable!("Unexpected rule for key: {:?}", key_pair.as_rule()),
-        };
-
+        let key = parse_map_key(key_pair)?;
         let value = parse_value(value_pair)?;
         map.insert(key, value);
     }
 
     Ok(Value::Map(map))
+}
+
+fn parse_map_key(pair: Pair<Rule>) -> Result<String> {
+    match pair.as_rule() {
+        Rule::key => {
+            // key is a wrapper rule, extract the actual string or identifier
+            let actual_key = pair.into_inner().next().unwrap();
+            parse_map_key(actual_key)
+        }
+        Rule::string => {
+            if let Value::String(s) = parse_string(pair)? {
+                Ok(s)
+            } else {
+                unreachable!("parse_string should always return Value::String")
+            }
+        }
+        Rule::identifier => Ok(pair.as_str().to_string()),
+        _ => unreachable!("Unexpected rule for map key: {:?}", pair.as_rule()),
+    }
 }
 
 #[cfg(test)]
