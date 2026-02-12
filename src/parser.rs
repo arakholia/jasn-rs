@@ -220,6 +220,8 @@ fn parse_map_key(pair: Pair<Rule>) -> Result<String> {
 
 #[cfg(test)]
 mod tests {
+    use rstest::rstest;
+
     use super::*;
 
     #[test]
@@ -227,121 +229,83 @@ mod tests {
         assert_eq!(parse("null").unwrap(), Value::Null);
     }
 
-    #[test]
-    fn test_parse_bool() {
-        assert_eq!(parse("true").unwrap(), Value::Bool(true));
-        assert_eq!(parse("false").unwrap(), Value::Bool(false));
+    #[rstest]
+    #[case("true", true)]
+    #[case("false", false)]
+    fn test_parse_bool(#[case] input: &str, #[case] expected: bool) {
+        assert_eq!(parse(input).unwrap(), Value::Bool(expected));
+    }
+
+    #[rstest]
+    #[case("42", 42)]
+    #[case("-123", -123)]
+    #[case("0xFF", 255)]
+    #[case("0b1010", 10)]
+    #[case("0o755", 493)]
+    fn test_parse_integer(#[case] input: &str, #[case] expected: i64) {
+        assert_eq!(parse(input).unwrap(), Value::Int(expected));
+    }
+
+    #[rstest]
+    #[case("3.14", 3.14)]
+    #[case("1e10", 1e10)]
+    fn test_parse_float_numbers(#[case] input: &str, #[case] expected: f64) {
+        assert_eq!(parse(input).unwrap(), Value::Float(expected));
+    }
+
+    #[rstest]
+    #[case("inf", true, true)] // is_infinite, is_sign_positive
+    #[case("-inf", true, false)] // is_infinite, is_sign_negative
+    fn test_parse_float_infinity(#[case] input: &str, #[case] is_inf: bool, #[case] is_pos: bool) {
+        match parse(input).unwrap() {
+            Value::Float(f) => {
+                assert_eq!(f.is_infinite(), is_inf);
+                assert_eq!(f.is_sign_positive(), is_pos);
+            }
+            _ => panic!("Expected Float value"),
+        }
     }
 
     #[test]
-    fn test_parse_integer() {
-        assert_eq!(parse("42").unwrap(), Value::Int(42));
-        assert_eq!(parse("-123").unwrap(), Value::Int(-123));
-        assert_eq!(parse("0xFF").unwrap(), Value::Int(255));
-        assert_eq!(parse("0b1010").unwrap(), Value::Int(10));
-        assert_eq!(parse("0o755").unwrap(), Value::Int(493));
-    }
-
-    #[test]
-    fn test_parse_float() {
-        assert_eq!(parse("3.14").unwrap(), Value::Float(3.14));
-        assert_eq!(parse("1e10").unwrap(), Value::Float(1e10));
-        assert!(
-            matches!(parse("inf").unwrap(), Value::Float(f) if f.is_infinite() && f.is_sign_positive())
-        );
-        assert!(
-            matches!(parse("-inf").unwrap(), Value::Float(f) if f.is_infinite() && f.is_sign_negative())
-        );
+    fn test_parse_float_nan() {
         assert!(matches!(parse("nan").unwrap(), Value::Float(f) if f.is_nan()));
     }
 
-    #[test]
-    fn test_parse_string() {
-        assert_eq!(
-            parse("\"hello\"").unwrap(),
-            Value::String("hello".to_string())
-        );
-        assert_eq!(
-            parse("'world'").unwrap(),
-            Value::String("world".to_string())
-        );
+    #[rstest]
+    #[case("\"hello\"", "hello")]
+    #[case("'world'", "world")]
+    fn test_parse_string(#[case] input: &str, #[case] expected: &str) {
+        assert_eq!(parse(input).unwrap(), Value::String(expected.to_string()));
     }
 
-    #[test]
-    fn test_parse_string_escapes() {
-        // Basic escapes
-        assert_eq!(
-            parse(r#""a\nb""#).unwrap(),
-            Value::String("a\nb".to_string())
-        );
-        assert_eq!(
-            parse(r#""a\tb""#).unwrap(),
-            Value::String("a\tb".to_string())
-        );
-        assert_eq!(
-            parse(r#""a\rb""#).unwrap(),
-            Value::String("a\rb".to_string())
-        );
-        assert_eq!(
-            parse(r#""a\\b""#).unwrap(),
-            Value::String("a\\b".to_string())
-        );
-        assert_eq!(
-            parse(r#""a\/b""#).unwrap(),
-            Value::String("a/b".to_string())
-        );
-        assert_eq!(
-            parse(r#""a\"b""#).unwrap(),
-            Value::String("a\"b".to_string())
-        );
-        assert_eq!(
-            parse(r#"'a\'b'"#).unwrap(),
-            Value::String("a'b".to_string())
-        );
-        assert_eq!(
-            parse(r#""a\bb""#).unwrap(),
-            Value::String("a\u{0008}b".to_string())
-        );
-        assert_eq!(
-            parse(r#""a\fb""#).unwrap(),
-            Value::String("a\u{000C}b".to_string())
-        );
-
-        // Unicode escapes
-        assert_eq!(
-            parse(r#""\u0041""#).unwrap(),
-            Value::String("A".to_string())
-        );
-        assert_eq!(
-            parse(r#""\u03B1""#).unwrap(),
-            Value::String("α".to_string())
-        );
-        assert_eq!(
-            parse(r#""\u4E2D\u6587""#).unwrap(),
-            Value::String("中文".to_string())
-        );
-        assert_eq!(
-            parse(r#""Hello\u0020World""#).unwrap(),
-            Value::String("Hello World".to_string())
-        );
+    #[rstest]
+    // Basic escapes
+    #[case(r#""a\nb""#, "a\nb")]
+    #[case(r#""a\tb""#, "a\tb")]
+    #[case(r#""a\rb""#, "a\rb")]
+    #[case(r#""a\\b""#, "a\\b")]
+    #[case(r#""a\/b""#, "a/b")]
+    #[case(r#""a\"b""#, "a\"b")]
+    #[case(r#"'a\'b'"#, "a'b")]
+    #[case(r#""a\bb""#, "a\u{0008}b")]
+    #[case(r#""a\fb""#, "a\u{000C}b")]
+    // Unicode escapes
+    #[case(r#""\u0041""#, "A")]
+    #[case(r#""\u03B1""#, "α")]
+    #[case(r#""\u4E2D\u6587""#, "中文")]
+    #[case(r#""Hello\u0020World""#, "Hello World")]
+    fn test_parse_string_escapes(#[case] input: &str, #[case] expected: &str) {
+        assert_eq!(parse(input).unwrap(), Value::String(expected.to_string()));
     }
 
-    #[test]
-    fn test_parse_binary() {
-        // Test hex encoding
-        let hex_result = parse("h\"48656c6c6f\"").unwrap();
-        assert!(matches!(hex_result, Value::Binary(ref b) if b.0 == b"Hello"));
-
-        // Test base64 encoding
-        let b64_result = parse("b64\"SGVsbG8=\"").unwrap();
-        assert!(matches!(b64_result, Value::Binary(ref b) if b.0 == b"Hello"));
-
-        // Test empty binary
-        let empty_hex = parse("h\"\"").unwrap();
-        assert!(matches!(empty_hex, Value::Binary(ref b) if b.0.is_empty()));
-
-        let empty_b64 = parse("b64\"\"").unwrap();
-        assert!(matches!(empty_b64, Value::Binary(ref b) if b.0.is_empty()));
+    #[rstest]
+    #[case("h\"48656c6c6f\"", b"Hello")]
+    #[case("b64\"SGVsbG8=\"", b"Hello")]
+    #[case("h\"\"", b"")]
+    #[case("b64\"\"", b"")]
+    fn test_parse_binary(#[case] input: &str, #[case] expected: &[u8]) {
+        let result = parse(input).unwrap();
+        assert!(matches!(result, Value::Binary(ref b) if b.0 == expected));
     }
 
     #[test]

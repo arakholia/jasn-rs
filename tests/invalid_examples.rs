@@ -1,6 +1,7 @@
 use std::{fs, path::Path};
 
 use jasn::parse;
+use rstest::rstest;
 
 #[test]
 fn test_all_invalid_examples() {
@@ -35,72 +36,40 @@ fn test_all_invalid_examples() {
     }
 }
 
-#[test]
-fn test_double_underscore() {
-    assert!(parse("1__000").is_err());
+#[rstest]
+#[case("1__000")]
+#[case("1000_")]
+#[case("_1000")]
+fn test_invalid_underscore_in_numbers(#[case] input: &str) {
+    assert!(parse(input).is_err());
 }
 
-#[test]
-fn test_trailing_underscore() {
-    assert!(parse("1000_").is_err());
+#[rstest]
+#[case("{null: 1}")]
+#[case("{true: 1}")]
+#[case("{false: 1}")]
+fn test_unquoted_keyword_key(#[case] input: &str) {
+    assert!(parse(input).is_err());
 }
 
-#[test]
-fn test_leading_underscore_number() {
-    assert!(parse("_1000").is_err());
+#[rstest]
+#[case(r#""\x""#)]
+#[case(r#""unterminated"#)]
+#[case("[1, 2 3]")]
+#[case(r#"h"ABC""#)]
+#[case(r#"b64"Hello!""#)]
+#[case(".")]
+#[case("{kebab-case: 1}")]
+#[case("/* unterminated")]
+fn test_various_parse_errors(#[case] input: &str) {
+    assert!(parse(input).is_err());
 }
 
-#[test]
-fn test_unquoted_keyword_key() {
-    assert!(parse("{null: 1}").is_err());
-    assert!(parse("{true: 1}").is_err());
-    assert!(parse("{false: 1}").is_err());
-}
-
-#[test]
-fn test_invalid_escape() {
-    assert!(parse(r#""\x""#).is_err());
-}
-
-#[test]
-fn test_unterminated_string() {
-    assert!(parse(r#""unterminated"#).is_err());
-}
-
-#[test]
-fn test_missing_comma() {
-    assert!(parse("[1, 2 3]").is_err());
-}
-
-#[test]
-fn test_odd_hex_binary() {
-    assert!(parse(r#"h"ABC""#).is_err());
-}
-
-#[test]
-fn test_invalid_base64() {
-    assert!(parse(r#"b64"Hello!""#).is_err());
-}
-
-#[test]
-fn test_bare_decimal_point() {
-    assert!(parse(".").is_err());
-}
-
-#[test]
-fn test_unquoted_dash_key() {
-    assert!(parse("{kebab-case: 1}").is_err());
-}
-
-#[test]
-fn test_unterminated_comment() {
-    assert!(parse("/* unterminated").is_err());
-}
-
-#[test]
-fn test_integer_overflow() {
-    // Beyond i64::MAX
-    assert!(parse("9223372036854775808").is_err());
-    // Below i64::MIN
-    assert!(parse("-9223372036854775809").is_err());
+#[rstest]
+// Beyond i64::MAX
+#[case("9223372036854775808")]
+// Below i64::MIN
+#[case("-9223372036854775809")]
+fn test_integer_overflow(#[case] input: &str) {
+    assert!(parse(input).is_err());
 }
