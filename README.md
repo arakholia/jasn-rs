@@ -8,6 +8,7 @@ JASN addresses these issues by introducing distinct integer types and convenient
 ## Features
 - **Distinct Types**: Separate `i64` integers and `f64` floats (not everything is a float!)
 - **Raw Binary Data**: Native support for binary data with `b64"..."` (base64) and `h"..."` (hex) literals
+- **Timestamps**: ISO8601/RFC3339 timestamps with `ts"..."` syntax
 - **Comments**: Line (`//`) and block (`/* */`) comments
 - **Flexible Syntax**: Trailing commas, single quotes, unquoted object keys
 - **Multiple Radixes**: Support for hexadecimal (`0x`), binary (`0b`), and octal (`0o`) integer literals
@@ -45,7 +46,8 @@ pub enum Value {
     Int(i64),
     Float(f64),
     String(String),
-    Binary(Binary),  // Wrapper for `Vec<u8>`.
+    Binary(Binary),       // Wrapper for `Vec<u8>`
+    Timestamp(Timestamp), // ISO8601/RFC3339 timestamp (time::OffsetDateTime)
     List(Vec<Value>),
     Map(BTreeMap<String, Value>),
 }
@@ -81,6 +83,13 @@ b64"SGVsbG8gV29ybGQh"    // base64 encoded
 h"48656c6c6f"            // hex encoded
 ```
 
+**Timestamps**:
+```jasn
+ts"2024-01-15T12:30:45Z"           // UTC
+ts"2024-01-15T12:30:45.123Z"       // with milliseconds
+ts"2024-01-15T12:30:45-05:00"      // with timezone offset
+```
+
 **Flexible Syntax**:
 ```jasn
 {
@@ -94,16 +103,16 @@ h"48656c6c6f"            // hex encoded
 ## Differences from JSON
 1. **Integer Type**: Numbers without decimal points are `i64`, not `f64`
 2. **Binary Type**: New `b64"..."` and `h"..."` literals for byte arrays
-3. **Comments**: `//` and `/* */` are supported
-4. **Trailing Commas**: Allowed in arrays and objects
-5. **Unquoted Keys**: Object keys can be identifiers, including reserved words (`null`, `true`, `false`, `inf`, `nan`)
-6. **Multiple Radixes**: `0x`, `0b`, `0o` integer literals (case-insensitive prefixes)
-7. **Permissive Floats**: `.5`, `5.`, `inf`, `nan` are valid
-8. **Duplicate Keys**: Explicitly disallowed - parsing fails on duplicate keys in maps
+3. **Timestamp Type**: New `ts"..."` literals for ISO8601/RFC3339 timestamps
+4. **Comments**: `//` and `/* */` are supported
+5. **Trailing Commas**: Allowed in arrays and objects
+6. **Unquoted Keys**: Object keys can be identifiers, including reserved words (`null`, `true`, `false`, `inf`, `nan`)
+7. **Multiple Radixes**: `0x`, `0b`, `0o` integer literals (case-insensitive prefixes)
+8. **Permissive Floats**: `.5`, `5.`, `inf`, `nan` are valid
+9. **Duplicate Keys**: Explicitly disallowed - parsing fails on duplicate keys in maps
 
 ## Under Consideration
 - **Multiline Strings**: Support for multiline string literals with proper indentation handling
-- **Timestamp Type**: Native timestamp type using `ts"..."` syntax adhering to ISO 8601 or RFC 3339
 
 ## Planned Features
 1. **Serde Integration**: Support for `serde` serialization/deserialization
