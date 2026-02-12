@@ -1,27 +1,26 @@
-use pest::Parser;
-use pest_derive::Parser;
-
-#[derive(Parser)]
-#[grammar = "grammar.pest"]
-struct JasnParser;
-
 use std::{collections::BTreeMap, result::Result as StdResult};
+
+use pest::{Parser, iterators::Pair};
+use pest_derive::Parser;
 
 use crate::{Binary, Value};
 
 mod error;
 pub use error::{Error, Result};
 
+#[derive(Parser)]
+#[grammar = "grammar.pest"]
+struct JasnParser;
+
 /// Parse a JASN string into a Value
 pub fn parse(input: &str) -> Result<Value> {
-    let mut pairs =
-        JasnParser::parse(Rule::jasn, input).map_err(|e| Error::PestError(Box::new(e)))?;
+    let mut pairs = JasnParser::parse(Rule::jasn, input)?;
     let pair = pairs.next().unwrap(); // jasn rule
     let inner = pair.into_inner().next().unwrap(); // value rule
     parse_value(inner)
 }
 
-fn parse_value(pair: pest::iterators::Pair<Rule>) -> Result<Value> {
+fn parse_value(pair: Pair<Rule>) -> Result<Value> {
     let rule = if pair.as_rule() == Rule::value {
         // value is a wrapper, get the actual inner rule
         pair.into_inner().next().unwrap()
@@ -42,7 +41,7 @@ fn parse_value(pair: pest::iterators::Pair<Rule>) -> Result<Value> {
     }
 }
 
-fn parse_integer(pair: pest::iterators::Pair<Rule>) -> Result<Value> {
+fn parse_integer(pair: Pair<Rule>) -> Result<Value> {
     let s = pair.as_str();
 
     // Remove underscores
@@ -78,7 +77,7 @@ fn parse_integer(pair: pest::iterators::Pair<Rule>) -> Result<Value> {
     Ok(Value::Int(value))
 }
 
-fn parse_float(pair: pest::iterators::Pair<Rule>) -> Result<Value> {
+fn parse_float(pair: Pair<Rule>) -> Result<Value> {
     let s = pair.as_str();
 
     // Handle special values
@@ -92,7 +91,7 @@ fn parse_float(pair: pest::iterators::Pair<Rule>) -> Result<Value> {
     Ok(Value::Float(value))
 }
 
-fn parse_string(pair: pest::iterators::Pair<Rule>) -> Result<Value> {
+fn parse_string(pair: Pair<Rule>) -> Result<Value> {
     // The string rule contains the entire string with quotes due to $
     // We need to get the inner content
     let mut inner = pair.into_inner();
@@ -123,7 +122,8 @@ fn parse_string(pair: pest::iterators::Pair<Rule>) -> Result<Value> {
                     let ch = char::from_u32(code).ok_or(Error::InvalidUnicodeCodepoint(code))?;
                     result.push(ch);
                 }
-                _ => return Err(Error::InvalidEscape),
+                Some(c) => return Err(Error::InvalidEscapeChar(c)),
+                None => return Err(Error::InvalidEscapeChar('\\')),
             }
         } else {
             result.push(ch);
@@ -133,33 +133,43 @@ fn parse_string(pair: pest::iterators::Pair<Rule>) -> Result<Value> {
     Ok(Value::String(result))
 }
 
-fn parse_binary(pair: pest::iterators::Pair<Rule>) -> Result<Value> {
+fn parse_binary_b64(content: &str) -> Result<Vec<u8>> {
+    Ok(base64::Engine::decode(
+        &base64::engine::general_purpose::STANDARD,
+        content,
+    )?)
+}
+
+fn parse_binary_hex(content: &str) -> Result<Vec<u8>> {
+    if !content.len().is_multiple_of(2) {
+        return Err(Error::OddHexDigits);
+    }
+
+    (0..content.len())
+        .step_by(2)
+        .map(|i| u8::from_str_radix(&content[i..i + 2], 16))
+        .collect::<StdResult<Vec<u8>, _>>()
+        .map_err(Into::into)
+}
+
+fn parse_binary(pair: Pair<Rule>) -> Result<Value> {
     let s = pair.as_str();
 
     let bytes = if s.starts_with("b64\"") {
-        // Base64 encoding
         let content = &s[4..s.len() - 1]; // Remove b64" and "
-        base64::Engine::decode(&base64::engine::general_purpose::STANDARD, content)?
+        parse_binary_b64(content)?
     } else if s.starts_with("h\"") {
-        // Hex encoding
         let content = &s[2..s.len() - 1]; // Remove h" and "
-
-        if content.len().is_multiple_of(2) {
-            return Err(Error::OddHexDigits);
-        }
-
-        (0..content.len())
-            .step_by(2)
-            .map(|i| u8::from_str_radix(&content[i..i + 2], 16))
-            .collect::<StdResult<Vec<u8>, _>>()?
+        parse_binary_hex(content)?
     } else {
-        return Err(Error::UnknownBinaryEncoding);
+        let encoding = s.split('"').next().unwrap_or(s);
+        return Err(Error::UnknownBinaryEncoding(encoding.to_string()));
     };
 
     Ok(Value::Binary(Binary(bytes)))
 }
 
-fn parse_list(pair: pest::iterators::Pair<Rule>) -> Result<Value> {
+fn parse_list(pair: Pair<Rule>) -> Result<Value> {
     let values = pair
         .into_inner()
         .map(parse_value)
@@ -167,7 +177,7 @@ fn parse_list(pair: pest::iterators::Pair<Rule>) -> Result<Value> {
     Ok(Value::List(values))
 }
 
-fn parse_map(pair: pest::iterators::Pair<Rule>) -> Result<Value> {
+fn parse_map(pair: Pair<Rule>) -> Result<Value> {
     let mut map = BTreeMap::new();
 
     for member in pair.into_inner() {
@@ -256,6 +266,24 @@ mod tests {
             parse("'world'").unwrap(),
             Value::String("world".to_string())
         );
+    }
+
+    #[test]
+    fn test_parse_binary() {
+        // Test hex encoding
+        let hex_result = parse("h\"48656c6c6f\"").unwrap();
+        assert!(matches!(hex_result, Value::Binary(ref b) if b.0 == b"Hello"));
+
+        // Test base64 encoding
+        let b64_result = parse("b64\"SGVsbG8=\"").unwrap();
+        assert!(matches!(b64_result, Value::Binary(ref b) if b.0 == b"Hello"));
+
+        // Test empty binary
+        let empty_hex = parse("h\"\"").unwrap();
+        assert!(matches!(empty_hex, Value::Binary(ref b) if b.0.is_empty()));
+
+        let empty_b64 = parse("b64\"\"").unwrap();
+        assert!(matches!(empty_b64, Value::Binary(ref b) if b.0.is_empty()));
     }
 
     #[test]

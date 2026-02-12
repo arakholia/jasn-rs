@@ -1,26 +1,27 @@
 use super::Rule;
 
 #[derive(Debug, thiserror::Error)]
+#[non_exhaustive]
 pub enum Error {
     /// Error from the pest parser (syntax errors).
     #[error("Parse error: {0}")]
-    PestError(#[from] Box<pest::error::Error<Rule>>),
+    PestError(#[from] pest::error::Error<Rule>),
 
     /// Integer parsing or overflow error.
     #[error("Integer parse error: {0}")]
-    IntError(#[from] std::num::ParseIntError),
+    ParseIntError(#[from] std::num::ParseIntError),
 
     /// Float parsing error.
     #[error("Float parse error: {0}")]
-    FloatError(#[from] std::num::ParseFloatError),
+    ParseFloatError(#[from] std::num::ParseFloatError),
 
     /// Base64 decoding error.
     #[error("Base64 decode error: {0}")]
-    Base64Error(#[from] base64::DecodeError),
+    Base64DecodeError(#[from] base64::DecodeError),
 
     /// Invalid escape sequence in string.
-    #[error("Invalid escape sequence")]
-    InvalidEscape,
+    #[error("Invalid escape character: {0}")]
+    InvalidEscapeChar(char),
 
     /// Invalid unicode escape sequence.
     #[error("Invalid unicode escape: {0}")]
@@ -35,8 +36,8 @@ pub enum Error {
     OddHexDigits,
 
     /// Unknown binary encoding.
-    #[error("Unknown binary encoding")]
-    UnknownBinaryEncoding,
+    #[error("Unknown binary encoding: {0}")]
+    UnknownBinaryEncoding(String),
 }
 
 pub type Result<T> = std::result::Result<T, Error>;
