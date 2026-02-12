@@ -1,8 +1,8 @@
 use std::{collections::BTreeMap, result::Result as StdResult};
 
-use chrono::{DateTime, Utc};
 use pest::{Parser, iterators::Pair};
 use pest_derive::Parser;
+use time::OffsetDateTime;
 
 use crate::{Binary, Value};
 
@@ -209,12 +209,12 @@ fn parse_timestamp(pair: Pair<Rule>) -> Result<Value> {
     // Extract the content between ts" and "
     let content = &s[3..s.len() - 1]; // Remove ts" and "
 
-    // Parse using chrono's RFC3339 parser
-    let dt = DateTime::parse_from_rfc3339(content)
+    // Parse using time's RFC3339 parser
+    let dt = OffsetDateTime::parse(content, &time::format_description::well_known::Rfc3339)
         .map_err(|e| Error::InvalidTimestamp(content.to_string(), e.to_string()))?;
 
     // Convert to UTC
-    Ok(Value::Timestamp(dt.with_timezone(&Utc)))
+    Ok(Value::Timestamp(dt.to_offset(time::UtcOffset::UTC)))
 }
 
 fn parse_list(pair: Pair<Rule>) -> Result<Value> {
@@ -420,7 +420,7 @@ mod tests {
         // Test specific timestamp value
         let result = parse("ts\"2009-02-13T23:31:30Z\"").unwrap();
         if let Value::Timestamp(dt) = result {
-            assert_eq!(dt.timestamp(), 1234567890);
+            assert_eq!(dt.unix_timestamp(), 1234567890);
         } else {
             panic!("Expected timestamp value");
         }

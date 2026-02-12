@@ -1,7 +1,5 @@
 use std::collections::BTreeMap;
 
-use chrono::SecondsFormat;
-
 use crate::{Binary, Value};
 
 /// Formatting options and configuration.
@@ -45,7 +43,13 @@ fn format_with_opts(value: &Value, opts: &Options, depth: usize) -> String {
             format_string(s, quote, opts.escape_unicode)
         }
         Value::Binary(b) => format_binary(b, opts.binary_encoding),
-        Value::Timestamp(t) => format!("ts\"{}\"", t.to_rfc3339_opts(SecondsFormat::AutoSi, true)),
+        Value::Timestamp(t) => {
+            // Format as RFC3339 with automatic precision and Z for UTC
+            let formatted = t
+                .format(&time::format_description::well_known::Rfc3339)
+                .unwrap_or_else(|_| t.to_string());
+            format!("ts\"{}\"", formatted)
+        }
         Value::List(items) => {
             if opts.indent.is_empty() {
                 format_list_compact(items, opts)

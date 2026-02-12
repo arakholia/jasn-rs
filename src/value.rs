@@ -1,6 +1,6 @@
 use std::{borrow::Cow, collections::BTreeMap, fmt};
 
-use chrono::{DateTime, Utc};
+use time::OffsetDateTime;
 
 use crate::Binary;
 
@@ -21,7 +21,7 @@ pub enum Value {
     /// Binary data (byte array).
     Binary(Binary),
     /// Timestamp with timezone (ISO8601/RFC3339 compatible).
-    Timestamp(DateTime<Utc>),
+    Timestamp(OffsetDateTime),
     /// Ordered list of values.
     List(Vec<Value>),
     /// Map of string keys to values.
@@ -124,8 +124,8 @@ impl Value {
         }
     }
 
-    /// Returns the [`DateTime<Utc>`] timestamp value if this is a [`Self::Timestamp`], otherwise `None`.
-    pub fn as_timestamp(&self) -> Option<&DateTime<Utc>> {
+    /// Returns the [`OffsetDateTime`] timestamp value if this is a [`Self::Timestamp`], otherwise `None`.
+    pub fn as_timestamp(&self) -> Option<&OffsetDateTime> {
         match self {
             Value::Timestamp(t) => Some(t),
             _ => None,
@@ -218,8 +218,8 @@ impl From<Binary> for Value {
     }
 }
 
-impl From<DateTime<Utc>> for Value {
-    fn from(value: DateTime<Utc>) -> Self {
+impl From<OffsetDateTime> for Value {
+    fn from(value: OffsetDateTime) -> Self {
         Value::Timestamp(value)
     }
 }
@@ -374,7 +374,7 @@ mod tests {
     #[case(Value::Float(2.5), "float")]
     #[case(Value::String("hello".to_string()), "string")]
     #[case(Value::Binary(Binary(vec![1, 2, 3])), "binary")]
-    #[case(Value::Timestamp(DateTime::from_timestamp(1234567890, 0).unwrap()), "timestamp")]
+    #[case(Value::Timestamp(OffsetDateTime::from_unix_timestamp(1234567890).unwrap()), "timestamp")]
     #[case(Value::List(vec![Value::Null]), "list")]
     #[case(Value::Map(BTreeMap::new()), "map")]
     fn test_is_methods(#[case] value: Value, #[case] value_type: &str) {
@@ -426,7 +426,7 @@ mod tests {
 
     #[test]
     fn test_as_timestamp() {
-        let ts = DateTime::from_timestamp(1234567890, 0).unwrap();
+        let ts = OffsetDateTime::from_unix_timestamp(1234567890).unwrap();
         let ts_val = Value::Timestamp(ts);
         assert_eq!(ts_val.as_timestamp(), Some(&ts));
         assert_eq!(Value::Int(42).as_timestamp(), None);
@@ -474,8 +474,8 @@ mod tests {
         let binary = Binary(vec![1, 2, 3]);
         assert_eq!(Value::from(binary.clone()), Value::Binary(binary));
 
-        // From DateTime<Utc>
-        let dt = DateTime::from_timestamp(1234567890, 0).unwrap();
+        // From OffsetDateTime
+        let dt = OffsetDateTime::from_unix_timestamp(1234567890).unwrap();
         assert_eq!(Value::from(dt), Value::Timestamp(dt));
 
         // Value::Binary from byte literal

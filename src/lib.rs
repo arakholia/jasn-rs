@@ -36,8 +36,8 @@
 
 #![warn(missing_docs)]
 
-// Re-export chrono types for timestamp support
-pub use chrono::{DateTime, Utc};
+// Re-export time types for timestamp support
+pub use time::OffsetDateTime;
 
 mod binary;
 pub use binary::Binary;
