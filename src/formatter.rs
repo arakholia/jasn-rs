@@ -1,6 +1,7 @@
 use std::collections::BTreeMap;
 
 use crate::{Binary, Value};
+use lazy_static::lazy_static;
 use time::format_description;
 
 /// Formatting options and configuration.
@@ -94,11 +95,33 @@ fn format_float(f: f64, opts: &Options) -> String {
     }
 }
 
+lazy_static! {
+    static ref TIMESTAMP_FORMAT_SECONDS: Vec<format_description::FormatItem<'static>> = 
+        format_description::parse(
+            "[year]-[month]-[day]T[hour]:[minute]:[second][offset_hour sign:mandatory]:[offset_minute]"
+        ).unwrap();
+    
+    static ref TIMESTAMP_FORMAT_MILLIS: Vec<format_description::FormatItem<'static>> = 
+        format_description::parse(
+            "[year]-[month]-[day]T[hour]:[minute]:[second].[subsecond digits:3][offset_hour sign:mandatory]:[offset_minute]"
+        ).unwrap();
+    
+    static ref TIMESTAMP_FORMAT_MICROS: Vec<format_description::FormatItem<'static>> = 
+        format_description::parse(
+            "[year]-[month]-[day]T[hour]:[minute]:[second].[subsecond digits:6][offset_hour sign:mandatory]:[offset_minute]"
+        ).unwrap();
+    
+    static ref TIMESTAMP_FORMAT_NANOS: Vec<format_description::FormatItem<'static>> = 
+        format_description::parse(
+            "[year]-[month]-[day]T[hour]:[minute]:[second].[subsecond digits:9][offset_hour sign:mandatory]:[offset_minute]"
+        ).unwrap();
+}
+
 fn format_timestamp(t: &crate::Timestamp, opts: &Options) -> String {
     use options::TimestampPrecision;
 
-    // Create format descriptor based on precision
-    let format = match opts.timestamp_precision {
+    // Select format descriptor based on precision
+    let format: &[format_description::FormatItem<'_>] = match opts.timestamp_precision {
         TimestampPrecision::Auto => {
             // Use RFC3339 which includes fractional seconds when present
             let formatted = t
@@ -116,30 +139,14 @@ fn format_timestamp(t: &crate::Timestamp, opts: &Options) -> String {
             };
             return format!("ts\"{}\"", final_str);
         }
-        TimestampPrecision::Seconds => {
-            format_description::parse(
-                "[year]-[month]-[day]T[hour]:[minute]:[second][offset_hour sign:mandatory]:[offset_minute]"
-            ).unwrap()
-        }
-        TimestampPrecision::Milliseconds => {
-            format_description::parse(
-                "[year]-[month]-[day]T[hour]:[minute]:[second].[subsecond digits:3][offset_hour sign:mandatory]:[offset_minute]"
-            ).unwrap()
-        }
-        TimestampPrecision::Microseconds => {
-            format_description::parse(
-                "[year]-[month]-[day]T[hour]:[minute]:[second].[subsecond digits:6][offset_hour sign:mandatory]:[offset_minute]"
-            ).unwrap()
-        }
-        TimestampPrecision::Nanoseconds => {
-            format_description::parse(
-                "[year]-[month]-[day]T[hour]:[minute]:[second].[subsecond digits:9][offset_hour sign:mandatory]:[offset_minute]"
-            ).unwrap()
-        }
+        TimestampPrecision::Seconds => &TIMESTAMP_FORMAT_SECONDS,
+        TimestampPrecision::Milliseconds => &TIMESTAMP_FORMAT_MILLIS,
+        TimestampPrecision::Microseconds => &TIMESTAMP_FORMAT_MICROS,
+        TimestampPrecision::Nanoseconds => &TIMESTAMP_FORMAT_NANOS,
     };
 
     // Custom formats output +00:00, convert to Z if needed
-    let formatted = t.format(&format).unwrap_or_else(|_| t.to_string());
+    let formatted = t.format(format).unwrap_or_else(|_| t.to_string());
     let final_str = if opts.use_zulu && formatted.ends_with("+00:00") {
         let mut s = formatted;
         s.truncate(s.len() - 6);
