@@ -1,0 +1,28 @@
+// Unicode strings
+{
+  // Basic ASCII via unicode escapes
+  abc: "\u0041\u0042\u0043",
+  
+  // Common symbols
+  copyright: "\u00A9",
+  euro: "\u20AC",
+  
+  // Mathematical symbols
+  pi: "\u03C0",
+  sum: "\u2211",
+  
+  // Emoji and supplementary characters (via surrogate pairs)
+  smiley: "😀",  // Direct UTF-8
+  
+  // Chinese characters
+  chinese: "\u4E2D\u6587",
+  
+  // Arabic
+  arabic: "\u0645\u0631\u062D\u0628\u0627",
+  
+  // Mixed content
+  mixed: "Hello \u4E16\u754C from \u0041\u0042\u0043!",
+  
+  // Control characters via escapes
+  tab_newline: "line1\tcolumn2\nline2",
+}

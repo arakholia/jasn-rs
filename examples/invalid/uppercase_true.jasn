@@ -1,0 +1,4 @@
+// Uppercase True (should be lowercase)
+{
+  bad: True
+}

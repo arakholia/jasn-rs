@@ -1,0 +1,4 @@
+// Invalid unicode escape - too few hex digits
+{
+  bad: "\u041"
+}

@@ -1,0 +1,15 @@
+// Empty structures
+{
+  empty_object: {},
+  empty_array: [],
+  empty_string: "",
+  empty_binary_b64: b64"",
+  empty_binary_hex: h"",
+  
+  // Nested empties
+  nested: {
+    more: {
+      empties: [[], {}, ""],
+    },
+  },
+}
