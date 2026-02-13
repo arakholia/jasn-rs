@@ -11,7 +11,7 @@ pub enum Error {
     #[error("Parse error: {0}")]
     ParseError(#[from] parser::Error),
     /// Deserialization error from value module.
-    #[error("Eeserialization error: {0}")]
+    #[error("Deserialization error: {0}")]
     DeserializationError(#[from] de::Error),
 }
 
