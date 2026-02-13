@@ -1,4 +1,4 @@
-use std::{borrow::Cow, collections::BTreeMap, fmt};
+use std::{borrow::Cow, collections::BTreeMap};
 
 mod binary;
 pub use binary::Binary;
@@ -34,13 +34,12 @@ pub enum Value {
     Map(BTreeMap<String, Value>),
 }
 
-impl fmt::Display for Value {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        if f.alternate() {
-            write!(f, "{}", crate::formatter::format_pretty(self))
-        } else {
-            write!(f, "{}", crate::formatter::format(self))
-        }
+/// Display implementation for Value using debug formatting.
+///
+/// For proper JASN formatting, use the `jasn` crate's formatting functions.
+impl std::fmt::Display for Value {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:?}", self)
     }
 }
 

@@ -105,8 +105,8 @@
 
 #![warn(missing_docs)]
 
-mod value;
-pub use value::{Binary, Timestamp, Value};
+// Re-export core types
+pub use jasn_core::{Binary, Timestamp, Value};
 
 pub mod parser;
 pub use parser::parse;

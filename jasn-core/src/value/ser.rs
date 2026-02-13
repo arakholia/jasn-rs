@@ -216,6 +216,7 @@ impl ser::Serializer for Serializer {
     }
 }
 
+/// Helper for serializing sequences.
 pub struct SerializeVec {
     vec: Vec<Value>,
 }
@@ -269,6 +270,7 @@ impl ser::SerializeTupleStruct for SerializeVec {
     }
 }
 
+/// Helper for serializing tuple variants.
 pub struct SerializeTupleVariant {
     name: String,
     vec: Vec<Value>,
@@ -293,6 +295,7 @@ impl ser::SerializeTupleVariant for SerializeTupleVariant {
     }
 }
 
+/// Helper for serializing maps and structs.
 pub struct SerializeMap {
     map: BTreeMap<String, Value>,
     next_key: Option<String>,
@@ -344,6 +347,7 @@ impl ser::SerializeStruct for SerializeMap {
     }
 }
 
+/// Helper for serializing struct variants.
 pub struct SerializeStructVariant {
     name: String,
     map: BTreeMap<String, Value>,

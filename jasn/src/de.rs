@@ -1,8 +1,9 @@
 //! Deserialization of JASN text to Rust values.
 
+use jasn_core::de;
 use serde::de::Deserialize;
 
-use crate::{Value, parser, value::de};
+use crate::{Value, parser};
 
 /// Error type for deserialization.
 #[derive(Debug, thiserror::Error)]

@@ -1,5 +1,5 @@
 # JASN - Just Another Serialization Notation
-Rust library for parsing and formatting JASN (pronounced "Jason", not to be confused with "JSON"). JASN is a human-readable data serialization format similar to JSON but with explicit integer and binary types.
+JASN (pronounced "Jason") is a human-readable data serialization format similar to JSON but with explicit integer and binary types.
 
 ## Motivation
 While JSON is widely used, it has limitations such as treating all numbers as floating-point and lacking native support for binary data. 
