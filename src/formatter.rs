@@ -10,21 +10,21 @@ pub use options::Options;
 use options::{BinaryEncoding, QuoteStyle, TimestampPrecision};
 
 /// Formats a JASN value into a compact string (no unnecessary whitespace).
-pub fn to_string(value: &Value) -> String {
-    format_with_opts(value, &Options::compact(), 0)
+pub fn format(value: &Value) -> String {
+    format_impl(value, &Options::compact(), 0)
 }
 
 /// Formats a JASN value into a pretty-printed string with indentation and newlines.
-pub fn to_string_pretty(value: &Value) -> String {
-    format_with_opts(value, &Options::pretty(), 0)
+pub fn format_pretty(value: &Value) -> String {
+    format_impl(value, &Options::pretty(), 0)
 }
 
 /// Formats a JASN value with custom formatting options.
-pub fn to_string_opts(value: &Value, opts: &Options) -> String {
-    format_with_opts(value, opts, 0)
+pub fn format_with_opts(value: &Value, opts: &Options) -> String {
+    format_impl(value, opts, 0)
 }
 
-fn format_with_opts(value: &Value, opts: &Options, depth: usize) -> String {
+fn format_impl(value: &Value, opts: &Options, depth: usize) -> String {
     match value {
         Value::Null => "null".to_string(),
         Value::Bool(b) => b.to_string(),
@@ -213,7 +213,7 @@ fn format_list_compact(items: &[Value], opts: &Options) -> String {
 
     let formatted: Vec<String> = items
         .iter()
-        .map(|item| format_with_opts(item, opts, 0))
+        .map(|item| format_impl(item, opts, 0))
         .collect();
     format!("[{}]", formatted.join(","))
 }
@@ -229,7 +229,7 @@ fn format_list_pretty(items: &[Value], opts: &Options, depth: usize) -> String {
 
     for (i, item) in items.iter().enumerate() {
         result.push_str(&item_indent);
-        result.push_str(&format_with_opts(item, opts, depth + 1));
+        result.push_str(&format_impl(item, opts, depth + 1));
         if i < items.len() - 1 || opts.trailing_commas {
             result.push(',');
         }
@@ -273,7 +273,7 @@ fn format_map_compact(map: &BTreeMap<String, Value>, opts: &Options) -> String {
                 };
                 format_string(k, quote, opts.escape_unicode)
             };
-            format!("{}:{}", key_str, format_with_opts(v, opts, 0))
+            format!("{}:{}", key_str, format_impl(v, opts, 0))
         })
         .collect();
     format!("{{{}}}", formatted.join(","))
@@ -317,7 +317,7 @@ fn format_map_pretty(map: &BTreeMap<String, Value>, opts: &Options, depth: usize
         }
 
         result.push_str(": ");
-        result.push_str(&format_with_opts(value, opts, depth + 1));
+        result.push_str(&format_impl(value, opts, depth + 1));
 
         if i < entries.len() - 1 || opts.trailing_commas {
             result.push(',');
@@ -366,7 +366,7 @@ mod tests {
     #[case(Value::Int(42), "42")]
     #[case(Value::Int(-123), "-123")]
     fn test_format_primitives(#[case] value: Value, #[case] expected: &str) {
-        assert_eq!(to_string(&value), expected);
+        assert_eq!(format(&value), expected);
     }
 
     #[rstest]
@@ -375,23 +375,23 @@ mod tests {
     #[case(f64::INFINITY, "inf")]
     #[case(f64::NEG_INFINITY, "-inf")]
     fn test_format_float(#[case] value: f64, #[case] expected: &str) {
-        assert_eq!(to_string(&Value::Float(value)), expected);
+        assert_eq!(format(&Value::Float(value)), expected);
     }
 
     #[test]
     fn test_format_float_nan() {
-        assert!(to_string(&Value::Float(f64::NAN)).contains("nan"));
+        assert!(format(&Value::Float(f64::NAN)).contains("nan"));
     }
 
     #[test]
     fn test_format_string() {
-        assert_eq!(to_string(&Value::String("hello".to_string())), "\"hello\"");
+        assert_eq!(format(&Value::String("hello".to_string())), "\"hello\"");
         assert_eq!(
-            to_string(&Value::String("hello\nworld".to_string())),
+            format(&Value::String("hello\nworld".to_string())),
             "\"hello\\nworld\""
         );
         assert_eq!(
-            to_string(&Value::String("tab\there".to_string())),
+            format(&Value::String("tab\there".to_string())),
             "\"tab\\there\""
         );
     }
@@ -399,15 +399,15 @@ mod tests {
     #[test]
     fn test_format_binary() {
         let binary = Binary(vec![72, 101, 108, 108, 111]); // "Hello"
-        assert_eq!(to_string(&Value::Binary(binary)), "b64\"SGVsbG8=\"");
+        assert_eq!(format(&Value::Binary(binary)), "b64\"SGVsbG8=\"");
     }
 
     #[test]
     fn test_format_list() {
         let list = vec![Value::Int(1), Value::Int(2), Value::Int(3)];
-        assert_eq!(to_string(&Value::List(list)), "[1,2,3]");
+        assert_eq!(format(&Value::List(list)), "[1,2,3]");
 
-        assert_eq!(to_string(&Value::List(vec![])), "[]");
+        assert_eq!(format(&Value::List(vec![])), "[]");
     }
 
     #[test]
@@ -416,7 +416,7 @@ mod tests {
         map.insert("name".to_string(), Value::String("Alice".to_string()));
         map.insert("age".to_string(), Value::Int(30));
 
-        let formatted = to_string(&Value::Map(map));
+        let formatted = format(&Value::Map(map));
         // Compact format uses unquoted keys to save bytes
         assert!(formatted.contains("age:30"));
         assert!(formatted.contains("name:\"Alice\""));
@@ -426,33 +426,33 @@ mod tests {
     fn test_round_trip() {
         // Null
         let null = Value::Null;
-        assert_eq!(parse(&to_string(&null)).unwrap(), null);
+        assert_eq!(parse(&format(&null)).unwrap(), null);
 
         // Bool
         let bool_val = Value::Bool(true);
-        assert_eq!(parse(&to_string(&bool_val)).unwrap(), bool_val);
+        assert_eq!(parse(&format(&bool_val)).unwrap(), bool_val);
 
         // Int
         let int_val = Value::Int(42);
-        assert_eq!(parse(&to_string(&int_val)).unwrap(), int_val);
+        assert_eq!(parse(&format(&int_val)).unwrap(), int_val);
 
         // Float
         let float_val = Value::Float(2.5);
-        assert_eq!(parse(&to_string(&float_val)).unwrap(), float_val);
+        assert_eq!(parse(&format(&float_val)).unwrap(), float_val);
 
         // String
         let string_val = Value::String("hello world".to_string());
-        assert_eq!(parse(&to_string(&string_val)).unwrap(), string_val);
+        assert_eq!(parse(&format(&string_val)).unwrap(), string_val);
 
         // List
         let list_val = Value::List(vec![Value::Int(1), Value::Int(2)]);
-        assert_eq!(parse(&to_string(&list_val)).unwrap(), list_val);
+        assert_eq!(parse(&format(&list_val)).unwrap(), list_val);
 
         // Map
         let mut map = BTreeMap::new();
         map.insert("key".to_string(), Value::Int(42));
         let map_val = Value::Map(map);
-        assert_eq!(parse(&to_string(&map_val)).unwrap(), map_val);
+        assert_eq!(parse(&format(&map_val)).unwrap(), map_val);
     }
 
     #[test]
@@ -461,7 +461,7 @@ mod tests {
         map.insert("name".to_string(), Value::String("Alice".to_string()));
         map.insert("age".to_string(), Value::Int(30));
 
-        let pretty = to_string_pretty(&Value::Map(map));
+        let pretty = format_pretty(&Value::Map(map));
         assert!(pretty.contains('\n'));
         assert!(pretty.contains("  "));
     }
@@ -492,7 +492,7 @@ mod tests {
     #[case(Value::Float(f64::NAN), "nan")]
     fn test_leading_plus(#[case] value: Value, #[case] expected: &str) {
         let opts = Options::compact().with_leading_plus(true);
-        assert_eq!(to_string_opts(&value, &opts), expected);
+        assert_eq!(format_with_opts(&value, &opts), expected);
     }
 
     #[rstest]
@@ -500,7 +500,7 @@ mod tests {
     #[case(Value::Float(2.5), "2.5")]
     fn test_no_leading_plus(#[case] value: Value, #[case] expected: &str) {
         let opts = Options::compact();
-        assert_eq!(to_string_opts(&value, &opts), expected);
+        assert_eq!(format_with_opts(&value, &opts), expected);
     }
 
     #[test]
@@ -512,7 +512,7 @@ mod tests {
 
         // With sort_keys enabled
         let sorted_opts = Options::compact().with_sort_keys(true);
-        let sorted = to_string_opts(&Value::Map(map), &sorted_opts);
+        let sorted = format_with_opts(&Value::Map(map), &sorted_opts);
 
         // Should be alphabetically ordered
         assert_eq!(sorted, "{apple:2,banana:3,zebra:1}");
@@ -522,7 +522,7 @@ mod tests {
         let mut map2 = BTreeMap::new();
         map2.insert("z".to_string(), Value::Int(1));
         map2.insert("a".to_string(), Value::Int(2));
-        let result = to_string_opts(&Value::Map(map2), &pretty_sorted);
+        let result = format_with_opts(&Value::Map(map2), &pretty_sorted);
         assert!(result.find("a").unwrap() < result.find("z").unwrap());
     }
 
@@ -532,23 +532,23 @@ mod tests {
 
         // ASCII characters should not be escaped
         let ascii = Value::String("hello".to_string());
-        assert_eq!(to_string_opts(&ascii, &opts), "\"hello\"");
+        assert_eq!(format_with_opts(&ascii, &opts), "\"hello\"");
 
         // Non-ASCII characters should be escaped
         let unicode = Value::String("café".to_string());
-        assert_eq!(to_string_opts(&unicode, &opts), "\"caf\\u00e9\"");
+        assert_eq!(format_with_opts(&unicode, &opts), "\"caf\\u00e9\"");
 
         // Emoji should be escaped using UTF-16 surrogate pairs (U+1F30D => D83C DF0D)
         let emoji = Value::String("Hello 🌍".to_string());
-        assert_eq!(to_string_opts(&emoji, &opts), "\"Hello \\ud83c\\udf0d\"");
+        assert_eq!(format_with_opts(&emoji, &opts), "\"Hello \\ud83c\\udf0d\"");
 
         // Chinese characters
         let chinese = Value::String("你好".to_string());
-        assert_eq!(to_string_opts(&chinese, &opts), "\"\\u4f60\\u597d\"");
+        assert_eq!(format_with_opts(&chinese, &opts), "\"\\u4f60\\u597d\"");
 
         // Without escape_unicode should keep Unicode literal
         let no_escape = Options::compact().with_escape_unicode(false);
-        let result = to_string_opts(&unicode, &no_escape);
+        let result = format_with_opts(&unicode, &no_escape);
         assert_eq!(result, "\"café\"");
     }
 
@@ -562,7 +562,7 @@ mod tests {
     fn test_surrogate_pair_encoding(#[case] input: &str, #[case] expected: &str) {
         let opts = Options::compact().with_escape_unicode(true);
         let value = Value::String(input.to_string());
-        assert_eq!(to_string_opts(&value, &opts), expected);
+        assert_eq!(format_with_opts(&value, &opts), expected);
     }
 
     #[rstest]
@@ -575,7 +575,7 @@ mod tests {
     fn test_surrogate_pair_round_trip(#[case] original: &str) {
         let opts = Options::compact().with_escape_unicode(true);
         let value = Value::String(original.to_string());
-        let formatted = to_string_opts(&value, &opts);
+        let formatted = format_with_opts(&value, &opts);
         let parsed = crate::parse(&formatted).expect("Failed to parse");
 
         if let Value::String(s) = parsed {
@@ -593,7 +593,7 @@ mod tests {
         let value = Value::Timestamp(ts);
 
         // Default (use_zulu = true) - should use Z notation
-        let result = to_string(&value);
+        let result = format(&value);
         assert_eq!(result, "ts\"2009-02-13T23:31:30Z\"");
     }
 
@@ -606,7 +606,7 @@ mod tests {
         let ts = Timestamp::from_unix_timestamp(1234567890).unwrap();
         let value = Value::Timestamp(ts);
         let opts = Options::compact().with_use_zulu(use_zulu);
-        let result = to_string_opts(&value, &opts);
+        let result = format_with_opts(&value, &opts);
         assert_eq!(result, expected);
     }
 
@@ -619,7 +619,7 @@ mod tests {
         let ts = Timestamp::from_unix_timestamp_nanos(1234567890123456789).unwrap();
         let value = Value::Timestamp(ts);
         let opts = Options::compact().with_use_zulu(use_zulu);
-        let result = to_string_opts(&value, &opts);
+        let result = format_with_opts(&value, &opts);
         assert_eq!(result, expected);
     }
 
@@ -641,7 +641,7 @@ mod tests {
         let ts = Timestamp::from_unix_timestamp_nanos(1234567890123456789).unwrap();
         let value = Value::Timestamp(ts);
         let opts = Options::compact().with_timestamp_precision(precision);
-        let result = to_string_opts(&value, &opts);
+        let result = format_with_opts(&value, &opts);
         assert_eq!(result, expected);
     }
 
@@ -654,7 +654,7 @@ mod tests {
         let opts = Options::compact()
             .with_timestamp_precision(TimestampPrecision::Milliseconds)
             .with_use_zulu(false);
-        let result = to_string_opts(&value, &opts);
+        let result = format_with_opts(&value, &opts);
         assert_eq!(result, "ts\"2009-02-13T23:31:30.123+00:00\"");
     }
 
@@ -667,7 +667,7 @@ mod tests {
         let ts = Timestamp::from_unix_timestamp(1234567890).unwrap();
         let value = Value::Timestamp(ts);
         let opts = Options::compact().with_timestamp_precision(TimestampPrecision::Milliseconds);
-        let result = to_string_opts(&value, &opts);
+        let result = format_with_opts(&value, &opts);
         assert_eq!(result, "ts\"2009-02-13T23:31:30.000Z\"");
     }
 }

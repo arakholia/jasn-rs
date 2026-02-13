@@ -17,7 +17,7 @@
 //!
 //! let jasn_text = r#"{ name: "Alice", age: 30 }"#;
 //! let value = parse(jasn_text).unwrap();
-//! println!("{}", formatter::to_string_pretty(&value));
+//! println!("{}", formatter::format_pretty(&value));
 //! ```
 //!
 //! ## Serde Integration (default feature)

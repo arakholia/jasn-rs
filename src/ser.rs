@@ -16,7 +16,7 @@ where
     T: Serialize,
 {
     let jasn_value = ser::to_value(value)?;
-    Ok(formatter::to_string(&jasn_value))
+    Ok(formatter::format(&jasn_value))
 }
 
 /// Serialize a Rust value to a JASN string with pretty formatting.
@@ -25,7 +25,7 @@ where
     T: Serialize,
 {
     let jasn_value = ser::to_value(value)?;
-    Ok(formatter::to_string_pretty(&jasn_value))
+    Ok(formatter::format_pretty(&jasn_value))
 }
 
 /// Serialize a Rust value to a JASN string with custom formatting options.
@@ -35,7 +35,7 @@ where
 {
     // TODO: optimize by directly serializing to string instead of going through Value
     let jasn_value = ser::to_value(value)?;
-    Ok(formatter::to_string_opts(&jasn_value, options))
+    Ok(formatter::format_with_opts(&jasn_value, options))
 }
 
 /// Serialize a Rust value to a JASN `Value`.
