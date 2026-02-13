@@ -1,7 +1,7 @@
-//! Format a [`Value`][crate::Value] into JASN text.
+//! Format a [`Value`] into JASN text.
 //!
-//! The main entry points are [`format`] and [`format_pretty`] for common use cases.
-//! For custom formatting options, use [`format_with_opts`] with [`Options`].
+//! The main entry points are [`format()`] and [`format_pretty()`] for common use cases.
+//! For custom formatting options, use [`format_with_opts()`] with [`Options`].
 //!
 //! ```
 //! use jasn::{Value, format};
