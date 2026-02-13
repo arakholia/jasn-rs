@@ -3,7 +3,7 @@
 //! The main entry point is [`parse`], which parses a string into a [`Value`][crate::Value].
 //!
 //! ```
-//! use jasn::parser::parse;
+//! use jasn::parse;
 //!
 //! let value = parse(r#"{ name: "Alice", age: 30 }"#).unwrap();
 //! assert!(value.is_map());

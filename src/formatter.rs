@@ -4,14 +4,15 @@
 //! For custom formatting options, use [`format_with_opts`] with [`Options`].
 //!
 //! ```
-//! use jasn::{Value, formatter};
+//! use jasn::{Value, format};
 //!
 //! let value = Value::String("hello".to_string());
-//! assert_eq!(formatter::format(&value), r#""hello""#);
+//! assert_eq!(format(&value), r#""hello""#);
 //!
-//! // Custom formatting
-//! let opts = formatter::Options::pretty().with_indent("\t");
-//! let formatted = formatter::format_with_opts(&value, &opts);
+//! // Custom formatting with advanced options
+//! use jasn::formatter::{Options, format_with_opts};
+//! let opts = Options::pretty().with_indent("\t");
+//! let formatted = format_with_opts(&value, &opts);
 //! ```
 
 use std::collections::BTreeMap;
