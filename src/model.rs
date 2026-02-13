@@ -1,5 +1,8 @@
 mod value;
-pub use value::{Timestamp, Value};
+pub use value::Value;
 
 mod binary;
 pub use binary::Binary;
+
+mod timestamp;
+pub use timestamp::Timestamp;

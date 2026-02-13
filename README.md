@@ -47,7 +47,7 @@ pub enum Value {
     Float(f64),
     String(String),
     Binary(Binary),       // Wrapper for `Vec<u8>`
-    Timestamp(Timestamp), // ISO8601/RFC3339 timestamp (time::OffsetDateTime)
+    Timestamp(Timestamp), // ISO8601/RFC3339 timestamp
     List(Vec<Value>),
     Map(BTreeMap<String, Value>),
 }
