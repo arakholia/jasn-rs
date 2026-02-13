@@ -1,12 +1,7 @@
-//! Serialization to JASN Value.
-//!
-//! This module provides serialization from Rust types to JASN `Value`.
-
+use serde::{ser, Serialize};
 use std::collections::BTreeMap;
 
-use serde::{Serialize, ser};
-
-use crate::{Binary, Value};
+use crate::{formatter, Binary, Value};
 
 /// Error type for serialization.
 #[derive(Debug, thiserror::Error)]
@@ -27,18 +22,44 @@ impl ser::Error for Error {
 
 type Result<T> = std::result::Result<T, Error>;
 
+/// Serialize a Rust value to a JASN string.
+pub fn to_string<T>(value: &T) -> Result<String>
+where
+    T: Serialize,
+{
+    let jasn_value = to_value(value)?;
+    Ok(formatter::to_string(&jasn_value))
+}
+
+/// Serialize a Rust value to a JASN string with pretty formatting.
+pub fn to_string_pretty<T>(value: &T) -> Result<String>
+where
+    T: Serialize,
+{
+    let jasn_value = to_value(value)?;
+    Ok(formatter::to_string_pretty(&jasn_value))
+}
+
+/// Serialize a Rust value to a JASN string with custom formatting options.
+pub fn to_string_opts<T>(value: &T, options: &formatter::Options) -> Result<String>
+where
+    T: Serialize,
+{
+    let jasn_value = to_value(value)?;
+    Ok(formatter::to_string_opts(&jasn_value, options))
+}
+
 /// Serialize a Rust value to a JASN [`Value`].
 pub fn to_value<T>(value: &T) -> Result<Value>
 where
     T: Serialize + ?Sized,
 {
-    value.serialize(Serializer)
+    value.serialize(ValueSerializer)
 }
 
-/// Serializer whose output is a [`Value`].
-pub struct Serializer;
+struct ValueSerializer;
 
-impl ser::Serializer for Serializer {
+impl ser::Serializer for ValueSerializer {
     type Ok = Value;
     type Error = Error;
 
@@ -216,7 +237,7 @@ impl ser::Serializer for Serializer {
     }
 }
 
-pub struct SerializeVec {
+struct SerializeVec {
     vec: Vec<Value>,
 }
 
@@ -269,7 +290,7 @@ impl ser::SerializeTupleStruct for SerializeVec {
     }
 }
 
-pub struct SerializeTupleVariant {
+struct SerializeTupleVariant {
     name: String,
     vec: Vec<Value>,
 }
@@ -293,7 +314,7 @@ impl ser::SerializeTupleVariant for SerializeTupleVariant {
     }
 }
 
-pub struct SerializeMap {
+struct SerializeMap {
     map: BTreeMap<String, Value>,
     next_key: Option<String>,
 }
@@ -314,10 +335,7 @@ impl ser::SerializeMap for SerializeMap {
     where
         T: ?Sized + Serialize,
     {
-        let key = self
-            .next_key
-            .take()
-            .expect("serialize_value called before serialize_key");
+        let key = self.next_key.take().expect("serialize_value called before serialize_key");
         self.map.insert(key, to_value(value)?);
         Ok(())
     }
@@ -344,7 +362,7 @@ impl ser::SerializeStruct for SerializeMap {
     }
 }
 
-pub struct SerializeStructVariant {
+struct SerializeStructVariant {
     name: String,
     map: BTreeMap<String, Value>,
 }

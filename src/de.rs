@@ -27,7 +27,7 @@ where
     Ok(de::from_value(&value)?)
 }
 
-/// Deserialize a JASN `Value` into a Rust value.
+/// Deserialize a JASN [`Value`] into a Rust value.
 pub fn from_value<'de, T>(value: &'de Value) -> Result<T>
 where
     T: Deserialize<'de>,

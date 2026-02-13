@@ -8,6 +8,64 @@
 //! 3. **Timestamps**: ISO8601/RFC3339 timestamps with `ts"..."` syntax
 //! 4. Permissive syntax, similar to JSON5
 //!
+//! # JASN Syntax
+//!
+//! A comprehensive example showing all supported value types:
+//!
+//! ```jasn
+//! {
+//!   // Comments are supported
+//!   /* Block comments are supported */
+//!   null_value: null,
+//!   
+//!   // Booleans
+//!   bool_true: true,
+//!   bool_false: false,
+//!   
+//!   // Integers (explicit type, no decimal point)
+//!   integer: 42,
+//!   negative: -123,
+//!   hex: 0xFF,
+//!   binary: 0b1010,
+//!   octal: 0o755,
+//!   with_underscores: 1_000_000,
+//!   
+//!   // Floats (always have decimal point or exponent)
+//!   float: 3.14,
+//!   scientific: 1.5e10,
+//!   special_inf: inf,
+//!   special_neg_inf: -inf,
+//!   special_nan: nan,
+//!   
+//!   // Strings (double or single quotes)
+//!   string_double: "Hello, World!",
+//!   string_single: 'Hello, World!',
+//!   string_unicode: "Hello \u4E16\u754C",  // Unicode escapes
+//!   
+//!   // Binary data
+//!   binary_hex: h"48656c6c6f",           // Hex encoding
+//!   binary_base64: b64"SGVsbG8gV29ybGQ=", // Base64 encoding
+//!   
+//!   // Timestamps (RFC3339/ISO8601)
+//!   timestamp: ts"2024-01-15T12:30:45Z",
+//!   timestamp_offset: ts"2024-01-15T12:30:45-05:00",
+//!   
+//!   // Lists
+//!   list: [1, 2, 3, "mixed", true, null],
+//!   nested_list: [[1, 2], [3, 4]],
+//!   
+//!   // Maps (objects)
+//!   map: {
+//!     unquoted_key: "value",
+//!     "quoted key": "also works",
+//!     nested: { a: 1, b: 2 },
+//!   },
+//!   
+//!   // Trailing commas allowed
+//!   trailing: [1, 2, 3,],
+//! }
+//! ```
+//!
 //! # Usage
 //!
 //! ## AST Manipulation (no serde required)

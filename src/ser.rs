@@ -2,7 +2,7 @@
 
 use serde::Serialize;
 
-use crate::{formatter, value::ser};
+use crate::{Value, formatter, value::ser};
 
 /// Error type for serialization.
 pub type Error = ser::Error;
@@ -38,8 +38,8 @@ where
     Ok(formatter::format_with_opts(&jasn_value, options))
 }
 
-/// Serialize a Rust value to a JASN `Value`.
-pub fn to_value<T>(value: &T) -> Result<crate::Value>
+/// Serialize a Rust value to a JASN [`Value`].
+pub fn to_value<T>(value: &T) -> Result<Value>
 where
     T: Serialize + ?Sized,
 {

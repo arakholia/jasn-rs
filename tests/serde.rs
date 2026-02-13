@@ -17,7 +17,7 @@ fn test_serialize_primitives() {
         null_field: None,
         bool_field: true,
         int_field: 42,
-        float_field: 3.14,
+        float_field: 2.5,
         string_field: "hello".to_string(),
     };
 
@@ -25,7 +25,7 @@ fn test_serialize_primitives() {
     assert!(jasn.contains("null"));
     assert!(jasn.contains("true"));
     assert!(jasn.contains("42"));
-    assert!(jasn.contains("3.14"));
+    assert!(jasn.contains("2.5"));
     assert!(jasn.contains("hello"));
 }
 
@@ -69,6 +69,7 @@ fn test_serialize_nested_struct() {
 
 #[test]
 fn test_serialize_enum_unit() {
+    #[allow(dead_code)]
     #[derive(Serialize)]
     enum Color {
         Red,
@@ -83,6 +84,7 @@ fn test_serialize_enum_unit() {
 
 #[test]
 fn test_serialize_enum_newtype() {
+    #[allow(dead_code)]
     #[derive(Serialize)]
     enum Message {
         Text(String),
@@ -97,6 +99,7 @@ fn test_serialize_enum_newtype() {
 
 #[test]
 fn test_serialize_enum_struct() {
+    #[allow(dead_code)]
     #[derive(Serialize)]
     enum Event {
         Click { x: i32, y: i32 },
@@ -125,15 +128,15 @@ fn test_deserialize_primitives() {
         null_field: null,
         bool_field: true,
         int_field: 42,
-        float_field: 3.14,
+        float_field: 2.5,
         string_field: "hello"
     }"#;
 
     let data: Data = jasn::from_str(jasn).unwrap();
     assert_eq!(data.null_field, None);
-    assert_eq!(data.bool_field, true);
+    assert!(data.bool_field);
     assert_eq!(data.int_field, 42);
-    assert_eq!(data.float_field, 3.14);
+    assert_eq!(data.float_field, 2.5);
     assert_eq!(data.string_field, "hello");
 }
 

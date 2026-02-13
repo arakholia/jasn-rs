@@ -25,17 +25,17 @@ use crate::{Binary, Value};
 mod options;
 pub use options::{BinaryEncoding, Options, QuoteStyle, TimestampPrecision};
 
-/// Formats a JASN value into a compact string (no unnecessary whitespace).
+/// Formats a JASN [`Value`] into a compact string (no unnecessary whitespace).
 pub fn format(value: &Value) -> String {
     format_impl(value, &Options::compact(), 0)
 }
 
-/// Formats a JASN value into a pretty-printed string with indentation and newlines.
+/// Formats a JASN [`Value`] into a pretty-printed string with indentation and newlines.
 pub fn format_pretty(value: &Value) -> String {
     format_impl(value, &Options::pretty(), 0)
 }
 
-/// Formats a JASN value with custom formatting options.
+/// Formats a JASN [`Value`] with custom formatting options.
 pub fn format_with_opts(value: &Value, opts: &Options) -> String {
     format_impl(value, opts, 0)
 }

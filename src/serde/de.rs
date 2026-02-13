@@ -1,12 +1,8 @@
-//! Deserialization from JASN Value.
-//!
-//! This module provides deserialization from JASN `Value` to Rust types.
-
 use serde::de::{
     self, Deserialize, DeserializeSeed, IntoDeserializer, MapAccess, SeqAccess, Visitor,
 };
 
-use crate::Value;
+use crate::{parse, Value};
 
 /// Error type for deserialization.
 #[derive(Debug, thiserror::Error)]
@@ -14,6 +10,9 @@ pub enum Error {
     /// Custom deserialization error.
     #[error("custom error: {0}")]
     Custom(String),
+    /// Parse error from the JASN parser.
+    #[error("parse error: {0}")]
+    Parse(#[from] crate::parser::Error),
     /// Type mismatch during deserialization.
     #[error("expected {expected}, got {got}")]
     TypeMismatch {
@@ -35,19 +34,28 @@ impl de::Error for Error {
 
 type Result<T> = std::result::Result<T, Error>;
 
+/// Deserialize a JASN string into a Rust value.
+pub fn from_str<T>(s: &str) -> Result<T>
+where
+    T: for<'de> Deserialize<'de>,
+{
+    let value = parse(s)?;
+    from_value(&value)
+}
+
 /// Deserialize a JASN [`Value`] into a Rust value.
 pub fn from_value<'de, T>(value: &'de Value) -> Result<T>
 where
     T: Deserialize<'de>,
 {
-    T::deserialize(Deserializer { value })
+    T::deserialize(ValueDeserializer { value })
 }
 
-struct Deserializer<'de> {
+struct ValueDeserializer<'de> {
     value: &'de Value,
 }
 
-impl<'de> de::Deserializer<'de> for Deserializer<'de> {
+impl<'de> de::Deserializer<'de> for ValueDeserializer<'de> {
     type Error = Error;
 
     fn deserialize_any<V>(self, visitor: V) -> Result<V::Value>
@@ -64,7 +72,9 @@ impl<'de> de::Deserializer<'de> for Deserializer<'de> {
             Value::Timestamp(_) => Err(Error::InvalidValue(
                 "timestamps must be deserialized explicitly".to_string(),
             )),
-            Value::List(v) => visitor.visit_seq(SeqDeserializer { iter: v.iter() }),
+            Value::List(v) => visitor.visit_seq(SeqDeserializer {
+                iter: v.iter(),
+            }),
             Value::Map(v) => visitor.visit_map(MapDeserializer {
                 iter: v.iter(),
                 value: None,
@@ -224,16 +234,12 @@ impl<'de> de::Deserializer<'de> for Deserializer<'de> {
         match self.value {
             Value::String(v) => {
                 let mut chars = v.chars();
-                if let Some(ch) = chars.next()
-                    && chars.next().is_none()
-                {
-                    return visitor.visit_char(ch);
+                if let Some(ch) = chars.next() {
+                    if chars.next().is_none() {
+                        return visitor.visit_char(ch);
+                    }
                 }
-
-                Err(Error::InvalidValue(format!(
-                    "expected single character, got: {}",
-                    v
-                )))
+                Err(Error::InvalidValue(format!("expected single character, got: {}", v)))
             }
             other => Err(Error::TypeMismatch {
                 expected: "char".to_string(),
@@ -324,7 +330,9 @@ impl<'de> de::Deserializer<'de> for Deserializer<'de> {
         V: Visitor<'de>,
     {
         match self.value {
-            Value::List(v) => visitor.visit_seq(SeqDeserializer { iter: v.iter() }),
+            Value::List(v) => visitor.visit_seq(SeqDeserializer {
+                iter: v.iter(),
+            }),
             other => Err(Error::TypeMismatch {
                 expected: "array".to_string(),
                 got: type_name(other),
@@ -434,7 +442,7 @@ impl<'de> SeqAccess<'de> for SeqDeserializer<'de> {
         T: DeserializeSeed<'de>,
     {
         match self.iter.next() {
-            Some(value) => seed.deserialize(Deserializer { value }).map(Some),
+            Some(value) => seed.deserialize(ValueDeserializer { value }).map(Some),
             None => Ok(None),
         }
     }
@@ -466,7 +474,7 @@ impl<'de> MapAccess<'de> for MapDeserializer<'de> {
         V: DeserializeSeed<'de>,
     {
         match self.value.take() {
-            Some(value) => seed.deserialize(Deserializer { value }),
+            Some(value) => seed.deserialize(ValueDeserializer { value }),
             None => Err(Error::Custom("value is missing".to_string())),
         }
     }
@@ -507,7 +515,7 @@ impl<'de> de::VariantAccess<'de> for VariantDeserializer<'de> {
     where
         T: DeserializeSeed<'de>,
     {
-        seed.deserialize(Deserializer { value: self.value })
+        seed.deserialize(ValueDeserializer { value: self.value })
     }
 
     fn tuple_variant<V>(self, _len: usize, visitor: V) -> Result<V::Value>
@@ -515,7 +523,9 @@ impl<'de> de::VariantAccess<'de> for VariantDeserializer<'de> {
         V: Visitor<'de>,
     {
         match self.value {
-            Value::List(v) => visitor.visit_seq(SeqDeserializer { iter: v.iter() }),
+            Value::List(v) => visitor.visit_seq(SeqDeserializer {
+                iter: v.iter(),
+            }),
             other => Err(Error::TypeMismatch {
                 expected: "array for tuple variant".to_string(),
                 got: type_name(other),
@@ -549,7 +559,7 @@ fn type_name(value: &Value) -> String {
         Value::String(_) => "string",
         Value::Binary(_) => "binary",
         Value::Timestamp(_) => "timestamp",
-        Value::List(_) => "lists",
+        Value::List(_) => "array",
         Value::Map(_) => "map",
     }
     .to_string()
