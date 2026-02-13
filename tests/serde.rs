@@ -216,16 +216,16 @@ fn test_deserialize_enum_struct() {
 }
 
 #[test]
-fn test_roundtrip() {
+fn test_roundtrip_simple() {
     #[derive(Serialize, Deserialize, Debug, PartialEq)]
-    struct Config {
+    struct Simple {
         name: String,
         version: u32,
         enabled: bool,
         values: Vec<i32>,
     }
 
-    let original = Config {
+    let original = Simple {
         name: "test".to_string(),
         version: 1,
         enabled: true,
@@ -233,8 +233,146 @@ fn test_roundtrip() {
     };
 
     let jasn = jasn::to_string(&original).unwrap();
-    let deserialized: Config = jasn::from_str(&jasn).unwrap();
+    let deserialized: Simple = jasn::from_str(&jasn).unwrap();
     assert_eq!(original, deserialized);
+}
+
+#[test]
+fn test_roundtrip_advanced() {
+    use std::collections::HashMap;
+
+    #[derive(Serialize, Deserialize, Debug, PartialEq)]
+    struct Nested {
+        id: i32,
+        tags: Vec<String>,
+    }
+
+    #[derive(Serialize, Deserialize, Debug)]
+    struct Advanced {
+        // Null (via Option::None)
+        null_field: Option<i32>,
+
+        // Bool
+        bool_field: bool,
+
+        // Int (various integer types)
+        int_field: i64,
+        negative_int: i32,
+
+        // Float
+        float_field: f64,
+        scientific: f64,
+        float_inf: f64,
+        float_nan: f64,
+
+        // String (with unicode)
+        string_field: String,
+        unicode_string: String,
+
+        // Binary data (using serde_bytes for proper binary serialization)
+        #[serde(with = "serde_bytes")]
+        binary_field: Vec<u8>,
+
+        // Timestamp (using time::OffsetDateTime with serde support)
+        #[serde(with = "time::serde::rfc3339")]
+        timestamp_field: time::OffsetDateTime,
+
+        // List
+        list_field: Vec<i32>,
+
+        // Nested list
+        nested_list: Vec<Vec<String>>,
+
+        // Map (via nested struct)
+        nested_struct: Nested,
+
+        // Map (via HashMap)
+        map_field: HashMap<String, i32>,
+
+        // Option::Some
+        optional_value: Option<String>,
+    }
+
+    let original = Advanced {
+        null_field: None,
+        bool_field: true,
+        int_field: -9223372036854775807, // Large i64
+        negative_int: -42,
+        float_field: 2.5,
+        scientific: 1.5e10,
+        float_inf: f64::INFINITY,
+        float_nan: f64::NAN,
+        string_field: "Hello, JASN!".to_string(),
+        unicode_string: "世界 🌍".to_string(),
+        binary_field: vec![0x48, 0x65, 0x6c, 0x6c, 0x6f], // "Hello"
+        timestamp_field: time::OffsetDateTime::parse(
+            "2024-01-15T12:30:45Z",
+            &time::format_description::well_known::Rfc3339,
+        )
+        .unwrap(),
+        list_field: vec![1, 2, 3, 4, 5],
+        nested_list: vec![
+            vec!["a".to_string(), "b".to_string()],
+            vec!["c".to_string(), "d".to_string()],
+        ],
+        nested_struct: Nested {
+            id: 123,
+            tags: vec!["rust".to_string(), "parser".to_string()],
+        },
+        map_field: {
+            let mut map = HashMap::new();
+            map.insert("one".to_string(), 1);
+            map.insert("two".to_string(), 2);
+            map.insert("three".to_string(), 3);
+            map
+        },
+        optional_value: Some("present".to_string()),
+    };
+
+    // Test with compact format
+    let jasn_compact = jasn::to_string(&original).unwrap();
+    let deserialized_compact: Advanced = jasn::from_str(&jasn_compact).unwrap();
+
+    // Custom comparison for fields (since we can't rely on PartialEq for f64 due to NaN)
+    assert_eq!(original.null_field, deserialized_compact.null_field);
+    assert_eq!(original.bool_field, deserialized_compact.bool_field);
+    assert_eq!(original.int_field, deserialized_compact.int_field);
+    assert_eq!(original.negative_int, deserialized_compact.negative_int);
+    assert_eq!(original.float_field, deserialized_compact.float_field);
+    assert_eq!(original.scientific, deserialized_compact.scientific);
+    assert_eq!(original.string_field, deserialized_compact.string_field);
+    assert_eq!(original.unicode_string, deserialized_compact.unicode_string);
+    assert_eq!(original.binary_field, deserialized_compact.binary_field);
+    assert_eq!(
+        original.timestamp_field,
+        deserialized_compact.timestamp_field
+    );
+    assert_eq!(original.list_field, deserialized_compact.list_field);
+    assert_eq!(original.nested_list, deserialized_compact.nested_list);
+    assert_eq!(original.nested_struct, deserialized_compact.nested_struct);
+    assert_eq!(original.optional_value, deserialized_compact.optional_value);
+
+    // Test with pretty format
+    let jasn_pretty = jasn::to_string_pretty(&original).unwrap();
+    let deserialized_pretty: Advanced = jasn::from_str(&jasn_pretty).unwrap();
+
+    assert_eq!(original.null_field, deserialized_pretty.null_field);
+    assert_eq!(original.bool_field, deserialized_pretty.bool_field);
+    assert_eq!(original.int_field, deserialized_pretty.int_field);
+    assert_eq!(original.negative_int, deserialized_pretty.negative_int);
+    assert_eq!(original.float_field, deserialized_pretty.float_field);
+    assert_eq!(original.scientific, deserialized_pretty.scientific);
+    assert_eq!(original.string_field, deserialized_pretty.string_field);
+    assert_eq!(original.unicode_string, deserialized_pretty.unicode_string);
+    assert_eq!(original.binary_field, deserialized_pretty.binary_field);
+    assert_eq!(
+        original.timestamp_field,
+        deserialized_pretty.timestamp_field
+    );
+    assert_eq!(original.list_field, deserialized_pretty.list_field);
+    assert_eq!(original.nested_list, deserialized_pretty.nested_list);
+    assert_eq!(original.nested_struct, deserialized_pretty.nested_struct);
+    assert_eq!(original.optional_value, deserialized_pretty.optional_value);
 }
 
 #[test]
