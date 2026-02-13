@@ -4,7 +4,10 @@ mod binary;
 pub use binary::Binary;
 mod timestamp;
 pub use timestamp::Timestamp;
+
+#[cfg(feature = "serde")]
 pub mod de;
+#[cfg(feature = "serde")]
 pub mod ser;
 
 /// Represents a valid JASN value.
