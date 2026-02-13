@@ -9,12 +9,20 @@ license = "MIT"
 keywords = ["json", "yaml", "parser", "serialization", "deserialization", "format"]
 categories = ["encoding"]
 
+[features]
+default = ["serde"]
+serde = ["dep:serde"]
+
 [dependencies]
 base64 = "0.22"
 pest = "2.7"
 pest_derive = "2.7"
+serde = { version = "1.0", optional = true }
 thiserror = "2.0"
 time = { version = "0.3", features = ["formatting", "parsing", "macros"] }
 
 [dev-dependencies]
 rstest = "0.23"
+serde = { version = "1.0", features = ["derive"] }
+serde_bytes = "0.11"
+time = { version = "0.3", features = ["formatting", "parsing", "macros", "serde"] }

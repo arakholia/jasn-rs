@@ -73,7 +73,7 @@ fn test_binary() {
     let result = parse(r#"b64"SGVsbG8=""#).unwrap();
     assert!(matches!(result, jasn::Value::Binary(_)));
 
-    let result = parse(r#"h"48656c6c6f""#).unwrap();
+    let result = parse(r#"hex"48656c6c6f""#).unwrap();
     assert!(matches!(result, jasn::Value::Binary(_)));
 }
 

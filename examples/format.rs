@@ -1,13 +1,8 @@
 use std::collections::BTreeMap;
 
 use jasn::{
-    Binary, Value,
-    formatter::{
-        Options,
-        options::{BinaryEncoding, QuoteStyle},
-        to_string_opts,
-    },
-    to_string, to_string_pretty,
+    Binary, Value, format, format_pretty,
+    formatter::{BinaryEncoding, Options, QuoteStyle, format_with_opts},
 };
 
 fn main() {
@@ -36,12 +31,12 @@ fn main() {
 
     // Compact format (no whitespace)
     println!("=== Compact Format ===");
-    println!("{}", to_string(&value));
+    println!("{}", format(&value));
     println!();
 
     // Pretty format (default)
     println!("=== Pretty Format ===");
-    println!("{}", to_string_pretty(&value));
+    println!("{}", format_pretty(&value));
     println!();
 
     // Custom format options
@@ -57,5 +52,5 @@ fn main() {
         .with_leading_plus(true)
         .with_sort_keys(true)
         .with_escape_unicode(true);
-    println!("{}", to_string_opts(&value, &custom_options));
+    println!("{}", format_with_opts(&value, &custom_options));
 }

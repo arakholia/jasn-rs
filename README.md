@@ -1,9 +1,9 @@
 # JASN - Just Another Serialization Notation
-Rust parser for JASN (pronounced "Jason", not to be confused with "JSON"), a human-readable data serialization format similar to JSON but with explicit integer and binary types.
+Rust library for parsing and formatting JASN (pronounced "Jason", not to be confused with "JSON"). JASN is a human-readable data serialization format similar to JSON but with explicit integer and binary types.
 
 ## Motivation
 While JSON is widely used, it has limitations such as treating all numbers as floating-point and lacking native support for binary data. 
-JASN addresses these issues by introducing distinct integer types and permissive syntax features inspired by JSON5.
+JASN addresses these issues by introducing distinct integer and binary types and permissive syntax features inspired by JSON5.
 
 ## Features
 - **Distinct Types**: Separate `i64` integers and `f64` floats (not everything is a float!)
@@ -13,6 +13,63 @@ JASN addresses these issues by introducing distinct integer types and permissive
 - **Flexible Syntax**: Trailing commas, single quotes, unquoted object keys
 - **Multiple Radixes**: Support for hexadecimal (`0x`), binary (`0b`), and octal (`0o`) integer literals
 - **Permissive Numbers**: Leading/trailing decimal points (`.5`, `5.`), underscores (`1_000_000`), `inf`, `-inf`, `nan` support
+
+## Example
+A comprehensive example showing all supported value types:
+
+```jasn
+{
+  // Comments are supported
+  /* Block comments are supported */
+  null_value: null,
+  
+  // Booleans
+  bool_true: true,
+  bool_false: false,
+  
+  // Integers (explicit type, no decimal point)
+  integer: 42,
+  negative: -123,
+  hex: 0xFF,
+  binary: 0b1010,
+  octal: 0o755,
+  with_underscores: 1_000_000,
+  
+  // Floats (always have decimal point or exponent)
+  float: 3.14,
+  scientific: 1.5e10,
+  special_inf: inf,
+  special_neg_inf: -inf,
+  special_nan: nan,
+  
+  // Strings (double or single quotes)
+  string_double: "Hello, World!",
+  string_single: 'Hello, World!',
+  string_unicode: "Hello \u4E16\u754C",  // Unicode escapes
+  
+  // Binary data
+  binary_hex: hex"48656c6c6f",           // Hex encoding
+  binary_base64: b64"SGVsbG8gV29ybGQ=", // Base64 encoding
+  
+  // Timestamps (RFC3339/ISO8601)
+  timestamp: ts"2024-01-15T12:30:45Z",
+  timestamp_offset: ts"2024-01-15T12:30:45-05:00",
+  
+  // Lists
+  list: [1, 2, 3, "mixed", true, null],
+  nested_list: [[1, 2], [3, 4]],
+  
+  // Maps (objects)
+  map: {
+    unquoted_key: "value",
+    "quoted key": "also works",
+    nested: { a: 1, b: 2 },
+  },
+  
+  // Trailing commas allowed
+  trailing: [1, 2, 3,],
+}
+```
 
 ## Quick Start
 ```rust
@@ -80,7 +137,7 @@ nan         // not a number
 **Binary Data**:
 ```jasn
 b64"SGVsbG8gV29ybGQh"    // base64 encoded
-h"48656c6c6f"            // hex encoded
+hex"48656c6c6f"            // hex encoded
 ```
 
 **Timestamps**:
@@ -103,7 +160,7 @@ ts"2024-01-15T12:30:45-05:00"      // with timezone offset
 ## Comparison with JSON
 JASN is a superset of JSON with the following enhancements:
 1. **Integer Type**: Numbers without decimal points are `i64`, not `f64`
-2. **Binary Type**: New `b64"..."` and `h"..."` literals for byte arrays
+2. **Binary Type**: New `b64"..."` and `hex"..."` literals for byte arrays
 3. **Timestamp Type**: New `ts"..."` literals for ISO8601/RFC3339 timestamps
 4. **Comments**: `//` and `/* */` are supported
 5. **Trailing Commas**: Allowed in arrays and objects
@@ -118,9 +175,45 @@ JASN accepts most valid JSON, with the following caveats:
     - Workaround: use float notation (`9999999999999999999.0`) or scientific notation (`1e20`).
   - **Duplicate keys**: JASN rejects duplicate keys in objects, while JSON leaves this behavior undefined.
 
+## Serde Integration
+JASN provides custom `Serializer` and `Deserializer` implementations, allowing you to serialize and deserialize **any** Rust type directly to/from JASN format (not just JASN's `Value` type).
+
+**Add to your `Cargo.toml`**:
+```toml
+[dependencies]
+jasn = "0.1"
+```
+
+**Example usage**:
+```rust
+use serde::{Serialize, Deserialize};
+
+#[derive(Serialize, Deserialize, PartialEq, Debug)]
+struct Config {
+    name: String,
+    version: u32,
+    enabled: bool,
+}
+
+// Serialize Rust struct directly to JASN text
+let config = Config { 
+    name: "app".into(), 
+    version: 1, 
+    enabled: true 
+};
+let jasn = jasn::to_string_pretty(&config).unwrap();
+
+// Deserialize JASN text directly to Rust struct
+let parsed: Config = jasn::from_str(&jasn).unwrap();
+assert_eq!(config, parsed);
+```
+
+This works with all serde-compatible types: structs, enums, vectors, maps, options, etc.
+
+See [examples/serde_demo.rs](examples/serde_demo.rs) for a complete example.
+
 ## Planned Features
-1. **Serde Integration**: Support for `serde` serialization/deserialization
-2. **JAML**: A YAML-inspired syntax using the same data model as JASN
+1. **JAML**: A YAML-inspired syntax using the same data model as JASN
 
 ## Features under consideration
 - **Multiline Strings**: Support for multiline string literals with proper indentation handling

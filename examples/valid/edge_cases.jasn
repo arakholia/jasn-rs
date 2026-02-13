@@ -23,7 +23,7 @@
   empty_map: {},
   empty_string: "",
   empty_binary_b64: b64"",
-  empty_binary_hex: h"",
+  empty_binary_hex: hex"",
   
   // Single element
   single_list: [1],

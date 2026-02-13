@@ -55,7 +55,7 @@ fn test_duplicate_keys(#[case] input: &str) {
 #[case(r#""\x""#)]
 #[case(r#""unterminated"#)]
 #[case("[1, 2 3]")]
-#[case(r#"h"ABC""#)]
+#[case(r#"hex"ABC""#)]
 #[case(r#"b64"Hello!""#)]
 #[case(".")]
 #[case("{kebab-case: 1}")]

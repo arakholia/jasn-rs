@@ -1,6 +1,14 @@
 use std::{borrow::Cow, collections::BTreeMap, fmt};
 
-use crate::{Binary, Timestamp};
+mod binary;
+pub use binary::Binary;
+mod timestamp;
+pub use timestamp::Timestamp;
+
+#[cfg(feature = "serde")]
+pub mod de;
+#[cfg(feature = "serde")]
+pub mod ser;
 
 /// Represents a valid JASN value.
 #[derive(Debug, Clone, PartialEq, Default)]
@@ -29,9 +37,9 @@ pub enum Value {
 impl fmt::Display for Value {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         if f.alternate() {
-            write!(f, "{}", crate::to_string_pretty(self))
+            write!(f, "{}", crate::formatter::format_pretty(self))
         } else {
-            write!(f, "{}", crate::to_string(self))
+            write!(f, "{}", crate::formatter::format(self))
         }
     }
 }

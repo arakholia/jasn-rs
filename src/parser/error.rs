@@ -1,4 +1,4 @@
-use super::Rule;
+use super::parse::PestError;
 
 /// Errors that can occur during parsing.
 #[derive(Debug, thiserror::Error)]
@@ -6,7 +6,7 @@ use super::Rule;
 pub enum Error {
     /// Error from the pest parser (syntax errors).
     #[error("Parse error: {0}")]
-    PestError(#[from] pest::error::Error<Rule>),
+    PestError(#[from] PestError),
 
     /// Integer parsing or overflow error.
     #[error("Integer parse error: {0}")]
