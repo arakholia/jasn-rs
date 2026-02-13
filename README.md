@@ -1,9 +1,9 @@
 # JASN - Just Another Serialization Notation
-Rust parser for JASN (pronounced "Jason"), a human-readable data serialization format similar to JSON but with explicit integer and binary types.
+Rust parser for JASN (pronounced "Jason", not to be confused with "JSON"), a human-readable data serialization format similar to JSON but with explicit integer and binary types.
 
 ## Motivation
 While JSON is widely used, it has limitations such as treating all numbers as floating-point and lacking native support for binary data. 
-JASN addresses these issues by introducing distinct integer types and convenient syntax features inspired by JSON5.
+JASN addresses these issues by introducing distinct integer types and permissive syntax features inspired by JSON5.
 
 ## Features
 - **Distinct Types**: Separate `i64` integers and `f64` floats (not everything is a float!)
@@ -12,7 +12,7 @@ JASN addresses these issues by introducing distinct integer types and convenient
 - **Comments**: Line (`//`) and block (`/* */`) comments
 - **Flexible Syntax**: Trailing commas, single quotes, unquoted object keys
 - **Multiple Radixes**: Support for hexadecimal (`0x`), binary (`0b`), and octal (`0o`) integer literals
-- **Liberal Numbers**: Permissive decimal points (`.5`, `5.`), underscores (`1_000_000`), `inf`, `-inf`, `nan` support
+- **Permissive Numbers**: Leading/trailing decimal points (`.5`, `5.`), underscores (`1_000_000`), `inf`, `-inf`, `nan` support
 
 ## Quick Start
 ```rust
@@ -47,7 +47,7 @@ pub enum Value {
     Float(f64),
     String(String),
     Binary(Binary),       // Wrapper for `Vec<u8>`
-    Timestamp(Timestamp), // ISO8601/RFC3339 timestamp (time::OffsetDateTime)
+    Timestamp(Timestamp), // ISO8601/RFC3339 timestamp
     List(Vec<Value>),
     Map(BTreeMap<String, Value>),
 }
@@ -100,7 +100,8 @@ ts"2024-01-15T12:30:45-05:00"      // with timezone offset
 }
 ```
 
-## Differences from JSON
+## Comparison with JSON
+JASN is a superset of JSON with the following enhancements:
 1. **Integer Type**: Numbers without decimal points are `i64`, not `f64`
 2. **Binary Type**: New `b64"..."` and `h"..."` literals for byte arrays
 3. **Timestamp Type**: New `ts"..."` literals for ISO8601/RFC3339 timestamps
@@ -111,12 +112,19 @@ ts"2024-01-15T12:30:45-05:00"      // with timezone offset
 8. **Permissive Floats**: `.5`, `5.`, `inf`, `nan` are valid
 9. **Duplicate Keys**: Explicitly disallowed - parsing fails on duplicate keys in maps
 
-## Under Consideration
-- **Multiline Strings**: Support for multiline string literals with proper indentation handling
+### JSON Compatibility
+JASN accepts most valid JSON, with the following caveats:
+  - **Integer overflow**: Integers without decimal points are parsed as `i64` (range: ±9.2 quintillion). JSON documents with larger integers will fail to parse. 
+    - Workaround: use float notation (`9999999999999999999.0`) or scientific notation (`1e20`).
+  - **Duplicate keys**: JASN rejects duplicate keys in objects, while JSON leaves this behavior undefined.
 
 ## Planned Features
 1. **Serde Integration**: Support for `serde` serialization/deserialization
 2. **JAML**: A YAML-inspired syntax using the same data model as JASN
+
+## Features under consideration
+- **Multiline Strings**: Support for multiline string literals with proper indentation handling
+- **Python-style b-strings**: `b'''...'''` for raw byte strings without escaping (similar to Python's `b''` literals)
 
 ## License
 MIT License - see [LICENSE](LICENSE) file for details.

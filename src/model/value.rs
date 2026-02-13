@@ -1,11 +1,6 @@
 use std::{borrow::Cow, collections::BTreeMap, fmt};
 
-use time::OffsetDateTime;
-
-use crate::Binary;
-
-/// Type alias for timestamps (RFC3339/ISO8601 compatible).
-pub type Timestamp = OffsetDateTime;
+use crate::{Binary, Timestamp};
 
 /// Represents a valid JASN value.
 #[derive(Debug, Clone, PartialEq, Default)]
