@@ -118,9 +118,45 @@ JASN accepts most valid JSON, with the following caveats:
     - Workaround: use float notation (`9999999999999999999.0`) or scientific notation (`1e20`).
   - **Duplicate keys**: JASN rejects duplicate keys in objects, while JSON leaves this behavior undefined.
 
+## Serde Integration
+JASN provides custom `Serializer` and `Deserializer` implementations, allowing you to serialize and deserialize **any** Rust type directly to/from JASN format (not just JASN's `Value` type).
+
+**Add to your `Cargo.toml`**:
+```toml
+[dependencies]
+jasn = "0.1"
+```
+
+**Example usage**:
+```rust
+use serde::{Serialize, Deserialize};
+
+#[derive(Serialize, Deserialize, PartialEq, Debug)]
+struct Config {
+    name: String,
+    version: u32,
+    enabled: bool,
+}
+
+// Serialize Rust struct directly to JASN text
+let config = Config { 
+    name: "app".into(), 
+    version: 1, 
+    enabled: true 
+};
+let jasn = jasn::to_string_pretty(&config).unwrap();
+
+// Deserialize JASN text directly to Rust struct
+let parsed: Config = jasn::from_str(&jasn).unwrap();
+assert_eq!(config, parsed);
+```
+
+This works with all serde-compatible types: structs, enums, vectors, maps, options, etc.
+
+See [examples/serde_demo.rs](examples/serde_demo.rs) for a complete example.
+
 ## Planned Features
-1. **Serde Integration**: Support for `serde` serialization/deserialization
-2. **JAML**: A YAML-inspired syntax using the same data model as JASN
+1. **JAML**: A YAML-inspired syntax using the same data model as JASN
 
 ## Features under consideration
 - **Multiline Strings**: Support for multiline string literals with proper indentation handling

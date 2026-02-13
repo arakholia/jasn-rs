@@ -10,7 +10,7 @@
 //!
 //! # Example
 //! ```
-//! use jasn::{parse, to_string_pretty};
+//! use jasn::parse;
 //!
 //! let jasn_text = r#"
 //! {
@@ -31,7 +31,7 @@
 //! "#;
 //!
 //! let value = parse(jasn_text).unwrap();
-//! println!("{}", to_string_pretty(&value));
+//! println!("{:#}", value); // Pretty-print using Display trait
 //! ```
 
 #![warn(missing_docs)]
@@ -42,6 +42,18 @@ pub use model::{Binary, Timestamp, Value};
 mod parser;
 pub use parser::{Error as ParseError, Result as ParseResult, parse};
 
-/// Formatting JASN values to strings with custom options.
+/// Formatting options for JASN output.
 pub mod formatter;
-pub use formatter::{to_string, to_string_opts, to_string_pretty};
+
+mod ser;
+mod de;
+
+pub use ser::{
+    to_string, to_string_opts, to_string_pretty, to_value,
+    Error as SerializeError,
+};
+
+pub use de::{
+    from_str, from_value,
+    Error as DeserializeError,
+};

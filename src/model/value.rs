@@ -29,9 +29,9 @@ pub enum Value {
 impl fmt::Display for Value {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         if f.alternate() {
-            write!(f, "{}", crate::to_string_pretty(self))
+            write!(f, "{}", crate::formatter::to_string_pretty(self))
         } else {
-            write!(f, "{}", crate::to_string(self))
+            write!(f, "{}", crate::formatter::to_string(self))
         }
     }
 }

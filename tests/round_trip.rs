@@ -1,6 +1,6 @@
 use std::fs;
 
-use jasn::{parse, to_string, to_string_pretty};
+use jasn::{formatter, parse};
 
 #[test]
 fn test_round_trip_valid_examples() {
@@ -22,7 +22,7 @@ fn test_round_trip_valid_examples() {
             let value = parse(&content).expect("Failed to parse original");
 
             // Format and re-parse (compact)
-            let formatted = to_string(&value);
+            let formatted = formatter::to_string(&value);
             let reparsed = parse(&formatted).expect("Failed to parse formatted (compact)");
             assert_values_equal(
                 &value,
@@ -31,7 +31,7 @@ fn test_round_trip_valid_examples() {
             );
 
             // Format and re-parse (pretty)
-            let formatted_pretty = to_string_pretty(&value);
+            let formatted_pretty = formatter::to_string_pretty(&value);
             let reparsed_pretty =
                 parse(&formatted_pretty).expect("Failed to parse formatted (pretty)");
             assert_values_equal(
@@ -92,7 +92,7 @@ fn test_format_preserve_exact_values() {
 
     for (input, expected_compact) in test_cases {
         let value = parse(input).expect("Parse failed");
-        let formatted = to_string(&value);
+        let formatted = formatter::to_string(&value);
         assert_eq!(
             formatted, expected_compact,
             "Format mismatch for input: {}",
@@ -106,7 +106,7 @@ fn test_format_preserve_exact_values() {
 
     // Special case for NaN (can't compare with ==)
     let nan_value = parse("nan").expect("Parse failed");
-    let formatted_nan = to_string(&nan_value);
+    let formatted_nan = formatter::to_string(&nan_value);
     assert_eq!(formatted_nan, "nan");
     let reparsed_nan = parse(&formatted_nan).expect("Reparse failed");
     assert!(
@@ -136,7 +136,7 @@ fn test_string_escaping() {
                 .replace("\t", "\\t")
         ))
         .unwrap();
-        let formatted = to_string(&value);
+        let formatted = formatter::to_string(&value);
         assert_eq!(formatted, expected);
     }
 }
