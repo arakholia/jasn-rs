@@ -100,7 +100,8 @@ ts"2024-01-15T12:30:45-05:00"      // with timezone offset
 }
 ```
 
-## Differences from JSON
+## Comparison with JSON
+JASN is a superset of JSON with the following enhancements:
 1. **Integer Type**: Numbers without decimal points are `i64`, not `f64`
 2. **Binary Type**: New `b64"..."` and `h"..."` literals for byte arrays
 3. **Timestamp Type**: New `ts"..."` literals for ISO8601/RFC3339 timestamps
@@ -111,12 +112,18 @@ ts"2024-01-15T12:30:45-05:00"      // with timezone offset
 8. **Permissive Floats**: `.5`, `5.`, `inf`, `nan` are valid
 9. **Duplicate Keys**: Explicitly disallowed - parsing fails on duplicate keys in maps
 
-## Under Consideration
-- **Multiline Strings**: Support for multiline string literals with proper indentation handling
+### JSON Compatibility
+JASN accepts most valid JSON, with the following caveats:
+  - **Integer overflow**: Integers without decimal points are parsed as `i64` (range: ±9.2 quintillion). JSON documents with larger integers will fail to parse. Workaround: use float notation (`9999999999999999999.0`) or scientific notation (`1e20`).
+  - **Duplicate keys**: JASN rejects duplicate keys in objects, while JSON leaves this behavior undefined.
 
 ## Planned Features
 1. **Serde Integration**: Support for `serde` serialization/deserialization
 2. **JAML**: A YAML-inspired syntax using the same data model as JASN
+
+## Features under consideration
+- **Multiline Strings**: Support for multiline string literals with proper indentation handling
+- **Python-style b-strings**: `b'''...'''` for raw byte strings without escaping (similar to Python's `b''` literals)
 
 ## License
 MIT License - see [LICENSE](LICENSE) file for details.
