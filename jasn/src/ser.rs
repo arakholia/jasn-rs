@@ -1,8 +1,9 @@
 //! Serialization of Rust values to JASN text.
 
+use jasn_core::ser;
 use serde::Serialize;
 
-use crate::{Value, formatter, value::ser};
+use crate::{Value, formatter};
 
 /// Error type for serialization.
 pub type Error = ser::Error;
