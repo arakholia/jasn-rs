@@ -114,7 +114,8 @@ JASN is a superset of JSON with the following enhancements:
 
 ### JSON Compatibility
 JASN accepts most valid JSON, with the following caveats:
-  - **Integer overflow**: Integers without decimal points are parsed as `i64` (range: ±9.2 quintillion). JSON documents with larger integers will fail to parse. Workaround: use float notation (`9999999999999999999.0`) or scientific notation (`1e20`).
+  - **Integer overflow**: Integers without decimal points are parsed as `i64` (range: ±9.2 quintillion). JSON documents with larger integers will fail to parse. 
+    - Workaround: use float notation (`9999999999999999999.0`) or scientific notation (`1e20`).
   - **Duplicate keys**: JASN rejects duplicate keys in objects, while JSON leaves this behavior undefined.
 
 ## Planned Features
