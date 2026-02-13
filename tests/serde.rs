@@ -271,6 +271,6 @@ fn test_custom_format_options() {
         ..Default::default()
     };
 
-    let jasn = jasn::to_string_opts(&data, &opts).unwrap();
+    let jasn = jasn::ser::to_string_opts(&data, &opts).unwrap();
     assert!(jasn.contains("test"));
 }

@@ -1,3 +1,19 @@
+//! Format a [`Value`][crate::Value] into JASN text.
+//!
+//! The main entry points are [`format`] and [`format_pretty`] for common use cases.
+//! For custom formatting options, use [`format_with_opts`] with [`Options`].
+//!
+//! ```
+//! use jasn::{Value, formatter};
+//!
+//! let value = Value::String("hello".to_string());
+//! assert_eq!(formatter::format(&value), r#""hello""#);
+//!
+//! // Custom formatting
+//! let opts = formatter::Options::pretty().with_indent("\t");
+//! let formatted = formatter::format_with_opts(&value, &opts);
+//! ```
+
 use std::collections::BTreeMap;
 
 use time::{format_description, macros::format_description as fd};
@@ -5,9 +21,8 @@ use time::{format_description, macros::format_description as fd};
 use crate::{Binary, Value};
 
 /// Formatting options and configuration.
-pub mod options;
-pub use options::Options;
-use options::{BinaryEncoding, QuoteStyle, TimestampPrecision};
+mod options;
+pub use options::{BinaryEncoding, Options, QuoteStyle, TimestampPrecision};
 
 /// Formats a JASN value into a compact string (no unnecessary whitespace).
 pub fn format(value: &Value) -> String {

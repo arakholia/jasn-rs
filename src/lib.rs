@@ -13,11 +13,16 @@
 //! ## AST Manipulation (no serde required)
 //!
 //! ```
-//! use jasn::{parse, formatter};
+//! use jasn::{parse, format_pretty};
 //!
 //! let jasn_text = r#"{ name: "Alice", age: 30 }"#;
 //! let value = parse(jasn_text).unwrap();
-//! println!("{}", formatter::format_pretty(&value));
+//! println!("{}", format_pretty(&value));
+//!
+//! // For custom formatting:
+//! let opts = jasn::formatter::Options::pretty()
+//!     .with_indent("\t");
+//! println!("{}", jasn::formatter::format_with_opts(&value, &opts));
 //! ```
 //!
 //! ## Serde Integration (default feature)
@@ -45,21 +50,18 @@
 mod value;
 pub use value::{Binary, Timestamp, Value};
 
-mod parser;
-pub use parser::{Error as ParseError, Result as ParseResult, parse};
+pub mod parser;
+pub use parser::parse;
 
-/// Formatting options for JASN output.
 pub mod formatter;
+pub use formatter::{format, format_pretty};
 
 #[cfg(feature = "serde")]
-mod de;
+pub mod de;
 #[cfg(feature = "serde")]
-mod ser;
+pub mod ser;
 
 #[cfg(feature = "serde")]
-pub use de::{Error as DeserializeError, Result as DeserializeResult, from_str, from_value};
+pub use de::{from_str, from_value};
 #[cfg(feature = "serde")]
-pub use ser::{
-    Error as SerializeError, Result as SerializeResult, to_string, to_string_opts,
-    to_string_pretty, to_value,
-};
+pub use ser::{to_string, to_string_pretty, to_value};

@@ -1,12 +1,8 @@
 use std::collections::BTreeMap;
 
 use jasn::{
-    Binary, Value,
-    formatter::{
-        Options,
-        options::{BinaryEncoding, QuoteStyle},
-        format, format_pretty, format_with_opts,
-    },
+    Binary, Value, format, format_pretty,
+    formatter::{BinaryEncoding, Options, QuoteStyle, format_with_opts},
 };
 
 fn main() {
