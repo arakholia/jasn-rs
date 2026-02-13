@@ -36,8 +36,8 @@
 
 #![warn(missing_docs)]
 
-mod model;
-pub use model::{Binary, Timestamp, Value};
+mod value;
+pub use value::{Binary, Timestamp, Value};
 
 mod parser;
 pub use parser::{Error as ParseError, Result as ParseResult, parse};
@@ -45,15 +45,11 @@ pub use parser::{Error as ParseError, Result as ParseResult, parse};
 /// Formatting options for JASN output.
 pub mod formatter;
 
-mod ser;
 mod de;
+mod ser;
 
+pub use de::{Error as DeserializeError, Result as DeserializeResult, from_str, from_value};
 pub use ser::{
-    to_string, to_string_opts, to_string_pretty, to_value,
-    Error as SerializeError,
-};
-
-pub use de::{
-    from_str, from_value,
-    Error as DeserializeError,
+    Error as SerializeError, Result as SerializeResult, to_string, to_string_opts,
+    to_string_pretty, to_value,
 };

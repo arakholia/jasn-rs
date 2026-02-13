@@ -1,6 +1,11 @@
 use std::{borrow::Cow, collections::BTreeMap, fmt};
 
-use crate::{Binary, Timestamp};
+mod binary;
+pub use binary::Binary;
+mod timestamp;
+pub use timestamp::Timestamp;
+pub mod de;
+pub mod ser;
 
 /// Represents a valid JASN value.
 #[derive(Debug, Clone, PartialEq, Default)]

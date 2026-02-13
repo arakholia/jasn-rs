@@ -5,9 +5,7 @@ use jasn::{
     formatter::{
         Options,
         options::{BinaryEncoding, QuoteStyle},
-        to_string,
-        to_string_opts,
-        to_string_pretty,
+        to_string, to_string_opts, to_string_pretty,
     },
 };
 

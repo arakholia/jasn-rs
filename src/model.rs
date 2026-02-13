@@ -6,3 +6,6 @@ pub use binary::Binary;
 
 mod timestamp;
 pub use timestamp::Timestamp;
+
+pub mod ser;
+pub mod de;
