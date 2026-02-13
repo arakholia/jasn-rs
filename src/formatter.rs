@@ -1,7 +1,6 @@
 use std::collections::BTreeMap;
 
-use time::format_description;
-use time::macros::format_description as fd;
+use time::{format_description, macros::format_description as fd};
 
 use crate::{Binary, Value};
 

@@ -1,9 +1,9 @@
 # JASN - Just Another Serialization Notation
-Rust parser for JASN (pronounced "Jason"), a human-readable data serialization format similar to JSON but with explicit integer and binary types.
+Rust parser for JASN (pronounced "Jason", not to be confused with "JSON"), a human-readable data serialization format similar to JSON but with explicit integer and binary types.
 
 ## Motivation
 While JSON is widely used, it has limitations such as treating all numbers as floating-point and lacking native support for binary data. 
-JASN addresses these issues by introducing distinct integer types and convenient syntax features inspired by JSON5.
+JASN addresses these issues by introducing distinct integer types and permissive syntax features inspired by JSON5.
 
 ## Features
 - **Distinct Types**: Separate `i64` integers and `f64` floats (not everything is a float!)
@@ -12,7 +12,7 @@ JASN addresses these issues by introducing distinct integer types and convenient
 - **Comments**: Line (`//`) and block (`/* */`) comments
 - **Flexible Syntax**: Trailing commas, single quotes, unquoted object keys
 - **Multiple Radixes**: Support for hexadecimal (`0x`), binary (`0b`), and octal (`0o`) integer literals
-- **Liberal Numbers**: Permissive decimal points (`.5`, `5.`), underscores (`1_000_000`), `inf`, `-inf`, `nan` support
+- **Permissive Numbers**: Leading/trailing decimal points (`.5`, `5.`), underscores (`1_000_000`), `inf`, `-inf`, `nan` support
 
 ## Quick Start
 ```rust

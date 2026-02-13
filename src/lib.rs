@@ -36,14 +36,11 @@
 
 #![warn(missing_docs)]
 
-mod binary;
-pub use binary::Binary;
+mod model;
+pub use model::{Binary, Timestamp, Value};
 
 mod parser;
 pub use parser::{Error as ParseError, Result as ParseResult, parse};
-
-mod value;
-pub use value::{Timestamp, Value};
 
 /// Formatting JASN values to strings with custom options.
 pub mod formatter;

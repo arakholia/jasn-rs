@@ -15,7 +15,7 @@ pub use error::{Error, Result};
 #[grammar = "parser/grammar.pest"]
 struct JasnParser;
 
-/// Parse a JASN string into a Value
+/// Parse a JASN string into a [`Value`].
 pub fn parse(input: &str) -> Result<Value> {
     let mut pairs = JasnParser::parse(Rule::jasn, input)?;
     let pair = pairs.next().unwrap(); // jasn rule

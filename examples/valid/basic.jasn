@@ -93,4 +93,10 @@
   _private: "underscore prefix",
   camelCase: "mixed case",
   snake_case: "with underscore",
+  
+  // Quoted keys (when special characters or reserved words as keys)
+  "quoted-key": "double quotes allow dashes",
+  'single-quoted-key': "single quotes also work",
+  "key with spaces": "spaces require quotes",
+  "123numeric": "starts with digit, needs quotes",
 }
