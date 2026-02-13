@@ -1,21 +1,4 @@
 # JASN - Just Another Serialization Notation
-
-This repository contains the Rust implementation of JASN and JAML serialization formats.
-
-## Workspace Structure
-
-This is a Cargo workspace containing:
-
-- **[`jasn-core`](jasn-core/)**: Core data types (`Value`, `Binary`, `Timestamp`) shared by all formats
-- **[`jasn`](jasn/)**: JASN parser and formatter (JSON5-like syntax)
-- **`jaml`**: JAML parser and formatter (YAML-like syntax) - *coming soon*
-
-All formats share the same data model defined in `jasn-core`.
-
----
-
-## JASN Format
-
 JASN (pronounced "Jason") is a human-readable data serialization format similar to JSON but with explicit integer and binary types.
 
 ## Motivation

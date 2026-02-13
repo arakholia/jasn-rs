@@ -30,11 +30,11 @@ pub use value::{Binary, Timestamp, Value};
 #[cfg(feature = "serde")]
 pub mod de {
     //! Serde deserialization support for Value.
-    pub use crate::value::de::{from_value, Error};
+    pub use crate::value::de::{Error, from_value};
 }
 
 #[cfg(feature = "serde")]
 pub mod ser {
     //! Serde serialization support for Value.
-    pub use crate::value::ser::{to_value, Error, Serializer};
+    pub use crate::value::ser::{Error, Serializer, to_value};
 }
