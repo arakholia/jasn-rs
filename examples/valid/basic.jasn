@@ -60,9 +60,9 @@
   padded_b64: b64"AQIDBA==",
   
   // Binary (hex)
-  data_hex: h"48656c6c6f20576f726c6421",
-  empty_hex: h"",
-  mixed_case_hex: h"DeadBeef",
+  data_hex: hex"48656c6c6f20576f726c6421",
+  empty_hex: hex"",
+  mixed_case_hex: hex"DeadBeef",
   
   // Timestamps
   timestamp_utc: ts"2024-01-15T12:30:45Z",

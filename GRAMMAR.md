@@ -5,7 +5,7 @@ JASN (Just Another Serialization Notation) extends JSON with explicit integer an
 ## Overview
 
 - **Integers**: Distinct 64-bit signed integer type, supporting decimal, hexadecimal, binary, and octal notation
-- **Binary**: Byte array type with base64 (`b64"..."`) and hex (`h"..."`) encoding
+- **Binary**: Byte array type with base64 (`b64"..."`) and hex (`hex"..."`) encoding
 - **Timestamps**: ISO8601/RFC3339 timestamp literals with `ts"..."` syntax
 - **JSON5 Features**: Trailing commas, single quotes, unquoted keys, liberal number parsing, comments
 - **Comments**: Line comments (`//`) and block comments (`/* */`)
@@ -60,7 +60,7 @@ unicode_escape = "u" , hex_digit , hex_digit , hex_digit , hex_digit ;
 (* Binary *)
 binary = base64_binary | hex_binary ;
 base64_binary = "b64" , '"' , { base64_char } , '"' ;
-hex_binary = "h" , '"' , { hex_digit } , '"' ;
+hex_binary = "hex" , '"' , { hex_digit } , '"' ;
 base64_char = letter | digit | "+" | "/" | "=" ;
 letter = "A" | "B" | "C" | "D" | "E" | "F" | "G" | "H" | "I" | "J" | "K" | "L" | "M"
        | "N" | "O" | "P" | "Q" | "R" | "S" | "T" | "U" | "V" | "W" | "X" | "Y" | "Z"
@@ -153,10 +153,10 @@ nan
 b64"SGVsbG8gV29ybGQh"
 b64"AQIDBA=="
 b64""
-h"48656c6c6f20576f726c6421"
-h"01020304"
-h"DEADBEEF"
-h""
+hex"48656c6c6f20576f726c6421"
+hex"01020304"
+hex"DEADBEEF"
+hex""
 ```
 
 ### Timestamps
@@ -237,7 +237,7 @@ ts"2024-12-31T23:59:59.999999999Z"
 ## Differences from JSON
 
 1. **Integer type**: Numbers without decimal point/exponent are 64-bit signed integers, not double-precision floats
-2. **Binary type**: New `b64"..."` and `h"..."` literals for binary data
+2. **Binary type**: New `b64"..."` and `hex"..."` literals for binary data
 3. **Timestamp type**: New `ts"..."` literals for ISO8601/RFC3339 timestamps
 4. **Trailing commas**: Allowed in lists and maps
 4. **Single quotes**: Strings can use `'...'` or `"..."`
@@ -294,7 +294,7 @@ This means `42` and `42.0` are **different types** in JASN, though mathematicall
 ## Differences from JSON5
 
 1. **Integer/Float split**: Explicit type distinction based on syntax
-2. **Binary literals**: New `b64"..."` and `h"..."` types
+2. **Binary literals**: New `b64"..."` and `hex"..."` types
 3. **Multi-line strings**: Not supported (standard JSON escaping only)
 4. **Infinity/NaN**: Supported with simpler syntax (`inf`, `nan` vs `Infinity`, `NaN`)
 5. **Additional integer radixes**: Binary (`0b`) and octal (`0o`) literals beyond JSON5

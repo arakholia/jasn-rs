@@ -48,7 +48,7 @@ A comprehensive example showing all supported value types:
   string_unicode: "Hello \u4E16\u754C",  // Unicode escapes
   
   // Binary data
-  binary_hex: h"48656c6c6f",           // Hex encoding
+  binary_hex: hex"48656c6c6f",           // Hex encoding
   binary_base64: b64"SGVsbG8gV29ybGQ=", // Base64 encoding
   
   // Timestamps (RFC3339/ISO8601)
@@ -137,7 +137,7 @@ nan         // not a number
 **Binary Data**:
 ```jasn
 b64"SGVsbG8gV29ybGQh"    // base64 encoded
-h"48656c6c6f"            // hex encoded
+hex"48656c6c6f"            // hex encoded
 ```
 
 **Timestamps**:
@@ -160,7 +160,7 @@ ts"2024-01-15T12:30:45-05:00"      // with timezone offset
 ## Comparison with JSON
 JASN is a superset of JSON with the following enhancements:
 1. **Integer Type**: Numbers without decimal points are `i64`, not `f64`
-2. **Binary Type**: New `b64"..."` and `h"..."` literals for byte arrays
+2. **Binary Type**: New `b64"..."` and `hex"..."` literals for byte arrays
 3. **Timestamp Type**: New `ts"..."` literals for ISO8601/RFC3339 timestamps
 4. **Comments**: `//` and `/* */` are supported
 5. **Trailing Commas**: Allowed in arrays and objects

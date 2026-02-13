@@ -43,7 +43,7 @@
 //!   string_unicode: "Hello \u4E16\u754C",  // Unicode escapes
 //!   
 //!   // Binary data
-//!   binary_hex: h"48656c6c6f",           // Hex encoding
+//!   binary_hex: hex"48656c6c6f",           // Hex encoding
 //!   binary_base64: b64"SGVsbG8gV29ybGQ=", // Base64 encoding
 //!   
 //!   // Timestamps (RFC3339/ISO8601)

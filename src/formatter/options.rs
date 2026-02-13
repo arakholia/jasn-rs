@@ -151,7 +151,7 @@ pub enum BinaryEncoding {
     /// Always use base64: b64"..."
     Base64,
 
-    /// Always use hex: h"..."
+    /// Always use hex: hex"..."
     Hex,
 }
 

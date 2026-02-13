@@ -174,8 +174,8 @@ fn parse_binary(pair: Pair<Rule>) -> Result<Value> {
             let content = &s[4..s.len() - 1]; // Remove b64" and "
             parse_binary_b64(content)?
         }
-        s if s.starts_with("h\"") => {
-            let content = &s[2..s.len() - 1]; // Remove h" and "
+        s if s.starts_with("hex\"") => {
+            let content = &s[4..s.len() - 1]; // Remove hex" and "
             parse_binary_hex(content)?
         }
         _ => {
@@ -403,9 +403,9 @@ mod tests {
     }
 
     #[rstest]
-    #[case("h\"48656c6c6f\"", b"Hello")]
+    #[case("hex\"48656c6c6f\"", b"Hello")]
     #[case("b64\"SGVsbG8=\"", b"Hello")]
-    #[case("h\"\"", b"")]
+    #[case("hex\"\"", b"")]
     #[case("b64\"\"", b"")]
     fn test_parse_binary(#[case] input: &str, #[case] expected: &[u8]) {
         let result = parse_impl(input).unwrap();

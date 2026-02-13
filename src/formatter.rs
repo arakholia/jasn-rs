@@ -217,7 +217,7 @@ fn format_binary(binary: &Binary, encoding: BinaryEncoding) -> String {
         }
         BinaryEncoding::Hex => {
             let hex: String = binary.0.iter().map(|b| format!("{:02x}", b)).collect();
-            format!("h\"{}\"", hex)
+            format!("hex\"{}\"", hex)
         }
     }
 }
