@@ -293,6 +293,33 @@ fn test_roundtrip_advanced() {
         optional_value: Option<String>,
     }
 
+    impl PartialEq for Advanced {
+        fn eq(&self, other: &Self) -> bool {
+            self.null_field == other.null_field
+                && self.bool_field == other.bool_field
+                && self.int_field == other.int_field
+                && self.negative_int == other.negative_int
+                && float_eq(self.float_field, other.float_field)
+                && float_eq(self.scientific, other.scientific)
+                && float_eq(self.float_inf, other.float_inf)
+                && float_eq(self.float_nan, other.float_nan)
+                && self.string_field == other.string_field
+                && self.unicode_string == other.unicode_string
+                && self.binary_field == other.binary_field
+                && self.timestamp_field == other.timestamp_field
+                && self.list_field == other.list_field
+                && self.nested_list == other.nested_list
+                && self.nested_struct == other.nested_struct
+                && self.map_field == other.map_field
+                && self.optional_value == other.optional_value
+        }
+    }
+
+    // Helper for float equality that treats NaN == NaN
+    fn float_eq(a: f64, b: f64) -> bool {
+        (a.is_nan() && b.is_nan()) || (a == b)
+    }
+
     let original = Advanced {
         null_field: None,
         bool_field: true,
@@ -332,47 +359,12 @@ fn test_roundtrip_advanced() {
     // Test with compact format
     let jasn_compact = jasn::to_string(&original).unwrap();
     let deserialized_compact: Advanced = jasn::from_str(&jasn_compact).unwrap();
-
-    // Custom comparison for fields (since we can't rely on PartialEq for f64 due to NaN)
-    assert_eq!(original.null_field, deserialized_compact.null_field);
-    assert_eq!(original.bool_field, deserialized_compact.bool_field);
-    assert_eq!(original.int_field, deserialized_compact.int_field);
-    assert_eq!(original.negative_int, deserialized_compact.negative_int);
-    assert_eq!(original.float_field, deserialized_compact.float_field);
-    assert_eq!(original.scientific, deserialized_compact.scientific);
-    assert_eq!(original.string_field, deserialized_compact.string_field);
-    assert_eq!(original.unicode_string, deserialized_compact.unicode_string);
-    assert_eq!(original.binary_field, deserialized_compact.binary_field);
-    assert_eq!(
-        original.timestamp_field,
-        deserialized_compact.timestamp_field
-    );
-    assert_eq!(original.list_field, deserialized_compact.list_field);
-    assert_eq!(original.nested_list, deserialized_compact.nested_list);
-    assert_eq!(original.nested_struct, deserialized_compact.nested_struct);
-    assert_eq!(original.optional_value, deserialized_compact.optional_value);
+    assert_eq!(original, deserialized_compact);
 
     // Test with pretty format
     let jasn_pretty = jasn::to_string_pretty(&original).unwrap();
     let deserialized_pretty: Advanced = jasn::from_str(&jasn_pretty).unwrap();
-
-    assert_eq!(original.null_field, deserialized_pretty.null_field);
-    assert_eq!(original.bool_field, deserialized_pretty.bool_field);
-    assert_eq!(original.int_field, deserialized_pretty.int_field);
-    assert_eq!(original.negative_int, deserialized_pretty.negative_int);
-    assert_eq!(original.float_field, deserialized_pretty.float_field);
-    assert_eq!(original.scientific, deserialized_pretty.scientific);
-    assert_eq!(original.string_field, deserialized_pretty.string_field);
-    assert_eq!(original.unicode_string, deserialized_pretty.unicode_string);
-    assert_eq!(original.binary_field, deserialized_pretty.binary_field);
-    assert_eq!(
-        original.timestamp_field,
-        deserialized_pretty.timestamp_field
-    );
-    assert_eq!(original.list_field, deserialized_pretty.list_field);
-    assert_eq!(original.nested_list, deserialized_pretty.nested_list);
-    assert_eq!(original.nested_struct, deserialized_pretty.nested_struct);
-    assert_eq!(original.optional_value, deserialized_pretty.optional_value);
+    assert_eq!(original, deserialized_pretty);
 }
 
 #[test]
