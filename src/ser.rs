@@ -27,6 +27,7 @@ pub fn to_string<T>(value: &T) -> Result<String>
 where
     T: Serialize,
 {
+    // TODO: optimize by directly serializing to string instead of going through Value
     let jasn_value = to_value(value)?;
     Ok(formatter::to_string(&jasn_value))
 }
@@ -36,6 +37,7 @@ pub fn to_string_pretty<T>(value: &T) -> Result<String>
 where
     T: Serialize,
 {
+    // TODO: optimize by directly serializing to string instead of going through Value
     let jasn_value = to_value(value)?;
     Ok(formatter::to_string_pretty(&jasn_value))
 }
@@ -45,6 +47,7 @@ pub fn to_string_opts<T>(value: &T, options: &formatter::Options) -> Result<Stri
 where
     T: Serialize,
 {
+    // TODO: optimize by directly serializing to string instead of going through Value
     let jasn_value = to_value(value)?;
     Ok(formatter::to_string_opts(&jasn_value, options))
 }

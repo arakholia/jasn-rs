@@ -39,6 +39,7 @@ pub fn from_str<T>(s: &str) -> Result<T>
 where
     T: for<'de> Deserialize<'de>,
 {
+    // TODO: optimize by directly deserializing from the parse tree instead of going through Value
     let value = parse(s)?;
     from_value(&value)
 }
