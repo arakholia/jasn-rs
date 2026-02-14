@@ -51,7 +51,7 @@ foo:
 ## EBNF Grammar
 
 ```ebnf
-(* Root - a sequence of lines forming an implicit map *)
+(* Root document: may be an implicit map, a top-level list, or a single scalar value *)
 document = { line } ;
 line = indent , ( content | comment ) , newline ;
 content = map_entry | inline_value | list_item ;
