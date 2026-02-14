@@ -19,12 +19,12 @@ indent = @{ " "* }
 // This ensures negative numbers are parsed as values, not list items
 content = { map_entry | inline_value | list_item }
 
-// List item: "- " (dash + space) followed by value or newline for nested
+// List item: "- " (dash + one or more spaces) followed by value or newline for nested
 // Must have space or end after dash to distinguish from negative numbers
-list_item = { "-" ~ (&(" " | NEWLINE | EOI) ~ (" " ~ inline_value ~ (trailing_ws* ~ comment)?)?) }
+list_item = { "-" ~ (&(" " | NEWLINE | EOI) ~ (" "+ ~ inline_value ~ (trailing_ws* ~ comment)?)?) }
 
-// Map entry: "key: " followed by value or newline for nested
-map_entry = { key ~ ":" ~ (" " ~ inline_value ~ (trailing_ws* ~ comment)?)? }
+// Map entry: "key:" followed by one or more spaces and value, or newline for nested
+map_entry = { key ~ ":" ~ (" "+ ~ inline_value ~ (trailing_ws* ~ comment)?)? }
 
 // Inline values - values that can appear on the same line
 inline_value = {

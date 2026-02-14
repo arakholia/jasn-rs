@@ -26,13 +26,13 @@ JAML uses **strict 2-space indentation**:
 ### 2. Whitespace Requirements
 - **No trailing whitespace**: Lines must not have spaces or tabs after the last non-whitespace character
 - **Blank lines**: May contain only a newline, no spaces
-- **After `-`**: Exactly one space required, or immediate newline for nested content
-- **After `:`**: Exactly one space required before inline value, or immediate newline for block value
+- **After `-`**: One or more spaces required, or immediate newline for nested content
+- **After `:`**: One or more spaces required before inline value, or immediate newline for block value
 
 ### 3. Whitespace Significance
 - **Line start**: Indentation (spaces or tabs) determines structure depth
-- **After `-`**: Exactly one space required before the list item value
-- **After `:`**: Exactly one space required before inline value (or newline for block value)
+- **After `-`**: One or more spaces required before the list item value
+- **After `:`**: One or more spaces required before inline value (or newline for block value)
 - **Blank lines**: May contain only a newline, no spaces or tabs
 - **Comments**: `#` can appear after indentation or inline (with space before `#`)
 
@@ -134,11 +134,11 @@ iso8601_datetime = ? ISO 8601 / RFC 3339 formatted datetime string ? ;
 
 (* Block Lists *)
 block_list = list_item , { newline , indent , list_item } ;
-list_item = "-" , ( space , inline_value | newline , indent , value ) ;
+list_item = "-" , ( spaces , inline_value | newline , indent , value ) ;
 
 (* Block Maps *)
 block_map = map_entry , { newline , indent , map_entry } ;
-map_entry = key , ":" , ( space , inline_value | newline , indent , value ) ;
+map_entry = key , ":" , ( spaces , inline_value | newline , indent , value ) ;
 
 (* Brace Lists and Maps - compact single-line syntax *)
 brace_list = "[" , [ space ] , [ inline_value , { [ space ] , "," , [ space ] , inline_value } , [ "," ] ] , [ space ] , "]" ;
@@ -159,6 +159,7 @@ indent = { space_char , space_char } ;
   (* indentation is always an even number of spaces: 0, 2, 4, 6, ... *)
 space_char = " " ;
 space = " " ;
+spaces = space , { space } ;  (* one or more spaces *)
 newline = "\n" | "\r\n" | "\r" ;
 whitespace = { space | newline } ;
 

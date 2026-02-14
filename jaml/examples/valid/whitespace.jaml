@@ -1,0 +1,10 @@
+trailing_ws: null 
+blank_line: null
+
+blank_line_with_ws: null
+  
+map_trailing_ws: 
+  map_value_ws:  1 
+
+list_value_ws:
+  -  1 
