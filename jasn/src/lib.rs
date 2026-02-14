@@ -102,6 +102,12 @@
 //! # Features
 //!
 //! - `serde` (default): Enable serde serialization/deserialization support
+//!
+//! # Grammar
+//!
+//! For the complete grammar specification, see the [`grammar`] module.
+//!
+//! > **Note:** The specification is still under active development and may be subject to change.
 
 #![warn(missing_docs)]
 
@@ -123,3 +129,8 @@ pub mod ser;
 pub use de::{from_str, from_value};
 #[cfg(feature = "serde")]
 pub use ser::{to_string, to_string_pretty, to_value};
+
+/// Complete grammar specification for JASN.
+///
+#[doc = include_str!("../GRAMMAR.md")]
+pub mod grammar {}
