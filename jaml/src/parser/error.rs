@@ -1,4 +1,4 @@
-use super::{indent::Style as IndentStyle, parse::PestError};
+use super::{indent, parse::PestError};
 
 /// Errors that can occur during parsing.
 #[derive(Debug, thiserror::Error)]
@@ -45,16 +45,16 @@ pub enum Error {
     InvalidTimestamp(String, String),
 
     /// Mixed tabs and spaces in indentation base unit.
-    #[error("Mixed tabs and spaces in indentation, got {0:?}")]
+    #[error("Mixed tabs and spaces in indentation, got '{0:?}'")]
     MixedIndent(String),
 
     /// Inconsistent indentation type (switching between spaces and tabs).
-    #[error("Inconsistent indentation: expected {0}, got {1}")]
-    InconsistentIndentStyle(IndentStyle, IndentStyle),
+    #[error("Inconsistent indent char: expected '{0}', got '{1}'")]
+    InconsistentIndentTab(indent::Tab, indent::Tab),
 
     /// Invalid indentation (not a multiple of the base unit).
     #[error("Invalid indentation: expected multiple of {0}, got {1}")]
-    InvalidIndentCount(IndentStyle, usize),
+    InvalidIndentCount(usize, usize),
 
     /// Unexpected indentation level.
     #[error("Unexpected indentation: expected {0}, got {1}")]

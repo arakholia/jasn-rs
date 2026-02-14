@@ -50,7 +50,7 @@ pub(super) fn parse_impl(input: &str) -> Result<Value> {
 fn parse_lines(pairs: pest::iterators::Pairs<Rule>) -> Result<Vec<Line>> {
     let mut lines = Vec::new();
     let mut line_num = 1;
-    let mut indent_tracker = indent::Tracker::new();
+    let mut indent_tracker = indent::Tracker::default();
 
     for pair in pairs {
         if pair.as_rule() == Rule::jaml {
