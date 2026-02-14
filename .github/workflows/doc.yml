@@ -30,9 +30,9 @@ jobs:
         env:
           RUSTDOCFLAGS: "--default-theme=ayu"
       
-      - name: Add redirect page
+      - name: Create landing page
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        run: echo '<meta http-equiv="refresh" content="0; url=jasn/index.html">' > target/doc/index.html
+        run: cp .github/workflows/doc.html target/doc/index.html
       
       - name: Upload artifact
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'

@@ -254,5 +254,30 @@ jaml = "0.2"
 
 See the [JAML README](jaml/README.md) for complete documentation and examples.
 
+## Planned Features
+
+- **Streaming Serde Implementation**: Support for parsing and serializing large documents without loading entire structure into memory
+
+## Documentation
+
+To view the API documentation locally:
+
+```bash
+# Build documentation for all workspace crates
+cargo doc --workspace --no-deps
+
+# Generate landing page with links to JASN and JAML docs
+./generate-doc-index.sh
+
+# Open in browser
+xdg-open target/doc/index.html  # Linux
+open target/doc/index.html      # macOS
+start target/doc/index.html     # Windows
+```
+
+Or view the published documentation online:
+- **JASN**: [docs.rs/jasn](https://docs.rs/jasn)
+- **JAML**: [docs.rs/jaml](https://docs.rs/jaml)
+
 ## License
 MIT License - see [LICENSE](LICENSE) file for details.
