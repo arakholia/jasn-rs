@@ -1,0 +1,38 @@
+name: Build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+    name: Build (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+      
+      - name: Build library
+        run: cargo build --workspace --lib --verbose
+      
+      - name: Build CLI binary
+        run: cargo build --bin jasn --features cli --verbose
+      
+      - name: Build release binary
+        run: cargo build --bin jasn --features cli --release --verbose
+      
+      - name: Verify binary works
+        run: |
+          echo '{"test": 123}' | cargo run --bin jasn --features cli -- format --compact
+        shell: bash

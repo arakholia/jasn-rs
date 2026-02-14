@@ -19,8 +19,11 @@ jobs:
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
       
-      - name: Run tests
-        run: cargo test --workspace --verbose
+      - name: Run tests (all features)
+        run: cargo test --workspace --all-features --verbose
+      
+      - name: Run tests (no default features)
+        run: cargo test --workspace --lib --no-default-features --verbose
       
       - name: Run doc tests
         run: cargo test --doc --workspace --verbose
