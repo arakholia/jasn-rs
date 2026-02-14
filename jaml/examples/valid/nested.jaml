@@ -1,0 +1,13 @@
+# Nested structures test
+items:
+  -
+    "first"
+  -
+    "second"
+matrix:
+  -
+    - 1
+    - 2
+  -
+    - 3
+    - 4

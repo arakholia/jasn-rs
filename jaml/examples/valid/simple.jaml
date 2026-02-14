@@ -1,0 +1,9 @@
+# Simple test
+name: "Alice"
+age: 30
+tags:
+  - "rust"
+  - "yaml"
+config:
+  enabled: true
+  count: 5

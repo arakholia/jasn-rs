@@ -16,14 +16,14 @@
 //!
 //! fn main() -> Result<(), Box<dyn std::error::Error>> {
 //!     let value = parse(r#"
-//! name: Alice
+//! name: "Alice"
 //! age: 30
 //! balance: 1234.56
 //! data: b64"SGVsbG8="
 //! tags:
-//!   - rust
-//!   - yaml
-//!   - parser
+//!   - "rust"
+//!   - "yaml"
+//!   - "parser"
 //!     "#)?;
 //!     
 //!     println!("{:#?}", value);
@@ -36,4 +36,6 @@
 // Re-export core types
 pub use jasn_core::{Binary, Timestamp, Value};
 
-// TODO: Add parser, formatter, and other modules
+mod parser;
+
+pub use parser::{parse, Error as ParseError, Result as ParseResult};
