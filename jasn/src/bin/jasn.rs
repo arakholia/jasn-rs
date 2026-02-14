@@ -8,7 +8,7 @@ use std::{
 use anyhow::{Context, Result};
 use clap::{CommandFactory, Parser, Subcommand, ValueEnum};
 use jasn::{
-    formatter::{BinaryEncoding, Options, QuoteStyle, format_with_opts},
+    formatter::{BinaryEncoding, Options, QuoteStyle, TimestampPrecision, format_with_opts},
     parse,
 };
 
@@ -58,6 +58,10 @@ enum Commands {
         #[arg(long)]
         quote_keys: bool,
 
+        /// Add leading plus sign to positive numbers
+        #[arg(long)]
+        leading_plus: bool,
+
         /// Don't sort object keys
         #[arg(long)]
         no_sort_keys: bool,
@@ -65,6 +69,14 @@ enum Commands {
         /// Escape all non-ASCII characters as \uXXXX
         #[arg(long)]
         escape_unicode: bool,
+
+        /// Use '+00:00' for UTC timestamps instead of 'Z'
+        #[arg(long)]
+        no_zulu: bool,
+
+        /// Timestamp precision for fractional seconds
+        #[arg(long, value_enum, default_value = "auto")]
+        timestamp_precision: TimestampPrecisionArg,
 
         /// Check if file is already formatted (exit 1 if not)
         #[arg(long)]
@@ -127,6 +139,27 @@ impl From<BinaryEncodingArg> for BinaryEncoding {
     }
 }
 
+#[derive(Copy, Clone, PartialEq, Eq, ValueEnum)]
+enum TimestampPrecisionArg {
+    Auto,
+    Seconds,
+    Milliseconds,
+    Microseconds,
+    Nanoseconds,
+}
+
+impl From<TimestampPrecisionArg> for TimestampPrecision {
+    fn from(arg: TimestampPrecisionArg) -> Self {
+        match arg {
+            TimestampPrecisionArg::Auto => TimestampPrecision::Auto,
+            TimestampPrecisionArg::Seconds => TimestampPrecision::Seconds,
+            TimestampPrecisionArg::Milliseconds => TimestampPrecision::Milliseconds,
+            TimestampPrecisionArg::Microseconds => TimestampPrecision::Microseconds,
+            TimestampPrecisionArg::Nanoseconds => TimestampPrecision::Nanoseconds,
+        }
+    }
+}
+
 fn main() {
     let cli = Cli::parse();
 
@@ -140,8 +173,11 @@ fn main() {
             binary,
             no_trailing_commas,
             quote_keys,
+            leading_plus,
             no_sort_keys,
             escape_unicode,
+            no_zulu,
+            timestamp_precision,
             check_format,
         } => cmd_fmt(
             input,
@@ -152,8 +188,11 @@ fn main() {
             binary,
             no_trailing_commas,
             quote_keys,
+            leading_plus,
             no_sort_keys,
             escape_unicode,
+            no_zulu,
+            timestamp_precision,
             check_format,
         ),
         Commands::Check {
@@ -181,8 +220,11 @@ fn build_format_options(
     binary: BinaryEncodingArg,
     no_trailing_commas: bool,
     quote_keys: bool,
+    leading_plus: bool,
     no_sort_keys: bool,
     escape_unicode: bool,
+    no_zulu: bool,
+    timestamp_precision: TimestampPrecisionArg,
 ) -> Options {
     let base = if compact {
         Options::compact()
@@ -194,8 +236,11 @@ fn build_format_options(
         .with_binary_encoding(binary.into())
         .with_trailing_commas(!no_trailing_commas)
         .with_unquoted_keys(!quote_keys)
+        .with_leading_plus(leading_plus)
         .with_sort_keys(!no_sort_keys)
         .with_escape_unicode(escape_unicode)
+        .with_use_zulu(!no_zulu)
+        .with_timestamp_precision(timestamp_precision.into())
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -208,8 +253,11 @@ fn cmd_fmt(
     binary: BinaryEncodingArg,
     no_trailing_commas: bool,
     quote_keys: bool,
+    leading_plus: bool,
     no_sort_keys: bool,
     escape_unicode: bool,
+    no_zulu: bool,
+    timestamp_precision: TimestampPrecisionArg,
     check_format: bool,
 ) -> Result<()> {
     // Read input
@@ -226,8 +274,11 @@ fn cmd_fmt(
         binary,
         no_trailing_commas,
         quote_keys,
+        leading_plus,
         no_sort_keys,
         escape_unicode,
+        no_zulu,
+        timestamp_precision,
     );
 
     // Format
