@@ -15,9 +15,12 @@ JASN (Just Another Serialization Notation) extends JSON with explicit integer an
 
 ## EBNF Grammar
 
+> **Note:** Whitespace is implicitly allowed between all tokens and is automatically skipped during parsing. All whitespace characters (space, tab, newline, carriage return) are completely interchangeable.
+
 ```ebnf
 (* Root *)
-value = null | boolean | integer | float | string | binary | timestamp | list | map ;
+(* Note: Float before integer to correctly parse trailing-dot syntax like "5." *)
+value = null | boolean | float | integer | string | binary | timestamp | list | map ;
 
 (* Primitives *)
 null = "null" ;
@@ -64,32 +67,25 @@ unicode_escape = "u" , hex_digit , hex_digit , hex_digit , hex_digit ;
 binary = base64_binary | hex_binary ;
 base64_binary = "b64" , '"' , { base64_char } , '"' ;
 hex_binary = "hex" , '"' , { hex_digit } , '"' ;
-base64_char = letter | digit | "+" | "/" | "=" ;
-letter = "A" | "B" | "C" | "D" | "E" | "F" | "G" | "H" | "I" | "J" | "K" | "L" | "M"
-       | "N" | "O" | "P" | "Q" | "R" | "S" | "T" | "U" | "V" | "W" | "X" | "Y" | "Z"
-       | "a" | "b" | "c" | "d" | "e" | "f" | "g" | "h" | "i" | "j" | "k" | "l" | "m"
-       | "n" | "o" | "p" | "q" | "r" | "s" | "t" | "u" | "v" | "w" | "x" | "y" | "z" ;
+base64_char = ? ASCII letter (A-Z, a-z) ? | digit | "+" | "/" | "=" ;
 
 (* Timestamps *)
 timestamp = "ts" , '"' , iso8601_datetime , '"' ;
 iso8601_datetime = ? ISO 8601 / RFC 3339 formatted datetime string ? ;
 
 (* Lists *)
-list = "[" , [ whitespace ] , [ value_list ] , [ "," ] , [ whitespace ] , "]" ;
-value_list = value , { [ whitespace ] , "," , [ whitespace ] , value } ;
+list = "[" , [ value_list ] , [ "," ] , "]" ;
+value_list = value , { "," , value } ;
 
 (* Maps *)
-map = "{" , [ whitespace ] , [ member_list ] , [ "," ] , [ whitespace ] , "}" ;
-member_list = member , { [ whitespace ] , "," , [ whitespace ] , member } ;
-member = key , [ whitespace ] , ":" , [ whitespace ] , value ;
+map = "{" , [ member_list ] , [ "," ] , "}" ;
+member_list = member , { "," , member } ;
+member = key , ":" , value ;
 
 key = string | identifier ;
 identifier = id_start , { id_continue } ;
-id_start = letter | "_" ;
+id_start = ? ASCII letter (A-Z, a-z) ? | "_" ;
 id_continue = id_start | digit ;
-
-(* Whitespace *)
-whitespace = { " " | "\t" | "\n" | "\r" } ;
 
 (* Comments *)
 comment = "/*" , { ? any character ? - ( "*/" ) } , "*/" ;
