@@ -257,6 +257,7 @@ See the [JAML README](jaml/README.md) for complete documentation and examples.
 ## Planned Features
 
 - **Streaming Serde Implementation**: Support for parsing and serializing large documents without loading entire structure into memory
+- **Faster/Custom Parser**: Replace Pest with a custom parser for improved performance
 
 ## Documentation
 

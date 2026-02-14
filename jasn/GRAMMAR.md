@@ -300,4 +300,3 @@ This means `42` and `42.0` are **different types** in JASN, though mathematicall
 
 - Additional binary encodings: `b"..."` for Python-style b-strings
 - Multi-line strings with proper indentation handling
-- BigInt support for arbitrary precision integers

@@ -333,4 +333,3 @@ JAML avoids this by requiring **all string values to be quoted**. Only these key
 ## Future Considerations
 
 - Multi-line strings with proper indentation handling
-- BigInt support for arbitrary precision integers
