@@ -45,20 +45,20 @@ pub enum Error {
     InvalidTimestamp(String, String),
 
     /// Mixed tabs and spaces in indentation base unit.
-    #[error("Mixed tabs and spaces in indentation at line {0}: base unit cannot mix whitespace types")]
-    MixedIndentation(usize),
+    #[error("Mixed tabs and spaces in indentation, got {0:?}")]
+    MixedIndent(String),
 
     /// Inconsistent indentation type (switching between spaces and tabs).
-    #[error("Inconsistent indentation at line {0}: expected {1}, got {2}")]
-    InconsistentIndentationType(usize, String, String),
+    #[error("Inconsistent indentation: expected {0}, got {1}")]
+    InconsistentIndentStyle(String, String),
 
     /// Invalid indentation (not a multiple of the base unit).
-    #[error("Invalid indentation at line {0}: expected multiple of {1}, got {2}")]
-    InvalidIndentation(usize, String, usize),
+    #[error("Invalid indentation: expected multiple of {0}, got {1}")]
+    InvalidIndentCount(String, usize),
 
     /// Unexpected indentation level.
-    #[error("Unexpected indentation at line {0}: expected {1}, got {2}")]
-    UnexpectedIndentation(usize, usize, usize),
+    #[error("Unexpected indentation: expected {0}, got {1}")]
+    UnexpectedIndent(usize, usize),
 
     /// Empty document.
     #[error("Empty document")]

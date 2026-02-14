@@ -20,8 +20,8 @@ pub(super) struct JamlParser;
 /// Tracks indentation style (spaces or tabs) and base unit size
 #[derive(Debug, Clone, Copy)]
 enum IndentStyle {
-    Spaces(usize),  // Number of spaces per indent level
-    Tabs,           // Using tabs
+    Spaces(usize),
+    Tabs,
 }
 
 /// Indentation tracker that detects and validates indentation
@@ -37,7 +37,7 @@ impl IndentTracker {
 
     /// Validate and track indentation for a line
     /// Returns the indent level (0, 1, 2, ...) if valid
-    fn validate(&mut self, indent_str: &str, line_num: usize) -> Result<usize> {
+    fn validate(&mut self, indent_str: &str) -> Result<usize> {
         if indent_str.is_empty() {
             return Ok(0);
         }
@@ -45,9 +45,9 @@ impl IndentTracker {
         // Check if it mixes spaces and tabs
         let has_spaces = indent_str.contains(' ');
         let has_tabs = indent_str.contains('\t');
-        
+
         if has_spaces && has_tabs {
-            return Err(Error::MixedIndentation(line_num));
+            return Err(Error::MixedIndent(indent_str.to_string()));
         }
 
         match self.style {
@@ -64,33 +64,30 @@ impl IndentTracker {
             }
             Some(IndentStyle::Spaces(base_unit)) => {
                 if has_tabs {
-                    return Err(Error::InconsistentIndentationType(
-                        line_num,
+                    return Err(Error::InconsistentIndentStyle(
                         format!("{} space(s)", base_unit),
                         "tab(s)".to_string(),
                     ));
                 }
-                
+
                 let num_spaces = indent_str.len();
                 if num_spaces % base_unit != 0 {
-                    return Err(Error::InvalidIndentation(
-                        line_num,
+                    return Err(Error::InvalidIndentCount(
                         format!("{} space(s)", base_unit),
                         num_spaces,
                     ));
                 }
-                
+
                 Ok(num_spaces / base_unit)
             }
             Some(IndentStyle::Tabs) => {
                 if has_spaces {
-                    return Err(Error::InconsistentIndentationType(
-                        line_num,
+                    return Err(Error::InconsistentIndentStyle(
                         "tab(s)".to_string(),
                         format!("{} space(s)", indent_str.len()),
                     ));
                 }
-                
+
                 Ok(indent_str.len()) // Number of tabs
             }
         }
@@ -145,7 +142,7 @@ fn parse_lines(pairs: pest::iterators::Pairs<Rule>) -> Result<Vec<Line>> {
                         let indent_str = indent_pair.as_str();
 
                         // Validate and get indent level using tracker
-                        let indent = indent_tracker.validate(indent_str, line_num)?;
+                        let indent = indent_tracker.validate(indent_str)?;
 
                         // Get content
                         let content_pair = inner.next().unwrap();
@@ -222,11 +219,7 @@ fn build_value(lines: &[Line], start_idx: usize, expected_indent: usize) -> Resu
     let first = &lines[start_idx];
 
     if first.indent != expected_indent {
-        return Err(Error::UnexpectedIndentation(
-            first.line_num,
-            expected_indent,
-            first.indent,
-        ));
+        return Err(Error::UnexpectedIndent(expected_indent, first.indent));
     }
 
     match &first.content {
@@ -249,11 +242,7 @@ fn build_list(lines: &[Line], start_idx: usize, expected_indent: usize) -> Resul
         }
 
         if line.indent > expected_indent {
-            return Err(Error::UnexpectedIndentation(
-                line.line_num,
-                expected_indent,
-                line.indent,
-            ));
+            return Err(Error::UnexpectedIndent(expected_indent, line.indent));
         }
 
         match &line.content {
@@ -292,11 +281,7 @@ fn build_map(lines: &[Line], start_idx: usize, expected_indent: usize) -> Result
         }
 
         if line.indent > expected_indent {
-            return Err(Error::UnexpectedIndentation(
-                line.line_num,
-                expected_indent,
-                line.indent,
-            ));
+            return Err(Error::UnexpectedIndent(expected_indent, line.indent));
         }
 
         match &line.content {
