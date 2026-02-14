@@ -1,0 +1,7 @@
+block_map:
+  a: 1
+  b: 2
+  c: 3
+
+inline_map: {a: 1, b: 2, c: 3}
+inline_map_trailing: {a: 1, b: 2, c: 3,}

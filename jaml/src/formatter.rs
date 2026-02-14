@@ -210,9 +210,8 @@ fn format_binary(binary: &Binary, encoding: BinaryEncoding) -> String {
 
 fn format_list(items: &[Value], opts: &Options, depth: usize, inline: bool) -> String {
     if items.is_empty() {
-        // Empty list can't be represented in JAML block syntax without context
-        // This would typically appear as an empty sequence in a parent structure
-        return String::new();
+        // Use inline syntax for empty lists
+        return "[]".to_string();
     }
 
     let indent = "  ".repeat(depth);
@@ -226,13 +225,18 @@ fn format_list(items: &[Value], opts: &Options, depth: usize, inline: bool) -> S
 
         // Check if the item can be written inline or needs nesting
         match item {
-            Value::List(_) | Value::Map(_) => {
-                // Nested structures need to go on the next indented line
+            Value::List(items) if !items.is_empty() => {
+                // Non-empty nested lists need to go on the next indented line
+                result.push('\n');
+                result.push_str(&format_impl(item, opts, depth + 1, false));
+            }
+            Value::Map(m) if !m.is_empty() => {
+                // Non-empty nested maps need to go on the next indented line
                 result.push('\n');
                 result.push_str(&format_impl(item, opts, depth + 1, false));
             }
             _ => {
-                // Primitive values can go inline after the dash
+                // Primitives, empty lists [], and empty maps {} can go inline after the dash
                 result.push_str(&format_impl(item, opts, depth + 1, true));
                 result.push('\n');
             }
@@ -244,8 +248,8 @@ fn format_list(items: &[Value], opts: &Options, depth: usize, inline: bool) -> S
 
 fn format_map(map: &BTreeMap<String, Value>, opts: &Options, depth: usize, inline: bool) -> String {
     if map.is_empty() {
-        // Empty map can't be represented in JAML block syntax without context
-        return String::new();
+        // Use inline syntax for empty maps
+        return "{}".to_string();
     }
 
     let indent = "  ".repeat(depth);
@@ -286,13 +290,18 @@ fn format_map(map: &BTreeMap<String, Value>, opts: &Options, depth: usize, inlin
 
         // Check if the value can be written inline or needs nesting
         match value {
-            Value::List(_) | Value::Map(_) => {
-                // Nested structures need to go on the next indented line
+            Value::List(items) if !items.is_empty() => {
+                // Non-empty lists need to go on the next indented line
+                result.push('\n');
+                result.push_str(&format_impl(value, opts, depth + 1, false));
+            }
+            Value::Map(m) if !m.is_empty() => {
+                // Non-empty maps need to go on the next indented line
                 result.push('\n');
                 result.push_str(&format_impl(value, opts, depth + 1, false));
             }
             _ => {
-                // Primitive values can go inline after the colon
+                // Primitive values, empty lists [], and empty maps {} can go inline
                 result.push(' ');
                 result.push_str(&format_impl(value, opts, depth + 1, true));
                 result.push('\n');

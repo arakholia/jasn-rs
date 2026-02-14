@@ -278,8 +278,45 @@ fn parse_inline_value(pair: Pair<Rule>) -> Result<Value> {
         Rule::string => parse_string(rule),
         Rule::binary => parse_binary(rule),
         Rule::timestamp => parse_timestamp(rule),
+        Rule::inline_list => parse_inline_list(rule),
+        Rule::inline_map => parse_inline_map(rule),
         _ => unreachable!("Unexpected inline value rule: {:?}", rule.as_rule()),
     }
+}
+
+fn parse_inline_list(pair: Pair<Rule>) -> Result<Value> {
+    let mut items = Vec::new();
+
+    for inner in pair.into_inner() {
+        match inner.as_rule() {
+            Rule::inline_value => {
+                items.push(parse_inline_value(inner)?);
+            }
+            _ => {}
+        }
+    }
+
+    Ok(Value::List(items))
+}
+
+fn parse_inline_map(pair: Pair<Rule>) -> Result<Value> {
+    let mut map = BTreeMap::new();
+
+    for member in pair.into_inner() {
+        if member.as_rule() == Rule::inline_member {
+            let mut inner = member.into_inner();
+            let key = parse_key(inner.next().unwrap())?;
+            let value = parse_inline_value(inner.next().unwrap())?;
+
+            if map.contains_key(&key) {
+                return Err(Error::DuplicateKey(key));
+            }
+
+            map.insert(key, value);
+        }
+    }
+
+    Ok(Value::Map(map))
 }
 
 // Number parsing (same as JASN)
