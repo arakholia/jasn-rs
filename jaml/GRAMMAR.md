@@ -10,7 +10,7 @@ JAML (Just Another Markup Language) is a YAML-inspired serialization format with
 - **Binary**: Byte array type with base64 (`b64"..."`) and hex (`hex"..."`) encoding
 - **Timestamps**: ISO8601/RFC3339 timestamp literals with `ts"..."` syntax
 - **Indentation-Based**: Uses indentation to denote structure (like YAML/Python), not braces/brackets
-- **Explicit Strings**: All strings must be quoted (avoids "The Norway Problem")
+- **Explicit Strings**: All strings must be quoted (avoids ["The Norway Problem"](https://lab174.com/blog/202601-yaml-norway/))
 - **Unquoted Keys**: Map keys can be unquoted identifiers
 - **Comments**: Line comments (`#`)
 

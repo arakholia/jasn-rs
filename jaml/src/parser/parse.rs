@@ -106,21 +106,28 @@ fn parse_line_content(pair: Pair<Rule>, line_num: usize) -> Result<LineContent> 
             parse_line_content(inner, line_num)
         }
         Rule::list_item => {
-            let value = if let Some(inner) = pair.into_inner().next() {
-                Some(parse_inline_value(inner)?)
-            } else {
-                None
-            };
+            let value = pair
+                .into_inner()
+                .find_map(|inner| {
+                    match inner.as_rule() {
+                        Rule::inline_value => Some(parse_inline_value(inner)),
+                        _ => None, // Skip trailing_ws and comment
+                    }
+                })
+                .transpose()?;
             Ok(LineContent::ListItem(value))
         }
         Rule::map_entry => {
             let mut inner = pair.into_inner();
             let key = parse_key(inner.next().unwrap())?;
-            let value = if let Some(val_pair) = inner.next() {
-                Some(parse_inline_value(val_pair)?)
-            } else {
-                None
-            };
+            let value = inner
+                .find_map(|pair| {
+                    match pair.as_rule() {
+                        Rule::inline_value => Some(parse_inline_value(pair)),
+                        _ => None, // Skip trailing_ws and comment
+                    }
+                })
+                .transpose()?;
             Ok(LineContent::MapEntry(key, value))
         }
         Rule::inline_value => {

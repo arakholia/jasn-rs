@@ -1,0 +1,4 @@
+# YAML accepts this, silently overriding the first key with the second.
+duplicate_keys:
+  a: 1
+  a: 2
