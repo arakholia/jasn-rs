@@ -24,7 +24,8 @@ struct Cli {
 #[derive(Subcommand)]
 enum Commands {
     /// Format and prettify JASN files
-    Fmt {
+    #[command(alias = "fmt")]
+    Format {
         /// Input file (use '-' or omit for stdin)
         #[arg(value_name = "FILE")]
         input: Option<PathBuf>,
@@ -67,11 +68,12 @@ enum Commands {
 
         /// Check if file is already formatted (exit 1 if not)
         #[arg(long)]
-        check: bool,
+        check_format: bool,
     },
 
-    /// Validate JASN syntax
-    Valid {
+    /// Check JASN syntax
+    #[command(alias = "chk")]
+    Check {
         /// Input files to validate (use '-' for stdin)
         #[arg(value_name = "FILE")]
         files: Vec<PathBuf>,
@@ -118,7 +120,7 @@ fn main() {
     let cli = Cli::parse();
 
     let result = match cli.command {
-        Commands::Fmt {
+        Commands::Format {
             input,
             output,
             compact,
@@ -129,7 +131,7 @@ fn main() {
             quote_keys,
             no_sort_keys,
             escape_unicode,
-            check,
+            check_format,
         } => cmd_fmt(
             input,
             output,
@@ -141,9 +143,9 @@ fn main() {
             quote_keys,
             no_sort_keys,
             escape_unicode,
-            check,
+            check_format,
         ),
-        Commands::Valid { files, verbose } => cmd_valid(files, verbose),
+        Commands::Check { files, verbose } => cmd_valid(files, verbose),
     };
 
     if let Err(e) = result {
@@ -163,7 +165,7 @@ fn cmd_fmt(
     quote_keys: bool,
     no_sort_keys: bool,
     escape_unicode: bool,
-    check: bool,
+    check_format: bool,
 ) -> Result<()> {
     // Read input
     let input_content = read_input(input.as_deref())?;
@@ -190,7 +192,7 @@ fn cmd_fmt(
     let formatted = format_with_opts(&value, &opts);
 
     // Check mode: compare and exit
-    if check {
+    if check_format {
         let input_trimmed = input_content.trim();
         let formatted_trimmed = formatted.trim();
 
