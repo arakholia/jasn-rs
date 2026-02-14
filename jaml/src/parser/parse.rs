@@ -19,9 +19,18 @@ pub(super) struct JamlParser;
 
 /// Tracks indentation style (spaces or tabs) and base unit size
 #[derive(Debug, Clone, Copy)]
-enum IndentStyle {
-    Spaces(usize),
-    Tabs,
+pub enum IndentStyle {
+    Spaces(usize), // Number of spaces per indent level
+    Tabs(usize),   // Number of tabs per indent level
+}
+
+impl std::fmt::Display for IndentStyle {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            IndentStyle::Spaces(n) => write!(f, "{:?}", " ".repeat(*n)),
+            IndentStyle::Tabs(n) => write!(f, "{:?}", "\t".repeat(*n)),
+        }
+    }
 }
 
 /// Indentation tracker that detects and validates indentation
@@ -54,8 +63,9 @@ impl IndentTracker {
             None => {
                 // First indent - establish the base unit
                 if has_tabs {
-                    self.style = Some(IndentStyle::Tabs);
-                    Ok(indent_str.len()) // Number of tabs
+                    let num_tabs = indent_str.len();
+                    self.style = Some(IndentStyle::Tabs(num_tabs));
+                    Ok(1) // First indent level
                 } else {
                     let num_spaces = indent_str.len();
                     self.style = Some(IndentStyle::Spaces(num_spaces));
@@ -65,30 +75,38 @@ impl IndentTracker {
             Some(IndentStyle::Spaces(base_unit)) => {
                 if has_tabs {
                     return Err(Error::InconsistentIndentStyle(
-                        format!("{} space(s)", base_unit),
-                        "tab(s)".to_string(),
+                        IndentStyle::Spaces(base_unit),
+                        IndentStyle::Tabs(indent_str.len()),
                     ));
                 }
 
                 let num_spaces = indent_str.len();
                 if num_spaces % base_unit != 0 {
                     return Err(Error::InvalidIndentCount(
-                        format!("{} space(s)", base_unit),
+                        IndentStyle::Spaces(base_unit),
                         num_spaces,
                     ));
                 }
 
                 Ok(num_spaces / base_unit)
             }
-            Some(IndentStyle::Tabs) => {
+            Some(IndentStyle::Tabs(base_unit)) => {
                 if has_spaces {
                     return Err(Error::InconsistentIndentStyle(
-                        "tab(s)".to_string(),
-                        format!("{} space(s)", indent_str.len()),
+                        IndentStyle::Tabs(base_unit),
+                        IndentStyle::Spaces(indent_str.len()),
                     ));
                 }
 
-                Ok(indent_str.len()) // Number of tabs
+                let num_tabs = indent_str.len();
+                if num_tabs % base_unit != 0 {
+                    return Err(Error::InvalidIndentCount(
+                        IndentStyle::Tabs(base_unit),
+                        num_tabs,
+                    ));
+                }
+
+                Ok(num_tabs / base_unit)
             }
         }
     }

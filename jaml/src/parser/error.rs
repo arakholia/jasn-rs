@@ -1,4 +1,4 @@
-use super::parse::PestError;
+use super::parse::{IndentStyle, PestError};
 
 /// Errors that can occur during parsing.
 #[derive(Debug, thiserror::Error)]
@@ -50,11 +50,11 @@ pub enum Error {
 
     /// Inconsistent indentation type (switching between spaces and tabs).
     #[error("Inconsistent indentation: expected {0}, got {1}")]
-    InconsistentIndentStyle(String, String),
+    InconsistentIndentStyle(IndentStyle, IndentStyle),
 
     /// Invalid indentation (not a multiple of the base unit).
     #[error("Invalid indentation: expected multiple of {0}, got {1}")]
-    InvalidIndentCount(String, usize),
+    InvalidIndentCount(IndentStyle, usize),
 
     /// Unexpected indentation level.
     #[error("Unexpected indentation: expected {0}, got {1}")]
