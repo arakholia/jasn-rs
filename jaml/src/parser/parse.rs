@@ -4,7 +4,7 @@
 
 use std::{collections::BTreeMap, result::Result as StdResult};
 
-use pest::{iterators::Pair, Parser};
+use pest::{Parser, iterators::Pair};
 use pest_derive::Parser;
 
 use super::{Error, Result};
@@ -34,14 +34,14 @@ enum LineContent {
 
 pub(super) fn parse_impl(input: &str) -> Result<Value> {
     let pairs = JamlParser::parse(Rule::jaml, input)?;
-    
+
     // Parse all lines
     let lines = parse_lines(pairs)?;
-    
+
     if lines.is_empty() {
         return Err(Error::EmptyDocument);
     }
-    
+
     // Build value from lines
     let (value, _) = build_value(&lines, 0, 0)?;
     Ok(value)
@@ -50,7 +50,7 @@ pub(super) fn parse_impl(input: &str) -> Result<Value> {
 fn parse_lines(pairs: pest::iterators::Pairs<Rule>) -> Result<Vec<Line>> {
     let mut lines = Vec::new();
     let mut line_num = 1;
-    
+
     for pair in pairs {
         if pair.as_rule() == Rule::jaml {
             let document = pair.into_inner().next().unwrap();
@@ -58,11 +58,11 @@ fn parse_lines(pairs: pest::iterators::Pairs<Rule>) -> Result<Vec<Line>> {
                 match line_pair.as_rule() {
                     Rule::non_empty_line => {
                         let mut inner = line_pair.into_inner();
-                        
+
                         // Get indent
                         let indent_pair = inner.next().unwrap();
                         let indent_str = indent_pair.as_str();
-                        
+
                         // Validate indentation
                         if indent_str.contains('\t') {
                             return Err(Error::TabsInIndentation(line_num));
@@ -71,11 +71,11 @@ fn parse_lines(pairs: pest::iterators::Pairs<Rule>) -> Result<Vec<Line>> {
                         if indent % 2 != 0 {
                             return Err(Error::InvalidIndentation(line_num, indent));
                         }
-                        
+
                         // Get content
                         let content_pair = inner.next().unwrap();
                         let content = parse_line_content(content_pair, line_num)?;
-                        
+
                         if !matches!(content, LineContent::Empty) {
                             lines.push(Line {
                                 indent,
@@ -83,7 +83,7 @@ fn parse_lines(pairs: pest::iterators::Pairs<Rule>) -> Result<Vec<Line>> {
                                 line_num,
                             });
                         }
-                        
+
                         line_num += 1;
                     }
                     Rule::empty_line | Rule::NEWLINE => {
@@ -95,7 +95,7 @@ fn parse_lines(pairs: pest::iterators::Pairs<Rule>) -> Result<Vec<Line>> {
             }
         }
     }
-    
+
     Ok(lines)
 }
 
@@ -136,9 +136,9 @@ fn build_value(lines: &[Line], start_idx: usize, expected_indent: usize) -> Resu
     if start_idx >= lines.len() {
         return Err(Error::EmptyDocument);
     }
-    
+
     let first = &lines[start_idx];
-    
+
     if first.indent != expected_indent {
         return Err(Error::UnexpectedIndentation(
             first.line_num,
@@ -146,7 +146,7 @@ fn build_value(lines: &[Line], start_idx: usize, expected_indent: usize) -> Resu
             first.indent,
         ));
     }
-    
+
     match &first.content {
         LineContent::Value(v) => Ok((v.clone(), start_idx + 1)),
         LineContent::ListItem(_) => build_list(lines, start_idx, expected_indent),
@@ -158,14 +158,14 @@ fn build_value(lines: &[Line], start_idx: usize, expected_indent: usize) -> Resu
 fn build_list(lines: &[Line], start_idx: usize, expected_indent: usize) -> Result<(Value, usize)> {
     let mut items = Vec::new();
     let mut idx = start_idx;
-    
+
     while idx < lines.len() {
         let line = &lines[idx];
-        
+
         if line.indent < expected_indent {
             break;
         }
-        
+
         if line.indent > expected_indent {
             return Err(Error::UnexpectedIndentation(
                 line.line_num,
@@ -173,7 +173,7 @@ fn build_list(lines: &[Line], start_idx: usize, expected_indent: usize) -> Resul
                 line.indent,
             ));
         }
-        
+
         match &line.content {
             LineContent::ListItem(maybe_val) => {
                 if let Some(val) = maybe_val {
@@ -194,21 +194,21 @@ fn build_list(lines: &[Line], start_idx: usize, expected_indent: usize) -> Resul
             _ => break,
         }
     }
-    
+
     Ok((Value::List(items), idx))
 }
 
 fn build_map(lines: &[Line], start_idx: usize, expected_indent: usize) -> Result<(Value, usize)> {
     let mut map = BTreeMap::new();
     let mut idx = start_idx;
-    
+
     while idx < lines.len() {
         let line = &lines[idx];
-        
+
         if line.indent < expected_indent {
             break;
         }
-        
+
         if line.indent > expected_indent {
             return Err(Error::UnexpectedIndentation(
                 line.line_num,
@@ -216,13 +216,13 @@ fn build_map(lines: &[Line], start_idx: usize, expected_indent: usize) -> Result
                 line.indent,
             ));
         }
-        
+
         match &line.content {
             LineContent::MapEntry(key, maybe_val) => {
                 if map.contains_key(key) {
                     return Err(Error::DuplicateKey(key.clone()));
                 }
-                
+
                 if let Some(val) = maybe_val {
                     map.insert(key.clone(), val.clone());
                     idx += 1;
@@ -241,7 +241,7 @@ fn build_map(lines: &[Line], start_idx: usize, expected_indent: usize) -> Result
             _ => break,
         }
     }
-    
+
     Ok((Value::Map(map), idx))
 }
 
@@ -269,7 +269,7 @@ fn parse_inline_value(pair: Pair<Rule>) -> Result<Value> {
     } else {
         pair
     };
-    
+
     match rule.as_rule() {
         Rule::null => Ok(Value::Null),
         Rule::boolean => Ok(Value::Bool(rule.as_str() == "true")),
@@ -285,24 +285,24 @@ fn parse_inline_value(pair: Pair<Rule>) -> Result<Value> {
 // Number parsing (same as JASN)
 fn parse_int(pair: Pair<Rule>) -> Result<Value> {
     let s = pair.as_str();
-    
+
     let normalized = s.replace('_', "");
     let normalized = normalized.strip_prefix('+').unwrap_or(&normalized);
-    
+
     let (is_negative, unsigned_str) = match normalized.strip_prefix('-') {
         Some(rest) => (true, rest),
         None => (false, normalized),
     };
-    
+
     let uint = match unsigned_str {
         s if s.starts_with("0x") || s.starts_with("0X") => parse_int_radix(&s[2..], 16)?,
         s if s.starts_with("0b") || s.starts_with("0B") => parse_int_radix(&s[2..], 2)?,
         s if s.starts_with("0o") || s.starts_with("0O") => parse_int_radix(&s[2..], 8)?,
         _ => return Ok(Value::Int(normalized.parse::<i64>()?)),
     };
-    
+
     let int = if is_negative { -uint } else { uint };
-    
+
     Ok(Value::Int(int))
 }
 
@@ -312,14 +312,14 @@ fn parse_int_radix(s: &str, radix: u32) -> Result<i64> {
 
 fn parse_float(pair: Pair<Rule>) -> Result<Value> {
     let s = pair.as_str();
-    
+
     let value = match s {
         "inf" | "+inf" => f64::INFINITY,
         "-inf" => f64::NEG_INFINITY,
         "nan" | "+nan" | "-nan" => f64::NAN,
         _ => s.parse::<f64>()?,
     };
-    
+
     Ok(Value::Float(value))
 }
 
@@ -328,10 +328,10 @@ fn parse_string(pair: Pair<Rule>) -> Result<Value> {
     let quoted = inner.next().unwrap();
     let content_pair = quoted.into_inner().next().unwrap();
     let content = content_pair.as_str();
-    
+
     let mut result = String::with_capacity(content.len());
     let mut chars = content.chars();
-    
+
     while let Some(ch) = chars.next() {
         if ch == '\\' {
             match chars.next() {
@@ -352,7 +352,7 @@ fn parse_string(pair: Pair<Rule>) -> Result<Value> {
             result.push(ch);
         }
     }
-    
+
     Ok(Value::String(result))
 }
 
@@ -363,7 +363,7 @@ fn parse_unicode_escape(chars: &mut std::str::Chars) -> Result<char> {
     }
     let code =
         u32::from_str_radix(&hex, 16).map_err(|_| Error::InvalidUnicodeEscape(hex.clone()))?;
-    
+
     if (0xD800..=0xDBFF).contains(&code) {
         let saved_chars = chars.clone();
         if chars.next() == Some('\\') && chars.next() == Some('u') {
@@ -380,20 +380,18 @@ fn parse_unicode_escape(chars: &mut std::str::Chars) -> Result<char> {
         }
         *chars = saved_chars;
     }
-    
+
     char::from_u32(code).ok_or(Error::InvalidUnicodeCodepoint(code))
 }
 
 fn parse_binary(pair: Pair<Rule>) -> Result<Value> {
     let rule = pair.into_inner().next().unwrap();
-    
+
     match rule.as_rule() {
         Rule::base64_binary => {
             let content = rule.into_inner().next().unwrap().as_str();
-            let bytes = base64::Engine::decode(
-                &base64::engine::general_purpose::STANDARD,
-                content,
-            )?;
+            let bytes =
+                base64::Engine::decode(&base64::engine::general_purpose::STANDARD, content)?;
             Ok(Value::Binary(Binary(bytes)))
         }
         Rule::hex_binary => {
@@ -413,7 +411,7 @@ fn parse_binary(pair: Pair<Rule>) -> Result<Value> {
 
 fn parse_timestamp(pair: Pair<Rule>) -> Result<Value> {
     let content = pair.into_inner().next().unwrap().as_str();
-    
+
     match time::OffsetDateTime::parse(content, &time::format_description::well_known::Rfc3339) {
         Ok(dt) => Ok(Value::Timestamp(dt)),
         Err(e) => Err(Error::InvalidTimestamp(content.to_string(), e.to_string())),

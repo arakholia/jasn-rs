@@ -81,7 +81,7 @@ fn test_binary() {
 fn test_lists() {
     let result = parse("items:\n  - 1\n  - 2\n  - 3").unwrap();
     assert!(matches!(result, jaml::Value::Map(ref m) if m.len() == 1));
-    
+
     // Simple inline list items
     let result = parse("- 1\n- 2\n- 3").unwrap();
     assert!(matches!(result, jaml::Value::List(ref v) if v.len() == 3));
@@ -109,7 +109,7 @@ fn test_comments() {
 fn test_nested_structures() {
     let result = parse("outer:\n  inner: \"value\"").unwrap();
     assert!(matches!(result, jaml::Value::Map(_)));
-    
+
     let map = result.as_map().unwrap();
     assert!(map.contains_key("outer"));
     assert!(matches!(map.get("outer"), Some(jaml::Value::Map(_))));

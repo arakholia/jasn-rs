@@ -12,7 +12,7 @@
 //! # Quick Start
 //!
 //! ```rust,ignore
-//! use jaml::parse;
+//! use jaml::{parse, format};
 //!
 //! fn main() -> Result<(), Box<dyn std::error::Error>> {
 //!     let value = parse(r#"
@@ -27,6 +27,10 @@
 //!     "#)?;
 //!     
 //!     println!("{:#?}", value);
+//!     
+//!     // Format back to JAML
+//!     let formatted = format(&value);
+//!     println!("{}", formatted);
 //!     Ok(())
 //! }
 //! ```
@@ -36,6 +40,8 @@
 // Re-export core types
 pub use jasn_core::{Binary, Timestamp, Value};
 
+pub mod formatter;
 mod parser;
 
-pub use parser::{parse, Error as ParseError, Result as ParseResult};
+pub use formatter::{format, format_with_opts};
+pub use parser::{Error as ParseError, Result as ParseResult, parse};
