@@ -1,6 +1,7 @@
 # Brace lists with newlines are allowed in YAML, but not JAML.
-# We may reconsider this.
-# Oddly enough, as permissive as YAML is, it rejects trailing commas.
+# JAML's brace syntax is intentionally compact/single-line.
+# For multi-line lists, use JAML's indentation-based block syntax.
+# (YAML oddly rejects trailing commas, but JAML allows them in brace syntax.)
 brace_list_nl: [
   1,
   2,
