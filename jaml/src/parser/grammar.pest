@@ -37,23 +37,23 @@ inline_value = {
   | string
   | binary
   | timestamp
-  | brace_list
-  | brace_map
+  | inline_list
+  | inline_map
 }
 
-// Brace list: compact list syntax [1, 2, 3]
-// Currently requires single-line (no newlines) to enforce compact style
-// NOTE: To allow newlines (for JSON compatibility), replace " "* with WHITESPACE*
+// Inline list: compact list syntax [1, 2, 3]
+// Intentionally single-line only (no newlines) to maintain compact style
+// For multi-line lists, use JAML's indentation-based block syntax
 // Allows empty lists: []
 // Trailing commas allowed
-brace_list = { "[" ~ " "* ~ (inline_value ~ " "* ~ ("," ~ " "* ~ inline_value ~ " "*)* ~ ("," ~ " "*)?)? ~ "]" }
+inline_list = { "[" ~ " "* ~ (inline_value ~ " "* ~ ("," ~ " "* ~ inline_value ~ " "*)* ~ ("," ~ " "*)?)? ~ "]" }
 
-// Brace map: compact map syntax {a: 1, b: 2}
-// Currently requires single-line (no newlines) to enforce compact style
-// NOTE: To allow newlines (for JSON compatibility), replace " "* with WHITESPACE*
+// Inline map: compact map syntax {a: 1, b: 2}
+// Intentionally single-line only (no newlines) to maintain compact style
+// For multi-line maps, use JAML's indentation-based block syntax
 // Allows empty maps: {}
 // Trailing commas allowed
-brace_map = { "{" ~ " "* ~ (inline_member ~ " "* ~ ("," ~ " "* ~ inline_member ~ " "*)* ~ ("," ~ " "*)?)? ~ "}" }
+inline_map = { "{" ~ " "* ~ (inline_member ~ " "* ~ ("," ~ " "* ~ inline_member ~ " "*)* ~ ("," ~ " "*)?)? ~ "}" }
 inline_member = { key ~ " "* ~ ":" ~ " "* ~ inline_value }
 
 // Primitives

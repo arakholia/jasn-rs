@@ -2,14 +2,14 @@
 
 > **Note:** This specification is still under active development and may be subject to change.
 
-JAML (Just Another Markup Language) is a YAML-inspired serialization format with explicit integer and binary types, sharing the same data model as JASN but using indentation-based syntax instead of braces and brackets.
+JAML (Just Another Markup Language) is a YAML-inspired serialization format with explicit integer and binary types, sharing the same data model as JASN but using indentation-based syntax as its primary structure notation.
 
 ## Overview
 
 - **Integers**: Distinct 64-bit signed integer type, supporting decimal, hexadecimal, binary, and octal notation
 - **Binary**: Byte array type with base64 (`b64"..."`) and hex (`hex"..."`) encoding
 - **Timestamps**: ISO8601/RFC3339 timestamp literals with `ts"..."` syntax
-- **Indentation-Based**: Uses indentation to denote structure (like YAML/Python), not braces/brackets
+- **Indentation-Based**: Primary syntax uses indentation (like YAML/Python); compact inline `[]` and `{}` also supported
 - **Explicit Strings**: All strings must be quoted (avoids ["The Norway Problem"](https://lab174.com/blog/202601-yaml-norway/))
 - **Unquoted Keys**: Map keys can be unquoted identifiers
 - **Comments**: Line comments (`#`)
@@ -140,13 +140,13 @@ list_item = "-" , ( spaces , inline_value | newline , indent , value ) ;
 block_map = map_entry , { newline , indent , map_entry } ;
 map_entry = key , ":" , ( spaces , inline_value | newline , indent , value ) ;
 
-(* Brace Lists and Maps - compact single-line syntax *)
-brace_list = "[" , [ space ] , [ inline_value , { [ space ] , "," , [ space ] , inline_value } , [ "," ] ] , [ space ] , "]" ;
-brace_map = "{" , [ space ] , [ brace_member , { [ space ] , "," , [ space ] , brace_member } , [ "," ] ] , [ space ] , "}" ;
-brace_member = key , [ space ] , ":" , [ space ] , inline_value ;
+(* Inline Lists and Maps - compact single-line syntax *)
+inline_list = "[" , [ space ] , [ inline_value , { [ space ] , "," , [ space ] , inline_value } , [ "," ] ] , [ space ] , "]" ;
+inline_map = "{" , [ space ] , [ inline_member , { [ space ] , "," , [ space ] , inline_member } , [ "," ] ] , [ space ] , "}" ;
+inline_member = key , [ space ] , ":" , [ space ] , inline_value ;
 
 (* Inline values - primitives and compact structures that can appear on same line *)
-inline_value = null | boolean | integer | float | string | binary | timestamp | brace_list | brace_map ;
+inline_value = null | boolean | integer | float | string | binary | timestamp | inline_list | inline_map ;
 
 (* Keys - can be unquoted identifiers or quoted strings *)
 key = string | identifier ;
@@ -353,14 +353,12 @@ JAML completely avoids this issue by requiring all non-primitive values to be ex
 
 ## Differences from JASN
 
-1. **Indentation-based**: Uses indentation instead of `{}` and `[]`
+1. **Indentation-based**: Primary syntax uses indentation; inline `{}` and `[]` are single-line only
 2. **Comments**: Uses `#` instead of `//` and `/* */`
-3. **No trailing commas**: Not needed in block syntax
-4. **No braces/brackets**: Map and list syntax is based on indentation only
+3. **No trailing commas in block syntax**: Trailing commas only needed/allowed in inline syntax
+4. **Explicit strings**: All string values must be quoted (avoids YAML's type coercion issues)
 
 ## Future Considerations
 
-- Optional support for JASN-style inline `{}` and `[]` syntax for compact representation
-- Flow-style syntax for single-line lists and maps
 - Multi-line strings with proper indentation handling
 - BigInt support for arbitrary precision integers
