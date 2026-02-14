@@ -397,8 +397,7 @@ fn parse_unicode_escape(chars: &mut std::str::Chars) -> Result<char> {
                 && (0xDC00..=0xDFFF).contains(&low_code)
             {
                 let codepoint = 0x10000 + ((code - 0xD800) << 10) + (low_code - 0xDC00);
-                return char::from_u32(codepoint)
-                    .ok_or(Error::InvalidUnicodeCodepoint(codepoint));
+                return char::from_u32(codepoint).ok_or(Error::InvalidUnicodeCodepoint(codepoint));
             }
         }
         *chars = saved_chars;
