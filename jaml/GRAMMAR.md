@@ -140,8 +140,13 @@ list_item = "-" , ( space , inline_value | newline , indent , value ) ;
 block_map = map_entry , { newline , indent , map_entry } ;
 map_entry = key , ":" , ( space , inline_value | newline , indent , value ) ;
 
-(* Inline values - primitives that can appear on same line *)
-inline_value = null | boolean | integer | float | string | binary | timestamp ;
+(* Brace Lists and Maps - compact single-line syntax *)
+brace_list = "[" , [ space ] , [ inline_value , { [ space ] , "," , [ space ] , inline_value } , [ "," ] ] , [ space ] , "]" ;
+brace_map = "{" , [ space ] , [ brace_member , { [ space ] , "," , [ space ] , brace_member } , [ "," ] ] , [ space ] , "}" ;
+brace_member = key , [ space ] , ":" , [ space ] , inline_value ;
+
+(* Inline values - primitives and compact structures that can appear on same line *)
+inline_value = null | boolean | integer | float | string | binary | timestamp | brace_list | brace_map ;
 
 (* Keys - can be unquoted identifiers or quoted strings *)
 key = string | identifier ;

@@ -39,16 +39,18 @@ inline_value = {
   | brace_map
 }
 
-// Brace list: compact list syntax [1, 2, 3] (no newlines allowed for simplicity)
-// This is the JAML equivalent of JASN's list, but brace-only
+// Brace list: compact list syntax [1, 2, 3]
+// Currently requires single-line (no newlines) to enforce compact style
+// NOTE: To allow newlines (for JSON compatibility), replace " "* with WHITESPACE*
 // Allows empty lists: []
-// Spaces around elements and commas are allowed
+// Trailing commas allowed
 brace_list = { "[" ~ " "* ~ (inline_value ~ " "* ~ ("," ~ " "* ~ inline_value ~ " "*)* ~ ("," ~ " "*)?)? ~ "]" }
 
-// Brace map: compact map syntax {a: 1, b: 2} (no newlines allowed for simplicity)
-// This is the JAML equivalent of JASN's map, but brace-only
+// Brace map: compact map syntax {a: 1, b: 2}
+// Currently requires single-line (no newlines) to enforce compact style
+// NOTE: To allow newlines (for JSON compatibility), replace " "* with WHITESPACE*
 // Allows empty maps: {}
-// Spaces around elements, keys, colons, and commas are allowed
+// Trailing commas allowed
 brace_map = { "{" ~ " "* ~ (inline_member ~ " "* ~ ("," ~ " "* ~ inline_member ~ " "*)* ~ ("," ~ " "*)?)? ~ "}" }
 inline_member = { key ~ " "* ~ ":" ~ " "* ~ inline_value }
 
