@@ -9,7 +9,9 @@
 //! 3. **Timestamps**: ISO8601/RFC3339 timestamps
 //! 4. **YAML-inspired syntax**: Indentation-based structure, cleaner appearance
 //!
-//! # Quick Start
+//! # Usage
+//!
+//! ## AST Manipulation (no serde required)
 //!
 //! ```rust
 //! use jaml::{parse, format};
@@ -34,6 +36,26 @@
 //!     Ok(())
 //! }
 //! ```
+//!
+//! ## Serde Integration (default feature)
+//!
+//! ```
+//! use serde::{Deserialize, Serialize};
+//!
+//! #[derive(Serialize, Deserialize)]
+//! struct Person {
+//!     name: String,
+//!     age: u32,
+//! }
+//!
+//! let person = Person { name: "Alice".into(), age: 30 };
+//! let jaml_text = jaml::to_string(&person).unwrap();
+//! let parsed: Person = jaml::from_str(&jaml_text).unwrap();
+//! ```
+//!
+//! # Features
+//!
+//! - `serde` (default): Enable serde serialization/deserialization support
 
 #![warn(missing_docs)]
 
@@ -45,3 +67,13 @@ mod parser;
 
 pub use formatter::{format, format_with_opts};
 pub use parser::{Error as ParseError, Result as ParseResult, parse};
+
+#[cfg(feature = "serde")]
+pub mod de;
+#[cfg(feature = "serde")]
+pub mod ser;
+
+#[cfg(feature = "serde")]
+pub use de::{from_str, from_value};
+#[cfg(feature = "serde")]
+pub use ser::{to_string, to_string_pretty, to_value};
