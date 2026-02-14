@@ -23,6 +23,9 @@ jobs:
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
       
+      - name: Cache Rust dependencies
+        uses: Swatinem/rust-cache@v2
+      
       - name: Run tests (all features)
         run: cargo test --workspace --all-features --verbose
       

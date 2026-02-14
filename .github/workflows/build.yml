@@ -27,6 +27,11 @@ jobs:
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
       
+      - name: Cache Rust dependencies
+        uses: Swatinem/rust-cache@v2
+        with:
+          key: ${{ matrix.os }}
+      
       - name: Build library
         run: cargo build --workspace --lib --verbose
       
