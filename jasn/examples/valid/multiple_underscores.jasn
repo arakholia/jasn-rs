@@ -1,4 +1,4 @@
-// Multiple underscores are allowed in numeric literals
+/* Multiple underscores are allowed in numeric literals */
 {
   double: 1__000,
   triple: 1___000,

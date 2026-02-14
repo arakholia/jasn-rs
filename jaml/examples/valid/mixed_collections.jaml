@@ -1,0 +1,67 @@
+# Complex combinations of maps, lists, and brace structures
+root:
+  # List of maps
+  users:
+    -
+      name: "Alice"
+      age: 30
+      roles: ["admin", "user"]
+    -
+      name: "Bob"
+      age: 25
+      roles: ["user"]
+      metadata: {active: true, verified: true}
+
+  # Map of lists
+  categories:
+    fruits: ["apple", "banana", "orange"]
+    vegetables: ["carrot", "broccoli"]
+    grains: []
+
+  # Nested mixed structures
+  organization:
+    departments:
+      -
+        name: "Engineering"
+        teams:
+          -
+            name: "Backend"
+            members: [1, 2, 3]
+          -
+            name: "Frontend"
+            members: [4, 5]
+      -
+        name: "Sales"
+        teams: []
+
+  # Brace structures mixed with block structures
+  config:
+    servers:
+      -
+        host: "localhost"
+        ports: [8080, 8081, 8082]
+        settings: {timeout: 30, retries: 3}
+      -
+        host: "remote"
+        ports: [443]
+        settings: {}
+
+  # Lists containing different types
+  mixed_types:
+    - 42
+    - "string"
+    - true
+    - null
+    - [1, 2, 3]
+    - {key: "value"}
+    - 3.14
+
+  # Empty collections at various levels
+  empties:
+    empty_list: []
+    empty_map: {}
+    nested_empties:
+      - []
+      - {}
+      -
+        inner: []

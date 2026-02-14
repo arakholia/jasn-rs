@@ -1,4 +1,4 @@
-// Uppercase False (should be lowercase)
+/* Uppercase False (should be lowercase) */
 {
   bad: False
 }

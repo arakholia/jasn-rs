@@ -1,4 +1,4 @@
-// Mismatched quotes
+/* Mismatched quotes */
 {
   bad: "starts with double ends with single'
 }

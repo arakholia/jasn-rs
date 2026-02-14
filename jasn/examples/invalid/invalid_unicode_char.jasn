@@ -1,4 +1,4 @@
-// Invalid unicode escape - non-hex character
+/* Invalid unicode escape - non-hex character */
 {
   bad: "\u00GZ"
 }

@@ -1,0 +1,14 @@
+# Empty structures using inline syntax
+empty_array: []
+empty_object: {}
+empty_string: ""
+empty_binary_b64: b64""
+empty_binary_hex: hex""
+
+# Nested empties
+nested:
+  more:
+    empties:
+      - []
+      - {}
+      - ""

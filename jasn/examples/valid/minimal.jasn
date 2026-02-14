@@ -1,4 +1,4 @@
-// Minimal valid JASN documents
+/* Minimal valid JASN documents */
 
-// Just null
+/* Just null */
 null

@@ -1,0 +1,9 @@
+# Inline maps with newlines are allowed in YAML, but not JAML.
+# JAML's inline syntax is intentionally compact/single-line.
+# For multi-line maps, use JAML's indentation-based block syntax.
+# (YAML oddly rejects trailing commas, but JAML allows them in inline syntax.)
+inline_map_nl: {
+  a: 1, 
+  b: 2, 
+  c: 3
+}

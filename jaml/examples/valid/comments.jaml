@@ -1,0 +1,15 @@
+# Start of file
+
+# Comments in map
+map: # map comment
+  a: 1  # value comment
+
+# Comments in list
+list:
+  - 1 # inline value with comment
+  - 2
+  - # comment with nested value
+    - 3
+    - 4
+
+# End of file

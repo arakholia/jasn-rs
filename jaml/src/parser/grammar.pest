@@ -1,0 +1,145 @@
+// JAML Grammar for Pest Parser
+// Python-style flexible indentation: first indent defines the base unit
+
+// Root
+jaml = { SOI ~ document ~ EOI }
+document = { ((non_empty_line | empty_line) ~ NEWLINE)* ~ (non_empty_line | empty_line)? }
+
+// A line must have content (comments are content for parsing purposes)
+// Trailing whitespace (spaces and tabs) is allowed before the newline
+non_empty_line = { indent ~ (content | comment) ~ trailing_ws* }
+
+// Empty line = just whitespace
+empty_line = { trailing_ws* }
+
+// Indentation - spaces or tabs (parser will validate consistency)
+indent = @{ (" " | "\t")* }
+
+// Line content - try in order: map_entry, inline_value, then list_item
+// This ensures negative numbers are parsed as values, not list items
+content = { map_entry | inline_value | list_item }
+
+// List item: "- " (dash + one or more spaces) followed by value or newline for nested
+// Must have space or end after dash to distinguish from negative numbers
+// Allows comments after dash even without inline value: "- # comment"
+list_item = { "-" ~ (&(" " | NEWLINE | EOI) ~ ((trailing_ws* ~ comment) | (" "+ ~ inline_value ~ (trailing_ws* ~ comment)?))?) }
+
+// Map entry: "key:" followed by one or more spaces and value, or newline for nested
+// Allows comments after colon even without inline value: "key: # comment"
+map_entry = { key ~ ":" ~ ((trailing_ws* ~ comment) | (" "+ ~ inline_value ~ (trailing_ws* ~ comment)?))? }
+
+// Inline values - values that can appear on the same line
+// Note: Float before integer to correctly parse trailing-dot syntax like "5."
+inline_value = {
+    null
+  | boolean
+  | float
+  | integer
+  | string
+  | binary
+  | timestamp
+  | inline_list
+  | inline_map
+}
+
+// Inline list: compact list syntax [1, 2, 3]
+// Intentionally single-line only (no newlines) to maintain compact style
+// For multi-line lists, use JAML's indentation-based block syntax
+// Allows empty lists: []
+// Trailing commas allowed
+inline_list = { "[" ~ " "* ~ (inline_value ~ " "* ~ ("," ~ " "* ~ inline_value ~ " "*)* ~ ("," ~ " "*)?)? ~ "]" }
+
+// Inline map: compact map syntax {a: 1, b: 2}
+// Intentionally single-line only (no newlines) to maintain compact style
+// For multi-line maps, use JAML's indentation-based block syntax
+// Allows empty maps: {}
+// Trailing commas allowed
+inline_map = { "{" ~ " "* ~ (inline_member ~ " "* ~ ("," ~ " "* ~ inline_member ~ " "*)* ~ ("," ~ " "*)?)? ~ "}" }
+inline_member = { key ~ " "* ~ ":" ~ " "* ~ inline_value }
+
+// Primitives
+null = { "null" }
+boolean = { "true" | "false" }
+
+// Numbers - Float must be tried before integer
+integer = @{ sign? ~ (hex_integer | binary_integer | octal_integer | decimal_integer) }
+
+decimal_integer = { digit ~ ("_"* ~ digit)* }
+hex_integer = { ^"0x" ~ hex_digit ~ ("_"* ~ hex_digit)* }
+binary_integer = { ^"0b" ~ binary_digit ~ ("_"* ~ binary_digit)* }
+octal_integer = { ^"0o" ~ octal_digit ~ ("_"* ~ octal_digit)* }
+
+float = @{ sign? ~ (infinity | nan | decimal_float | special_float) }
+
+decimal_float = {
+    (int_part ~ frac_part ~ exp_part?)
+  | (int_part ~ exp_part)
+  | (frac_part ~ exp_part?)
+}
+special_float = { int_part ~ "." }
+int_part = { digit+ }
+frac_part = { "." ~ digit+ }
+exp_part = { ^"e" ~ sign? ~ digit+ }
+
+infinity = { "inf" }
+nan = { "nan" }
+sign = { "+" | "-" }
+
+// Character classes
+digit = { '0'..'9' }
+binary_digit = { '0'..'1' }
+octal_digit = { '0'..'7' }
+hex_digit = { '0'..'9' | 'a'..'f' | 'A'..'F' }
+
+// Strings (MUST be quoted)
+string = ${ double_quoted_string | single_quoted_string }
+double_quoted_string = { "\"" ~ double_string_content ~ "\"" }
+single_quoted_string = { "'" ~ single_string_content ~ "'" }
+
+double_string_content = @{ (escape_sequence | double_string_char)* }
+single_string_content = @{ (escape_sequence | single_string_char)* }
+
+double_string_char = { !("\"" | "\\" | NEWLINE) ~ ANY }
+single_string_char = { !("'" | "\\" | NEWLINE) ~ ANY }
+
+escape_sequence = {
+    "\\" ~ (
+        "\"" | "'" | "\\" | "/" | "b" | "f" | "n" | "r" | "t"
+      | unicode_escape
+    )
+}
+unicode_escape = { "u" ~ hex_digit ~ hex_digit ~ hex_digit ~ hex_digit }
+
+// Binary data
+binary = { base64_binary | hex_binary }
+base64_binary = ${ "b64\"" ~ base64_content ~ "\"" }
+hex_binary = ${ "hex\"" ~ hex_content ~ "\"" }
+
+base64_content = @{ base64_char* }
+hex_content = @{ hex_digit* }
+base64_char = { 'A'..'Z' | 'a'..'z' | '0'..'9' | "+" | "/" | "=" }
+
+// Timestamp data
+timestamp = ${ "ts\"" ~ timestamp_content ~ "\"" }
+timestamp_content = @{
+    digit{4} ~ "-" ~ digit{2} ~ "-" ~ digit{2} ~
+    "T" ~
+    digit{2} ~ ":" ~ digit{2} ~ ":" ~ digit{2} ~
+    ("." ~ digit{1,9})? ~
+    ("Z" | (("+" | "-") ~ digit{2} ~ ":" ~ digit{2}))
+}
+
+// Keys - can be unquoted identifiers or quoted strings
+key = { string | identifier }
+identifier = @{ id_start ~ id_continue* }
+id_start = { 'a'..'z' | 'A'..'Z' | "_" }
+id_continue = { id_start | digit }
+
+// Comments
+comment = { "#" ~ (!NEWLINE ~ ANY)* }
+
+// Trailing whitespace (spaces and tabs only, not newlines)
+trailing_ws = { " " | "\t" }
+
+// Newline
+NEWLINE = _{ "\r\n" | "\n" | "\r" }

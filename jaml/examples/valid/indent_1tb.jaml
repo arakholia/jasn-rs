@@ -1,0 +1,7 @@
+# Indent: "\t"
+foo:
+	a: 1
+	b:
+		c: 2
+		d: 3
+bar: 4

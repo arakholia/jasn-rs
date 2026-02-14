@@ -1,13 +1,14 @@
 // JASN Grammar for Pest Parser
 // Whitespace and comments are automatically skipped between tokens
+// JASN is completely whitespace-agnostic (all whitespace is interchangeable)
 
 WHITESPACE = _{ " " | "\t" | "\r" | "\n" }
 
-COMMENT = _{ line_comment | block_comment }
-line_comment = { "//" ~ (!"\n" ~ ANY)* }
+COMMENT = _{ block_comment }
 block_comment = { "/*" ~ (!"*/" ~ ANY)* ~ "*/" }
 
 // Root value
+// Note: Float before integer to correctly parse trailing-dot syntax like "5."
 value = { null | boolean | float | integer | string | binary | timestamp | list | map }
 
 // Primitives
@@ -17,10 +18,10 @@ boolean = { "true" | "false" }
 // Numbers - Float must be tried before integer to handle cases like "5."
 integer = @{ sign? ~ (hex_integer | binary_integer | octal_integer | decimal_integer) }
 
-decimal_integer = { digit ~ (("_")* ~ digit)* }
-hex_integer = { ^"0x" ~ hex_digit ~ (("_")* ~ hex_digit)* }
-binary_integer = { ^"0b" ~ binary_digit ~ (("_")* ~ binary_digit)* }
-octal_integer = { ^"0o" ~ octal_digit ~ (("_")* ~ octal_digit)* }
+decimal_integer = { digit ~ ("_"* ~ digit)* }
+hex_integer = { ^"0x" ~ hex_digit ~ ("_"* ~ hex_digit)* }
+binary_integer = { ^"0b" ~ binary_digit ~ ("_"* ~ binary_digit)* }
+octal_integer = { ^"0o" ~ octal_digit ~ ("_"* ~ octal_digit)* }
 
 float = @{ sign? ~ (infinity | nan | decimal_float | special_float) }
 

@@ -1,4 +1,4 @@
-// Special float values
+/* Special float values */
 {
   positive_inf: inf,
   negative_inf: -inf,

@@ -1,4 +1,4 @@
-// Invalid hex binary with lowercase prefix
+/* Invalid hex binary with lowercase prefix */
 {
-  bad: HEX"DEADBEEF"  // Intentionally invalid: uppercase H should still be rejected
+  bad: HEX"DEADBEEF"  /* Intentionally invalid: uppercase H should still be rejected */
 }

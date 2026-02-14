@@ -10,13 +10,17 @@ JASN (Just Another Serialization Notation) extends JSON with explicit integer an
 - **Binary**: Byte array type with base64 (`b64"..."`) and hex (`hex"..."`) encoding
 - **Timestamps**: ISO8601/RFC3339 timestamp literals with `ts"..."` syntax
 - **JSON5 Features**: Trailing commas, single quotes, unquoted keys, liberal number parsing, comments
-- **Comments**: Line comments (`//`) and block comments (`/* */`)
+- **Comments**: Block comments (`/* */`) only
+- **Whitespace-Agnostic**: All whitespace characters are completely interchangeable
 
 ## EBNF Grammar
 
+> **Note:** Whitespace is implicitly allowed between all tokens and is automatically skipped during parsing. All whitespace characters (space, tab, newline, carriage return) are completely interchangeable.
+
 ```ebnf
 (* Root *)
-value = null | boolean | integer | float | string | binary | timestamp | list | map ;
+(* Note: Float before integer to correctly parse trailing-dot syntax like "5." *)
+value = null | boolean | float | integer | string | binary | timestamp | list | map ;
 
 (* Primitives *)
 null = "null" ;
@@ -63,37 +67,28 @@ unicode_escape = "u" , hex_digit , hex_digit , hex_digit , hex_digit ;
 binary = base64_binary | hex_binary ;
 base64_binary = "b64" , '"' , { base64_char } , '"' ;
 hex_binary = "hex" , '"' , { hex_digit } , '"' ;
-base64_char = letter | digit | "+" | "/" | "=" ;
-letter = "A" | "B" | "C" | "D" | "E" | "F" | "G" | "H" | "I" | "J" | "K" | "L" | "M"
-       | "N" | "O" | "P" | "Q" | "R" | "S" | "T" | "U" | "V" | "W" | "X" | "Y" | "Z"
-       | "a" | "b" | "c" | "d" | "e" | "f" | "g" | "h" | "i" | "j" | "k" | "l" | "m"
-       | "n" | "o" | "p" | "q" | "r" | "s" | "t" | "u" | "v" | "w" | "x" | "y" | "z" ;
+base64_char = ? ASCII letter (A-Z, a-z) ? | digit | "+" | "/" | "=" ;
 
 (* Timestamps *)
 timestamp = "ts" , '"' , iso8601_datetime , '"' ;
 iso8601_datetime = ? ISO 8601 / RFC 3339 formatted datetime string ? ;
 
 (* Lists *)
-list = "[" , [ whitespace ] , [ value_list ] , [ "," ] , [ whitespace ] , "]" ;
-value_list = value , { [ whitespace ] , "," , [ whitespace ] , value } ;
+list = "[" , [ value_list ] , [ "," ] , "]" ;
+value_list = value , { "," , value } ;
 
 (* Maps *)
-map = "{" , [ whitespace ] , [ member_list ] , [ "," ] , [ whitespace ] , "}" ;
-member_list = member , { [ whitespace ] , "," , [ whitespace ] , member } ;
-member = key , [ whitespace ] , ":" , [ whitespace ] , value ;
+map = "{" , [ member_list ] , [ "," ] , "}" ;
+member_list = member , { "," , member } ;
+member = key , ":" , value ;
 
 key = string | identifier ;
 identifier = id_start , { id_continue } ;
-id_start = letter | "_" ;
+id_start = ? ASCII letter (A-Z, a-z) ? | "_" ;
 id_continue = id_start | digit ;
 
-(* Whitespace *)
-whitespace = { " " | "\t" | "\n" | "\r" } ;
-
 (* Comments *)
-line_comment = "//" , { ? any character except newline ? } , ( "\n" | end_of_file ) ;
-block_comment = "/*" , { ? any character ? - ( "*/" ) } , "*/" ;
-comment = line_comment | block_comment ;
+comment = "/*" , { ? any character ? - ( "*/" ) } , "*/" ;
 ```
 
 ## Type Resolution Rules
@@ -208,11 +203,11 @@ ts"2024-12-31T23:59:59.999999999Z"
 
 ### Complex Example
 ```jasn
-// Configuration file example
+/* Configuration file example */
 {
-  // Version information
+  /* Version information */
   version: 1,
-  count: 0x100,  // Hex integer
+  count: 0x100,  /* Hex integer */
   ratio: 3.14,
   name: "JASN Example",
   active: true,
@@ -223,13 +218,13 @@ ts"2024-12-31T23:59:59.999999999Z"
   binary_data: b64"SGVsbG8=",
   
   items: [
-    { id: 1, value: 10.5, },  // First item
-    { id: 2, value: 20.0, },  // Second item
-    { id: 3, value: .5, },    // Third item
+    { id: 1, value: 10.5, },  /* First item */
+    { id: 2, value: 20.0, },  /* Second item */
+    { id: 3, value: .5, },    /* Third item */
   ],
   
   config: {
-    timeout: 30,           // seconds
+    timeout: 30,           /* seconds */
     'max-retries': 5,      /* quoted key with dash */
     enabled: true,
   },
@@ -248,7 +243,7 @@ ts"2024-12-31T23:59:59.999999999Z"
 7. **Multiple radix integers**: `0x` (hex), `0b` (binary), `0o` (octal) prefixes (case-insensitive)
 7. **Liberal numbers**: Leading/trailing decimal points (`.5`, `5.`), explicit sign (`+42`), underscores in integers (`1_000`, `1__000`)
 8. **Special floats**: `inf`, `nan` with signs (lowercase only)
-9. **Comments**: Line comments `//` and block comments `/* */`
+9. **Comments**: Block comments `/* */` only (whitespace-agnostic design)
 
 ## JSON Compatibility
 
@@ -264,16 +259,16 @@ JASN is designed to accept most valid JSON with the following important limitati
 
 Examples:
 ```jasn
-9223372036854775807   // ✓ Valid (max i64)
-9223372036854775808   // ✗ Parse error (overflow)
--9223372036854775808  // ✓ Valid (min i64)
--9223372036854775809  // ✗ Parse error (underflow)
+9223372036854775807   /* ✓ Valid (max i64) */
+9223372036854775808   /* ✗ Parse error (overflow) */
+-9223372036854775808  /* ✓ Valid (min i64) */
+-9223372036854775809  /* ✗ Parse error (underflow) */
 ```
 
 **Workaround:** Use float notation for numbers outside the i64 range:
 ```jasn
-9223372036854775808.0   // ✓ Valid as float
-1e20                     // ✓ Valid as float
+9223372036854775808.0   /* ✓ Valid as float */
+1e20                     /* ✓ Valid as float */
 ```
 
 ### Type Distinction
@@ -305,4 +300,3 @@ This means `42` and `42.0` are **different types** in JASN, though mathematicall
 
 - Additional binary encodings: `b"..."` for Python-style b-strings
 - Multi-line strings with proper indentation handling
-- BigInt support for arbitrary precision integers

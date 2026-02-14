@@ -1,4 +1,4 @@
-// Keys with dashes must be quoted
+/* Keys with dashes must be quoted */
 {
   kebab-case: "not allowed"
 }

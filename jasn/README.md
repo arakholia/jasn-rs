@@ -30,7 +30,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 - **Distinct Types**: Separate `i64` integers and `f64` floats
 - **Raw Binary Data**: Native `b64"..."` (base64) and `hex"..."` (hex) literals
 - **Timestamps**: ISO8601/RFC3339 timestamps with `ts"..."` syntax
-- **Comments**: Line (`//`) and block (`/* */`) comments
+- **Comments**: Block comments (`/* */`) only (whitespace-agnostic design)
 - **Flexible Syntax**: Trailing commas, single quotes, unquoted object keys
 - **Multiple Radixes**: Hexadecimal (`0x`), binary (`0b`), and octal (`0o`) integers
 - **Permissive Numbers**: Leading/trailing decimal points (`.5`, `5.`), underscores (`1_000_000`), `inf`, `-inf`, `nan`

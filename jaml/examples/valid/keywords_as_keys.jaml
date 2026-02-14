@@ -1,0 +1,13 @@
+# Keywords are allowed as unquoted map keys
+"null": "null is a valid key"
+"true": "true is a valid key"
+"false": "false is a valid key"
+inf: "inf is a valid key"
+nan: "nan is a valid key"
+
+# These work as values too
+null_value: null
+true_value: true
+false_value: false
+inf_value: inf
+nan_value: nan

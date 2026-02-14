@@ -1,4 +1,4 @@
-// Unclosed array
+/* Unclosed array */
 {
   bad: [1, 2, 3
 }

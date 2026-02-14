@@ -1,4 +1,4 @@
-// Invalid binary prefix
+/* Invalid binary prefix */
 {
   bad: B64"SGVsbG8="
 }

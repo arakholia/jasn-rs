@@ -1,4 +1,4 @@
-// Uppercase Inf (should be lowercase)
+/* Uppercase Inf (should be lowercase) */
 {
   bad: Inf
 }

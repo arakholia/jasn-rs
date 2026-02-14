@@ -1,2 +1,2 @@
-// Missing comma between list elements
+/* Missing comma between list elements */
 [1, 2, 3 4, 5]

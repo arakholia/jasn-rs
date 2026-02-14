@@ -1,0 +1,4 @@
+/* Line comments are not supported in JASN (use block comments instead) */
+/* JASN is whitespace-agnostic - all whitespace is interchangeable */
+// invalid line comment
+42

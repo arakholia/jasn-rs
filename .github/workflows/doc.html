@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="rustdoc">
+    <meta name="description" content="JASN and JAML Rust libraries for data serialization and markup languages">
+    <title>JASN/JAML Documentation</title>
+    <link rel="stylesheet" href="static.files/normalize-9960930a.css">
+    <link rel="stylesheet" href="static.files/rustdoc-ca0dd0c4.css">
+    <noscript><link rel="stylesheet" href="static.files/noscript-263c88ec.css"></noscript>
+    <script>
+        // Force system theme preference
+        (function() {
+            localStorage.setItem('rustdoc-use-system-theme', 'true');
+            localStorage.removeItem('rustdoc-theme');
+            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            document.documentElement.setAttribute('data-theme', prefersDark ? 'dark' : 'light');
+        })();
+    </script>
+    <link rel="alternate icon" type="image/png" href="static.files/favicon-32x32-eab170b8.png">
+    <link rel="icon" type="image/svg+xml" href="static.files/favicon-044be391.svg">
+    <style>
+        .crate-section {
+            background: var(--search-results-alias-bg-color);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        .crate-section h2 {
+            margin-top: 0;
+        }
+        .crate-section h2 a {
+            text-decoration: none;
+        }
+        .crate-section h2 a:hover {
+            text-decoration: underline;
+        }
+        .features {
+            list-style: none;
+            padding: 0;
+            margin: 1rem 0;
+        }
+        .features li {
+            padding: 0.25rem 0 0.25rem 1.5rem;
+            position: relative;
+        }
+        .features li:before {
+            content: "→";
+            position: absolute;
+            left: 0;
+            color: var(--link-color);
+        }
+        .btn {
+            display: inline-block;
+            padding: 0.5rem 1rem;
+            background: var(--link-color);
+            color: var(--main-background-color);
+            text-decoration: none;
+            border-radius: 6px;
+            margin-top: 1rem;
+            font-weight: 600;
+        }
+        .btn:hover {
+            opacity: 0.9;
+        }
+        .core-note {
+            background: var(--code-block-background-color);
+            border-left: 3px solid var(--link-color);
+            padding: 1rem;
+            margin-top: 1.5rem;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body class="rustdoc mod crate">
+    <main>
+        <div class="width-limiter">
+            <section id="main-content" class="content">
+                <div class="main-heading">
+                    <h1>JASN/JAML Rust Documentation</h1>
+                </div>
+                
+                <div class="crate-section">
+                    <h2><a href="jasn/index.html">jasn</a></h2>
+                    <p><strong>Just Another Serialization Notation</strong> - A JSON5-inspired format with explicit types</p>
+                    <ul class="features">
+                        <li>Distinct integer (<code>i64</code>) and float (<code>f64</code>) types</li>
+                        <li>Native binary data with <code>b64"..."</code> and <code>hex"..."</code> literals</li>
+                        <li>Timestamp support with <code>ts"..."</code> syntax</li>
+                        <li>Block comments, trailing commas, flexible syntax</li>
+                        <li>Full serde integration</li>
+                    </ul>
+                    <a href="jasn/index.html" class="btn">View JASN Documentation →</a>
+                </div>
+
+                <div class="crate-section">
+                    <h2><a href="jaml/index.html">jaml</a></h2>
+                    <p><strong>Just Another Markup Language</strong> - A YAML-inspired format with the same data model as JASN</p>
+                    <ul class="features">
+                        <li>Indentation-based structure (like YAML/Python)</li>
+                        <li>Same types as JASN: integers, floats, binary, timestamps</li>
+                        <li>Explicit string quoting (no "Norway Problem")</li>
+                        <li>Flexible indentation with runtime validation</li>
+                        <li>Full serde integration</li>
+                    </ul>
+                    <a href="jaml/index.html" class="btn">View JAML Documentation →</a>
+                </div>
+
+                <div class="core-note">
+                    <strong>Note:</strong> Both formats share the same data model via <a href="jasn_core/index.html">jasn-core</a>. 
+                    Data can be converted between JASN and JAML through the <code>Value</code> type.
+                </div>
+            </section>
+        </div>
+    </main>
+</body>
+</html>
