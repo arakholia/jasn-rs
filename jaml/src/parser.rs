@@ -15,6 +15,7 @@
 use crate::Value;
 
 mod error;
+mod indent;
 mod parse;
 
 pub use error::{Error, Result};

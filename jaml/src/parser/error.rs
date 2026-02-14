@@ -1,4 +1,4 @@
-use super::parse::{IndentStyle, PestError};
+use super::{indent::Style as IndentStyle, parse::PestError};
 
 /// Errors that can occur during parsing.
 #[derive(Debug, thiserror::Error)]

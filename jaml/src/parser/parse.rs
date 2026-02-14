@@ -7,7 +7,7 @@ use std::{collections::BTreeMap, result::Result as StdResult};
 use pest::{Parser, iterators::Pair};
 use pest_derive::Parser;
 
-use super::{Error, Result};
+use super::{Error, Result, indent};
 use crate::{Binary, Value};
 
 pub(super) type PestError = pest::error::Error<Rule>;
@@ -16,101 +16,6 @@ pub(super) type PestError = pest::error::Error<Rule>;
 #[derive(Parser)]
 #[grammar = "parser/grammar.pest"]
 pub(super) struct JamlParser;
-
-/// Tracks indentation style (spaces or tabs) and base unit size
-#[derive(Debug, Clone, Copy)]
-pub enum IndentStyle {
-    Spaces(usize), // Number of spaces per indent level
-    Tabs(usize),   // Number of tabs per indent level
-}
-
-impl std::fmt::Display for IndentStyle {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            IndentStyle::Spaces(n) => write!(f, "{:?}", " ".repeat(*n)),
-            IndentStyle::Tabs(n) => write!(f, "{:?}", "\t".repeat(*n)),
-        }
-    }
-}
-
-/// Indentation tracker that detects and validates indentation
-#[derive(Debug)]
-struct IndentTracker {
-    style: Option<IndentStyle>,
-}
-
-impl IndentTracker {
-    fn new() -> Self {
-        Self { style: None }
-    }
-
-    /// Validate and track indentation for a line
-    /// Returns the indent level (0, 1, 2, ...) if valid
-    fn validate(&mut self, indent_str: &str) -> Result<usize> {
-        if indent_str.is_empty() {
-            return Ok(0);
-        }
-
-        // Check if it mixes spaces and tabs
-        let has_spaces = indent_str.contains(' ');
-        let has_tabs = indent_str.contains('\t');
-
-        if has_spaces && has_tabs {
-            return Err(Error::MixedIndent(indent_str.to_string()));
-        }
-
-        match self.style {
-            None => {
-                // First indent - establish the base unit
-                if has_tabs {
-                    let num_tabs = indent_str.len();
-                    self.style = Some(IndentStyle::Tabs(num_tabs));
-                    Ok(1) // First indent level
-                } else {
-                    let num_spaces = indent_str.len();
-                    self.style = Some(IndentStyle::Spaces(num_spaces));
-                    Ok(1) // First indent level
-                }
-            }
-            Some(IndentStyle::Spaces(base_unit)) => {
-                if has_tabs {
-                    return Err(Error::InconsistentIndentStyle(
-                        IndentStyle::Spaces(base_unit),
-                        IndentStyle::Tabs(indent_str.len()),
-                    ));
-                }
-
-                let num_spaces = indent_str.len();
-                if num_spaces % base_unit != 0 {
-                    return Err(Error::InvalidIndentCount(
-                        IndentStyle::Spaces(base_unit),
-                        num_spaces,
-                    ));
-                }
-
-                Ok(num_spaces / base_unit)
-            }
-            Some(IndentStyle::Tabs(base_unit)) => {
-                if has_spaces {
-                    return Err(Error::InconsistentIndentStyle(
-                        IndentStyle::Tabs(base_unit),
-                        IndentStyle::Spaces(indent_str.len()),
-                    ));
-                }
-
-                let num_tabs = indent_str.len();
-                if num_tabs % base_unit != 0 {
-                    return Err(Error::InvalidIndentCount(
-                        IndentStyle::Tabs(base_unit),
-                        num_tabs,
-                    ));
-                }
-
-                Ok(num_tabs / base_unit)
-            }
-        }
-    }
-}
 
 #[derive(Debug, Clone)]
 struct Line {
@@ -145,7 +50,7 @@ pub(super) fn parse_impl(input: &str) -> Result<Value> {
 fn parse_lines(pairs: pest::iterators::Pairs<Rule>) -> Result<Vec<Line>> {
     let mut lines = Vec::new();
     let mut line_num = 1;
-    let mut indent_tracker = IndentTracker::new();
+    let mut indent_tracker = indent::Tracker::new();
 
     for pair in pairs {
         if pair.as_rule() == Rule::jaml {
