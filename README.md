@@ -1,9 +1,9 @@
 # JASN - Just Another Serialization Notation
-JASN (pronounced "Jason") is a human-readable data serialization format similar to JSON but with explicit integer and binary types.
+JASN (pronounced "Jason", not to be confused with "JSON") is a human-readable data serialization format similar to JSON but with explicit integer and binary types.
 
 ## Motivation
 While JSON is widely used, it has limitations such as treating all numbers as floating-point and lacking native support for binary data. 
-JASN addresses these issues by introducing distinct integer and binary types and permissive syntax features inspired by JSON5.
+JASN addresses these issues by introducing distinct integer and binary types and permissive syntax features inspired by [JSON5](https://json5.org/).
 
 ## Features
 - **Distinct Types**: Separate `i64` integers and `f64` floats (not everything is a float!)
