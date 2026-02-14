@@ -153,13 +153,10 @@ id_start = letter | "_" ;
 id_continue = id_start | digit ;
 
 (* Indentation and Whitespace *)
-indent = { space_char , space_char } ;
-  (* indentation is always an even number of spaces: 0, 2, 4, 6, ... *)
-space_char = " " ;
-space = " " ;
-spaces = space , { space } ;  (* one or more spaces *)
+space = " " ;spaces = space , { space } ;  (* one or more spaces *)
 newline = "\n" | "\r\n" | "\r" ;
-whitespace = { space | newline } ;
+whitespace = { space | newline } ;  (* zero or more spaces or newlines *)
+indent = { space , space } ;  (* zero or more pairs of spaces (0, 2, 4, 6, ...) *)
 
 (* Comments *)
 line_comment = "#" , { ? any character except newline ? } , ( newline | end_of_file ) ;
