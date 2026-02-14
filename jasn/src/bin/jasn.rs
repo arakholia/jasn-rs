@@ -173,6 +173,32 @@ fn main() {
     }
 }
 
+#[allow(clippy::too_many_arguments)]
+fn build_format_options(
+    compact: bool,
+    indent: String,
+    quotes: QuoteStyleArg,
+    binary: BinaryEncodingArg,
+    no_trailing_commas: bool,
+    quote_keys: bool,
+    no_sort_keys: bool,
+    escape_unicode: bool,
+) -> Options {
+    let base = if compact {
+        Options::compact()
+    } else {
+        Options::pretty().with_indent(indent)
+    };
+
+    base.with_quote_style(quotes.into())
+        .with_binary_encoding(binary.into())
+        .with_trailing_commas(!no_trailing_commas)
+        .with_unquoted_keys(!quote_keys)
+        .with_sort_keys(!no_sort_keys)
+        .with_escape_unicode(escape_unicode)
+}
+
+#[allow(clippy::too_many_arguments)]
 fn cmd_fmt(
     input: Option<PathBuf>,
     output: Option<PathBuf>,
@@ -193,33 +219,23 @@ fn cmd_fmt(
     let value = parse(&input_content).context("Failed to parse JASN")?;
 
     // Build formatting options
-    let mut opts = if compact {
-        Options::compact()
-    } else {
-        Options::pretty().with_indent(indent)
-    };
-
-    opts = opts
-        .with_quote_style(quotes.into())
-        .with_binary_encoding(binary.into())
-        .with_trailing_commas(!no_trailing_commas)
-        .with_unquoted_keys(!quote_keys)
-        .with_sort_keys(!no_sort_keys)
-        .with_escape_unicode(escape_unicode);
+    let opts = build_format_options(
+        compact,
+        indent,
+        quotes,
+        binary,
+        no_trailing_commas,
+        quote_keys,
+        no_sort_keys,
+        escape_unicode,
+    );
 
     // Format
     let formatted = format_with_opts(&value, &opts);
 
     // Check mode: compare and exit
     if check_format {
-        let input_trimmed = input_content.trim();
-        let formatted_trimmed = formatted.trim();
-
-        if input_trimmed != formatted_trimmed {
-            let input_name = input.as_ref().and_then(|p| p.to_str()).unwrap_or("stdin");
-            eprintln!("File '{}' is not formatted correctly", input_name);
-            process::exit(1);
-        }
+        check_formatting(&input_content, &formatted, input.as_deref());
         return Ok(());
     }
 
@@ -239,13 +255,9 @@ fn cmd_valid(files: Vec<PathBuf>, verbose: bool, quiet: bool) -> Result<()> {
     let mut error_count = 0;
 
     for file in &files {
-        let file_arg = if file.to_str() == Some("-") {
-            None
-        } else {
-            Some(file.as_path())
-        };
+        let file_path = parse_file_arg(file);
 
-        match validate_file(file_arg, verbose, quiet) {
+        match validate_file(file_path, verbose, quiet) {
             Ok(()) => {
                 if !quiet {
                     println!("✓ {}", file.display());
@@ -282,18 +294,24 @@ fn validate_file(path: Option<&Path>, verbose: bool, quiet: bool) -> Result<()> 
     Ok(())
 }
 
+fn check_formatting(input: &str, formatted: &str, path: Option<&Path>) {
+    if input.trim() != formatted.trim() {
+        let name = display_name(path);
+        eprintln!("File '{}' is not formatted correctly", name);
+        process::exit(1);
+    }
+}
+
+fn display_name(path: Option<&Path>) -> &str {
+    path.and_then(|p| p.to_str()).unwrap_or("stdin")
+}
+
 fn read_input(path: Option<&Path>) -> Result<String> {
     match path {
-        Some(p) if p.to_str() == Some("-") => {
-            let mut content = String::new();
-            io::stdin()
-                .read_to_string(&mut content)
-                .context("Failed to read from stdin")?;
-            Ok(content)
+        Some(p) if p.to_str() != Some("-") => {
+            fs::read_to_string(p).with_context(|| format!("Failed to read file: {}", p.display()))
         }
-        Some(path) => fs::read_to_string(path)
-            .with_context(|| format!("Failed to read file: {}", path.display())),
-        None => {
+        _ => {
             let mut content = String::new();
             io::stdin()
                 .read_to_string(&mut content)
@@ -305,19 +323,10 @@ fn read_input(path: Option<&Path>) -> Result<String> {
 
 fn write_output(path: Option<&Path>, content: &str) -> Result<()> {
     match path {
-        Some(p) if p.to_str() == Some("-") => {
-            writeln!(io::stdout(), "{}", content).context("Failed to write to stdout")?;
-            Ok(())
+        Some(p) if p.to_str() != Some("-") => {
+            fs::write(p, content).with_context(|| format!("Failed to write file: {}", p.display()))
         }
-        Some(path) => {
-            fs::write(path, content)
-                .with_context(|| format!("Failed to write file: {}", path.display()))?;
-            Ok(())
-        }
-        None => {
-            writeln!(io::stdout(), "{}", content).context("Failed to write to stdout")?;
-            Ok(())
-        }
+        _ => writeln!(io::stdout(), "{}", content).context("Failed to write to stdout"),
     }
 }
 
@@ -325,4 +334,12 @@ fn cmd_completions(shell: clap_complete::Shell) {
     let mut cmd = Cli::command();
     let bin_name = cmd.get_name().to_string();
     clap_complete::generate(shell, &mut cmd, bin_name, &mut io::stdout());
+}
+
+fn parse_file_arg(file: &Path) -> Option<&Path> {
+    if file.to_str() == Some("-") {
+        None
+    } else {
+        Some(file)
+    }
 }
