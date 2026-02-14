@@ -213,12 +213,46 @@ This works with all serde-compatible types: structs, enums, vectors, maps, optio
 
 See [examples/serde_demo.rs](examples/serde_demo.rs) for a complete example.
 
-## Planned Features
-1. **JAML**: A YAML-inspired syntax using the same data model as JASN
+## JAML - Alternative YAML-like Syntax
 
-## Features under consideration
-- **Multiline Strings**: Support for multiline string literals with proper indentation handling
-- **Python-style b-strings**: `b'''...'''` for raw byte strings without escaping (similar to Python's `b''` literals)
+JAML (Just Another Markup Language) provides a **YAML-inspired indentation-based syntax** for the same data model as JASN. If you prefer YAML's cleaner look without braces, JAML is for you.
+
+**Example**:
+```jaml
+# Same data as JASN, YAML-style syntax
+name: "Alice"
+age: 30
+balance: 1234.56
+data: b64"SGVsbG8="
+tags:
+  - "rust"
+  - "yaml"
+  - "parser"
+config:
+  timeout: 30
+  retries: 5
+  enabled: true
+```
+
+**Key Features**:
+- Indentation-based structure (like YAML/Python)
+- Same types as JASN: distinct integers, floats, binary, timestamps
+- Explicit string quoting (avoids YAML's "Norway Problem")
+- Full serde support
+- Flexible indentation: first indent defines base unit
+
+**Note:** JAML is **not a superset** of JASN (unlike how JASN is a superset of JSON). While both share the same data model, they use intentionally disjoint syntax styles:
+- JAML supports inline `[...]` and `{...}` but only single-line (no newlines)
+- JAML uses line comments `#`, JASN uses block comments `/* */`
+- Both can represent the same data, but with different syntax
+
+**Installation**:
+```toml
+[dependencies]
+jaml = "0.2"
+```
+
+See the [JAML README](jaml/README.md) for complete documentation and examples.
 
 ## License
 MIT License - see [LICENSE](LICENSE) file for details.
