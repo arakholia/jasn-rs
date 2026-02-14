@@ -1,5 +1,6 @@
+# Braced-maps are allowed in YAML, but not JAML.
 inline_map_nl: {
   a: 1, 
   b: 2, 
-  c: 3,
+  c: 3
 }

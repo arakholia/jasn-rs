@@ -1,1 +1,2 @@
+# Bare keys are allowed in YAML (implicit null), but JAML forbids this.
 bare_key:

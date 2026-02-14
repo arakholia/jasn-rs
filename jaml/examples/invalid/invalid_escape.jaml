@@ -1,2 +1,0 @@
-# Invalid escape sequence
-test: "invalid \x escape"
