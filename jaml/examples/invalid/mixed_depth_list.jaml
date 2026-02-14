@@ -1,0 +1,5 @@
+# YAML accepts this, although the results definitely don't meet expectations...
+mixed_depth_list:
+  - 1
+    - 2
+  - 3
