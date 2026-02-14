@@ -1,0 +1,6 @@
+# Brace lists with newlines are allowed in YAML, but not JAML.
+brace_list_nl: [
+  1,
+  2,
+  3
+]

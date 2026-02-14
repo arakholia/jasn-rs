@@ -3,5 +3,5 @@ block_list:
   - 2
   - 3
 
-inline_list: [1, 2, 3]
-inline_list_trailing: [1, 2, 3,]
+brace_list: [1, 2, 3]
+brace_list_trailing: [1, 2, 3,]

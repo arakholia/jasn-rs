@@ -1,6 +1,0 @@
-# Braced-lists with newlines are allowed in YAML, but not JAML.
-inline_list_nl: [
-  1,
-  2,
-  3
-]

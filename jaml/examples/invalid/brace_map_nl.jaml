@@ -1,0 +1,6 @@
+# Brace maps with newlines are allowed in YAML, but not JAML.
+brace_map_nl: {
+  a: 1, 
+  b: 2, 
+  c: 3
+}

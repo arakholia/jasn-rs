@@ -35,21 +35,21 @@ inline_value = {
   | string
   | binary
   | timestamp
-  | inline_list
-  | inline_map
+  | brace_list
+  | brace_map
 }
 
-// Inline list: compact list syntax [1, 2, 3] (no newlines allowed for simplicity)
-// This is the JAML equivalent of JASN's list, but inline-only
+// Brace list: compact list syntax [1, 2, 3] (no newlines allowed for simplicity)
+// This is the JAML equivalent of JASN's list, but brace-only
 // Allows empty lists: []
 // Spaces around elements and commas are allowed
-inline_list = { "[" ~ " "* ~ (inline_value ~ " "* ~ ("," ~ " "* ~ inline_value ~ " "*)* ~ ("," ~ " "*)?)? ~ "]" }
+brace_list = { "[" ~ " "* ~ (inline_value ~ " "* ~ ("," ~ " "* ~ inline_value ~ " "*)* ~ ("," ~ " "*)?)? ~ "]" }
 
-// Inline map: compact map syntax {a: 1, b: 2} (no newlines allowed for simplicity)
-// This is the JAML equivalent of JASN's map, but inline-only
+// Brace map: compact map syntax {a: 1, b: 2} (no newlines allowed for simplicity)
+// This is the JAML equivalent of JASN's map, but brace-only
 // Allows empty maps: {}
 // Spaces around elements, keys, colons, and commas are allowed
-inline_map = { "{" ~ " "* ~ (inline_member ~ " "* ~ ("," ~ " "* ~ inline_member ~ " "*)* ~ ("," ~ " "*)?)? ~ "}" }
+brace_map = { "{" ~ " "* ~ (inline_member ~ " "* ~ ("," ~ " "* ~ inline_member ~ " "*)* ~ ("," ~ " "*)?)? ~ "}" }
 inline_member = { key ~ " "* ~ ":" ~ " "* ~ inline_value }
 
 // Primitives
