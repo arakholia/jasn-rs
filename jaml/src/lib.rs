@@ -11,7 +11,7 @@
 //!
 //! # Quick Start
 //!
-//! ```rust,ignore
+//! ```rust
 //! use jaml::{parse, format};
 //!
 //! fn main() -> Result<(), Box<dyn std::error::Error>> {
