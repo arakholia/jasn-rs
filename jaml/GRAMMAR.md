@@ -75,7 +75,8 @@ key: "value"
 ```ebnf
 (* Root *)
 document = [ whitespace ] , value , [ whitespace ] ;
-value = null | boolean | integer | float | string | binary | timestamp | block_list | block_map | inline_value ;
+(* float before integer to handle trailing-dot syntax like "5." *)
+value = null | boolean | float | integer | string | binary | timestamp | block_list | block_map | inline_value ;
 
 (* Primitives *)
 null = "null" ;
@@ -123,10 +124,7 @@ binary = base64_binary | hex_binary ;
 base64_binary = "b64" , '"' , { base64_char } , '"' ;
 hex_binary = "hex" , '"' , { hex_digit } , '"' ;
 base64_char = letter | digit | "+" | "/" | "=" ;
-letter = "A" | "B" | "C" | "D" | "E" | "F" | "G" | "H" | "I" | "J" | "K" | "L" | "M"
-       | "N" | "O" | "P" | "Q" | "R" | "S" | "T" | "U" | "V" | "W" | "X" | "Y" | "Z"
-       | "a" | "b" | "c" | "d" | "e" | "f" | "g" | "h" | "i" | "j" | "k" | "l" | "m"
-       | "n" | "o" | "p" | "q" | "r" | "s" | "t" | "u" | "v" | "w" | "x" | "y" | "z" ;
+letter = ? ASCII letter (A-Z, a-z) ? ;
 
 (* Timestamps - same as JASN *)
 timestamp = "ts" , '"' , iso8601_datetime , '"' ;

@@ -29,6 +29,7 @@ list_item = { "-" ~ (&(" " | NEWLINE | EOI) ~ ((trailing_ws* ~ comment) | (" "+ 
 map_entry = { key ~ ":" ~ ((trailing_ws* ~ comment) | (" "+ ~ inline_value ~ (trailing_ws* ~ comment)?))? }
 
 // Inline values - values that can appear on the same line
+// Note: Float before integer to correctly parse trailing-dot syntax like "5."
 inline_value = {
     null
   | boolean
@@ -63,10 +64,10 @@ boolean = { "true" | "false" }
 // Numbers - Float must be tried before integer
 integer = @{ sign? ~ (hex_integer | binary_integer | octal_integer | decimal_integer) }
 
-decimal_integer = { digit ~ (("_")* ~ digit)* }
-hex_integer = { ^"0x" ~ hex_digit ~ (("_")* ~ hex_digit)* }
-binary_integer = { ^"0b" ~ binary_digit ~ (("_")* ~ binary_digit)* }
-octal_integer = { ^"0o" ~ octal_digit ~ (("_")* ~ octal_digit)* }
+decimal_integer = { digit ~ ("_"* ~ digit)* }
+hex_integer = { ^"0x" ~ hex_digit ~ ("_"* ~ hex_digit)* }
+binary_integer = { ^"0b" ~ binary_digit ~ ("_"* ~ binary_digit)* }
+octal_integer = { ^"0o" ~ octal_digit ~ ("_"* ~ octal_digit)* }
 
 float = @{ sign? ~ (infinity | nan | decimal_float | special_float) }
 
