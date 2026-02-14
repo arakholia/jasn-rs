@@ -7,7 +7,7 @@ JASN addresses these issues by introducing distinct integer and binary types and
 
 ## Features
 - **Distinct Types**: Separate `i64` integers and `f64` floats (not everything is a float!)
-- **Raw Binary Data**: Native support for binary data with `b64"..."` (base64) and `h"..."` (hex) literals
+- **Raw Binary Data**: Native support for binary data with `b64"..."` (base64) and `hex"..."` (hex) literals
 - **Timestamps**: ISO8601/RFC3339 timestamps with `ts"..."` syntax
 - **Comments**: Line (`//`) and block (`/* */`) comments
 - **Flexible Syntax**: Trailing commas, single quotes, unquoted object keys
