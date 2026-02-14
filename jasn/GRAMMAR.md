@@ -1,5 +1,7 @@
 # JASN Grammar Specification
 
+> **Note:** This specification is still under active development and may be subject to change.
+
 JASN (Just Another Serialization Notation) extends JSON with explicit integer and binary types, plus convenient JSON5-inspired syntax features.
 
 ## Overview

@@ -111,7 +111,9 @@ pub enum Value {
 ```
 
 ## Grammar
-See [GRAMMAR.md](GRAMMAR.md) for the complete formal specification.
+See [GRAMMAR.md](jasn/GRAMMAR.md) for the complete grammar specification.
+
+> **Note:** The specification is still under active development and may be subject to change.
 
 ### Examples
 **Integers** (distinct from floats):
