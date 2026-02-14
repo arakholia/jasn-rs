@@ -14,14 +14,16 @@ empty_line = { " "* }
 // Indentation - always even number of spaces (0, 2, 4, 6, ...)
 indent = @{ " "* }
 
-// Line content
-content = { list_item | map_entry | inline_value }
+// Line content - try in order: map_entry, inline_value, then list_item
+// This ensures negative numbers are parsed as values, not list items
+content = { map_entry | inline_value | list_item }
 
-// List item: "- " followed by value or newline for nested
-list_item = { "-" ~ (" " ~ inline_value)? }
+// List item: "- " (dash + space) followed by value or newline for nested
+// Must have space or end after dash to distinguish from negative numbers
+list_item = { "-" ~ (&(" " | NEWLINE | EOI) ~ (" " ~ inline_value ~ trailing_comment?)?) }
 
 // Map entry: "key: " followed by value or newline for nested
-map_entry = { key ~ ":" ~ (" " ~ inline_value)? }
+map_entry = { key ~ ":" ~ (" " ~ inline_value ~ trailing_comment?)? }
 
 // Inline values - values that can appear on the same line
 inline_value = {
@@ -114,6 +116,7 @@ id_continue = { id_start | digit }
 
 // Comments
 comment = { "#" ~ (!NEWLINE ~ ANY)* }
+trailing_comment = { " "* ~ comment }
 
 // Newline
 NEWLINE = _{ "\r\n" | "\n" | "\r" }
