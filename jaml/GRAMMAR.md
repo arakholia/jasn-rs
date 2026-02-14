@@ -16,58 +16,72 @@ JAML (Just Another Markup Language) is a YAML-inspired serialization format with
 
 ## Indentation Rules
 
-JAML uses **strict 2-space indentation**:
+JAML uses **Python-style flexible indentation**:
 
-### 1. Fixed Indentation
-- **Exactly 2 spaces** per indentation level
-- **No tabs allowed** - only spaces
-- **No mixing**: Every indent must be exactly 0, 2, 4, 6, 8... spaces
+### 1. Dynamic Indentation Detection
+- **First indent defines the base unit**: The first indented line in the document establishes the indentation pattern
+- **Base unit can be**: 1 space, 2 spaces, 3 spaces, 4 spaces, or 1 tab (any number of spaces or single tab)
+- **Consistency required**: All indentation must use the same base unit throughout the document
+- **All indents must be multiples**: Every indented line must use exactly N × (base unit) where N ≥ 0
 
-### 2. Whitespace Requirements
-- **No trailing whitespace**: Lines must not have spaces or tabs after the last non-whitespace character
-- **Blank lines**: May contain only a newline, no spaces
+### 2. Indentation Type Rules
+- **Spaces only OR tabs only**: Cannot mix spaces and tabs within a document
+- **No mixing in base unit**: The base unit itself cannot mix spaces and tabs (e.g., "2 spaces + 1 tab" is invalid)
+- **Consistent throughout**: Once the base unit is established, all indentation must use exact multiples of it
+
+### 3. Whitespace Requirements
 - **After `-`**: One or more spaces required, or immediate newline for nested content
 - **After `:`**: One or more spaces required before inline value, or immediate newline for block value
-
-### 3. Whitespace Significance
-- **Line start**: Indentation (spaces or tabs) determines structure depth
-- **After `-`**: One or more spaces required before the list item value
-- **After `:`**: One or more spaces required before inline value (or newline for block value)
 - **Blank lines**: May contain only a newline, no spaces or tabs
 - **Comments**: `#` can appear after indentation or inline (with space before `#`)
 
-### 3. Examples
+### 4. Examples
+
+**Valid (1-space indentation):**
+```jaml
+foo:
+ a: 1
+ b:
+  c: 2
+bar: 3
+```
 
 **Valid (2-space indentation):**
 ```jaml
-# Root level (indent 0)
-key: "value"
-nested:
-  # First indent level (2 spaces)
-  child: "value"
-  deeper:
-    # Second indent level (4 spaces)
-    grandchild: "value"
+foo:
+  a: 1
+  b:
+    c: 2
+bar: 3
 ```
 
-**Invalid (tabs):**
+**Valid (tab indentation):**
 ```jaml
-key: "value"
-nested:
-	child: "value"    # tab - ERROR! Must use spaces
+foo:
+	a: 1
+	b:
+		c: 2
+bar: 3
 ```
 
-**Invalid (wrong indent amount):**
+**Invalid (not a multiple of base unit):**
 ```jaml
-key: "value"
-nested:
-   child: "value"    # 3 spaces - ERROR! Must be exactly 2
+foo:
+  a: 1        # Base unit: 2 spaces
+   b: 2       # ERROR: 3 spaces is not a multiple of 2
 ```
 
-**Invalid (trailing whitespace):**
+**Invalid (mixed spaces and tabs):**
 ```jaml
-key: "value"    
-# ERROR: spaces after "value"
+foo:
+  	a: 1      # ERROR: base unit mixes spaces and tabs
+```
+
+**Invalid (switching indentation type):**
+```jaml
+foo:
+  a: 1        # Base unit: 2 spaces
+	b: 2        # ERROR: can't switch to tabs
 ```
 
 ## EBNF Grammar

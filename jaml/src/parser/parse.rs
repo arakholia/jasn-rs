@@ -17,6 +17,86 @@ pub(super) type PestError = pest::error::Error<Rule>;
 #[grammar = "parser/grammar.pest"]
 pub(super) struct JamlParser;
 
+/// Tracks indentation style (spaces or tabs) and base unit size
+#[derive(Debug, Clone, Copy)]
+enum IndentStyle {
+    Spaces(usize),  // Number of spaces per indent level
+    Tabs,           // Using tabs
+}
+
+/// Indentation tracker that detects and validates indentation
+#[derive(Debug)]
+struct IndentTracker {
+    style: Option<IndentStyle>,
+}
+
+impl IndentTracker {
+    fn new() -> Self {
+        Self { style: None }
+    }
+
+    /// Validate and track indentation for a line
+    /// Returns the indent level (0, 1, 2, ...) if valid
+    fn validate(&mut self, indent_str: &str, line_num: usize) -> Result<usize> {
+        if indent_str.is_empty() {
+            return Ok(0);
+        }
+
+        // Check if it mixes spaces and tabs
+        let has_spaces = indent_str.contains(' ');
+        let has_tabs = indent_str.contains('\t');
+        
+        if has_spaces && has_tabs {
+            return Err(Error::MixedIndentation(line_num));
+        }
+
+        match self.style {
+            None => {
+                // First indent - establish the base unit
+                if has_tabs {
+                    self.style = Some(IndentStyle::Tabs);
+                    Ok(indent_str.len()) // Number of tabs
+                } else {
+                    let num_spaces = indent_str.len();
+                    self.style = Some(IndentStyle::Spaces(num_spaces));
+                    Ok(1) // First indent level
+                }
+            }
+            Some(IndentStyle::Spaces(base_unit)) => {
+                if has_tabs {
+                    return Err(Error::InconsistentIndentationType(
+                        line_num,
+                        format!("{} space(s)", base_unit),
+                        "tab(s)".to_string(),
+                    ));
+                }
+                
+                let num_spaces = indent_str.len();
+                if num_spaces % base_unit != 0 {
+                    return Err(Error::InvalidIndentation(
+                        line_num,
+                        format!("{} space(s)", base_unit),
+                        num_spaces,
+                    ));
+                }
+                
+                Ok(num_spaces / base_unit)
+            }
+            Some(IndentStyle::Tabs) => {
+                if has_spaces {
+                    return Err(Error::InconsistentIndentationType(
+                        line_num,
+                        "tab(s)".to_string(),
+                        format!("{} space(s)", indent_str.len()),
+                    ));
+                }
+                
+                Ok(indent_str.len()) // Number of tabs
+            }
+        }
+    }
+}
+
 #[derive(Debug, Clone)]
 struct Line {
     indent: usize,
@@ -50,6 +130,7 @@ pub(super) fn parse_impl(input: &str) -> Result<Value> {
 fn parse_lines(pairs: pest::iterators::Pairs<Rule>) -> Result<Vec<Line>> {
     let mut lines = Vec::new();
     let mut line_num = 1;
+    let mut indent_tracker = IndentTracker::new();
 
     for pair in pairs {
         if pair.as_rule() == Rule::jaml {
@@ -63,14 +144,8 @@ fn parse_lines(pairs: pest::iterators::Pairs<Rule>) -> Result<Vec<Line>> {
                         let indent_pair = inner.next().unwrap();
                         let indent_str = indent_pair.as_str();
 
-                        // Validate indentation
-                        if indent_str.contains('\t') {
-                            return Err(Error::TabsInIndentation(line_num));
-                        }
-                        let indent = indent_str.len();
-                        if indent % 2 != 0 {
-                            return Err(Error::InvalidIndentation(line_num, indent));
-                        }
+                        // Validate and get indent level using tracker
+                        let indent = indent_tracker.validate(indent_str, line_num)?;
 
                         // Get content
                         let content_pair = inner.next().unwrap();
@@ -190,7 +265,7 @@ fn build_list(lines: &[Line], start_idx: usize, expected_indent: usize) -> Resul
                     // Value on next line
                     idx += 1;
                     if idx < lines.len() {
-                        let (nested_val, next_idx) = build_value(lines, idx, expected_indent + 2)?;
+                        let (nested_val, next_idx) = build_value(lines, idx, expected_indent + 1)?;
                         items.push(nested_val);
                         idx = next_idx;
                     } else {
@@ -237,7 +312,7 @@ fn build_map(lines: &[Line], start_idx: usize, expected_indent: usize) -> Result
                     // Value on next line
                     idx += 1;
                     if idx < lines.len() {
-                        let (nested_val, next_idx) = build_value(lines, idx, expected_indent + 2)?;
+                        let (nested_val, next_idx) = build_value(lines, idx, expected_indent + 1)?;
                         map.insert(key.clone(), nested_val);
                         idx = next_idx;
                     } else {

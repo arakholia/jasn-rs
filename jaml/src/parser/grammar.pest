@@ -1,5 +1,5 @@
 // JAML Grammar for Pest Parser
-// Simplified indentation-based syntax with 2-space indents
+// Python-style flexible indentation: first indent defines the base unit
 
 // Root
 jaml = { SOI ~ document ~ EOI }
@@ -12,8 +12,8 @@ non_empty_line = { indent ~ (content | comment) ~ trailing_ws* }
 // Empty line = just whitespace
 empty_line = { trailing_ws* }
 
-// Indentation - always even number of spaces (0, 2, 4, 6, ...)
-indent = @{ " "* }
+// Indentation - spaces or tabs (parser will validate consistency)
+indent = @{ (" " | "\t")* }
 
 // Line content - try in order: map_entry, inline_value, then list_item
 // This ensures negative numbers are parsed as values, not list items

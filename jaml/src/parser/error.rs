@@ -44,13 +44,17 @@ pub enum Error {
     #[error("Invalid timestamp '{0}': {1}")]
     InvalidTimestamp(String, String),
 
-    /// Invalid indentation (not a multiple of 2 spaces).
-    #[error("Invalid indentation at line {0}: expected multiple of 2 spaces, got {1}")]
-    InvalidIndentation(usize, usize),
+    /// Mixed tabs and spaces in indentation base unit.
+    #[error("Mixed tabs and spaces in indentation at line {0}: base unit cannot mix whitespace types")]
+    MixedIndentation(usize),
 
-    /// Tabs in indentation (only spaces allowed).
-    #[error("Tabs in indentation at line {0}: only spaces allowed")]
-    TabsInIndentation(usize),
+    /// Inconsistent indentation type (switching between spaces and tabs).
+    #[error("Inconsistent indentation at line {0}: expected {1}, got {2}")]
+    InconsistentIndentationType(usize, String, String),
+
+    /// Invalid indentation (not a multiple of the base unit).
+    #[error("Invalid indentation at line {0}: expected multiple of {1}, got {2}")]
+    InvalidIndentation(usize, String, usize),
 
     /// Unexpected indentation level.
     #[error("Unexpected indentation at line {0}: expected {1}, got {2}")]
