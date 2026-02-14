@@ -14,37 +14,16 @@ JAML (Just Another Markup Language) is a YAML-inspired serialization format with
 - **Unquoted Keys**: Map keys can be unquoted identifiers
 - **Comments**: Line comments (`#`)
 
-## Indentation Rules
+## Indentation and Whitespace
 
-JAML uses **Python-style flexible indentation**:
+JAML uses **flexible indentation** similar to Python:
 
-### 1. Dynamic Indentation Detection
-- **First indent defines the base unit**: The first indented line in the document establishes the indentation pattern
-- **Base unit can be**: 1 space, 2 spaces, 3 spaces, 4 spaces, or 1 tab (any number of spaces or single tab)
-- **Consistency required**: All indentation must use the same base unit throughout the document
-- **All indents must be multiples**: Every indented line must use exactly N × (base unit) where N ≥ 0
-
-### 2. Indentation Type Rules
-- **Spaces only OR tabs only**: Cannot mix spaces and tabs within a document
-- **No mixing in base unit**: The base unit itself cannot mix spaces and tabs (e.g., "2 spaces + 1 tab" is invalid)
-- **Consistent throughout**: Once the base unit is established, all indentation must use exact multiples of it
-
-### 3. Whitespace Requirements
-- **After `-`**: One or more spaces required, or immediate newline for nested content
-- **After `:`**: One or more spaces required before inline value, or immediate newline for block value
-- **Blank lines**: May contain only a newline, no spaces or tabs
-- **Comments**: `#` can appear after indentation or inline (with space before `#`)
-
-### 4. Examples
-
-**Valid (1-space indentation):**
-```jaml
-foo:
- a: 1
- b:
-  c: 2
-bar: 3
-```
+- **First indent defines the base unit**: The first indented line establishes the indentation size (e.g., 2 spaces, 4 spaces, 1 tab)
+- **All indents must be multiples**: Every subsequent indent must be N × (base unit), where N ≥ 0
+- **No mixing**: Cannot mix spaces and tabs in the same document
+- **After `:` or `-`**: Requires one or more spaces before inline value, or newline for block value
+- **Blank lines**: May contain only whitespace (recommended: empty)
+- **Comments**: `#` starts a line comment, can appear after values or on its own
 
 **Valid (2-space indentation):**
 ```jaml
@@ -55,54 +34,41 @@ foo:
 bar: 3
 ```
 
-**Valid (tab indentation):**
-```jaml
-foo:
-	a: 1
-	b:
-		c: 2
-bar: 3
-```
-
-**Invalid (not a multiple of base unit):**
+**Invalid (not a multiple):**
 ```jaml
 foo:
   a: 1        # Base unit: 2 spaces
-   b: 2       # ERROR: 3 spaces is not a multiple of 2
+   b: 2       # ERROR: 3 is not a multiple of 2
 ```
 
-**Invalid (mixed spaces and tabs):**
+**Invalid (mixed tabs/spaces):**
 ```jaml
 foo:
-  	a: 1      # ERROR: base unit mixes spaces and tabs
-```
-
-**Invalid (switching indentation type):**
-```jaml
-foo:
-  a: 1        # Base unit: 2 spaces
+  a: 1        # Base unit: spaces
 	b: 2        # ERROR: can't switch to tabs
 ```
 
 ## EBNF Grammar
 
 ```ebnf
-(* Root *)
-document = [ whitespace ] , value , [ whitespace ] ;
-(* float before integer to handle trailing-dot syntax like "5." *)
-value = null | boolean | float | integer | string | binary | timestamp | block_list | block_map | inline_value ;
+(* Root - a sequence of lines forming an implicit map *)
+document = { line } ;
+line = indent , ( content | comment ) , newline ;
+content = map_entry | inline_value | list_item ;
+
+(* Core Values *)
+value = null | boolean | float | integer | string | binary | timestamp | inline_list | inline_map ;
 
 (* Primitives *)
 null = "null" ;
-
 boolean = "true" | "false" ;
 
-(* Numbers - same as JASN *)
+(* Numbers *)
 integer = [ sign ] , ( decimal_integer | hex_integer | binary_integer | octal_integer ) ;
-decimal_integer = digit , { { "_" } , digit } ;
-hex_integer = ( "0x" | "0X" ) , hex_digit , { { "_" } , hex_digit } ;
-binary_integer = ( "0b" | "0B" ) , binary_digit , { { "_" } , binary_digit } ;
-octal_integer = ( "0o" | "0O" ) , octal_digit , { { "_" } , octal_digit } ;
+decimal_integer = digit , { [ "_" ] , digit } ;
+hex_integer = ( "0x" | "0X" ) , hex_digit , { [ "_" ] , hex_digit } ;
+binary_integer = ( "0b" | "0B" ) , binary_digit , { [ "_" ] , binary_digit } ;
+octal_integer = ( "0o" | "0O" ) , octal_digit , { [ "_" ] , octal_digit } ;
 
 float = [ sign ] , ( infinity | nan | decimal_float | special_float ) ;
 decimal_float = ( int_part , frac_part , [ exp_part ] )
@@ -111,11 +77,12 @@ decimal_float = ( int_part , frac_part , [ exp_part ] )
 int_part = digit , { digit } ;
 frac_part = "." , digit , { digit } ;
 exp_part = ( "e" | "E" ) , [ sign ] , digit , { digit } ;
-special_float = int_part , "." ;  (* Trailing dot: "5." *)
+special_float = int_part , "." ;
 infinity = "inf" ;
 nan = "nan" ;
-
 sign = "+" | "-" ;
+
+(* Character classes *)
 digit = "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" ;
 binary_digit = "0" | "1" ;
 octal_digit = "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" ;
@@ -124,61 +91,57 @@ hex_digit = digit | "a" | "b" | "c" | "d" | "e" | "f"
 
 (* Strings - MUST be quoted *)
 string = double_quoted_string | single_quoted_string ;
-double_quoted_string = '"' , { string_char_double | escape_sequence } , '"' ;
-single_quoted_string = "'" , { string_char_single | escape_sequence } , "'" ;
-string_char_double = ? any Unicode character except '"', '\', or control characters ? ;
-string_char_single = ? any Unicode character except "'", '\', or control characters ? ;
-
-escape_sequence = "\\" , ( '"' | "'" | "\\" | "/" | "b" | "f" | "n" | "r" | "t"
-                         | unicode_escape ) ;
+double_quoted_string = '"' , { string_char | escape_sequence } , '"' ;
+single_quoted_string = "'" , { string_char | escape_sequence } , "'" ;
+string_char = ? any Unicode character except quotes, backslash, or control characters ? ;
+escape_sequence = "\\" , ( '"' | "'" | "\\" | "/" | "b" | "f" | "n" | "r" | "t" | unicode_escape ) ;
 unicode_escape = "u" , hex_digit , hex_digit , hex_digit , hex_digit ;
 
-(* Binary - same as JASN *)
+(* Binary *)
 binary = base64_binary | hex_binary ;
 base64_binary = "b64" , '"' , { base64_char } , '"' ;
 hex_binary = "hex" , '"' , { hex_digit } , '"' ;
-base64_char = letter | digit | "+" | "/" | "=" ;
-letter = ? ASCII letter (A-Z, a-z) ? ;
+base64_char = ? A-Z, a-z, 0-9, +, /, = ? ;
 
-(* Timestamps - same as JASN *)
+(* Timestamps *)
 timestamp = "ts" , '"' , iso8601_datetime , '"' ;
 iso8601_datetime = ? ISO 8601 / RFC 3339 formatted datetime string ? ;
 
-(* Block Lists *)
-block_list = list_item , { newline , indent , list_item } ;
-list_item = "-" , ( spaces , inline_value | newline , indent , value ) ;
+(* Block Structures - indentation-based *)
+list_item = "-" , ( spaces , value | newline , indent , content ) ;
+map_entry = key , ":" , ( spaces , value | newline , indent , content ) ;
 
-(* Block Maps *)
-block_map = map_entry , { newline , indent , map_entry } ;
-map_entry = key , ":" , ( spaces , inline_value | newline , indent , value ) ;
+(* Inline Structures - compact single-line only *)
+inline_list = "[" , [ spaces ] , [ value , { [ spaces ] , "," , [ spaces ] , value } , [ "," ] ] , [ spaces ] , "]" ;
+inline_map = "{" , [ spaces ] , [ inline_member , { [ spaces ] , "," , [ spaces ] , inline_member } , [ "," ] ] , [ spaces ] , "}" ;
+inline_member = key , [ spaces ] , ":" , [ spaces ] , value ;
 
-(* Inline Lists and Maps - compact single-line syntax *)
-inline_list = "[" , [ space ] , [ inline_value , { [ space ] , "," , [ space ] , inline_value } , [ "," ] ] , [ space ] , "]" ;
-inline_map = "{" , [ space ] , [ inline_member , { [ space ] , "," , [ space ] , inline_member } , [ "," ] ] , [ space ] , "}" ;
-inline_member = key , [ space ] , ":" , [ space ] , inline_value ;
-
-(* Inline values - primitives and compact structures that can appear on same line *)
-inline_value = null | boolean | integer | float | string | binary | timestamp | inline_list | inline_map ;
-
-(* Keys - can be unquoted identifiers or quoted strings *)
+(* Keys *)
 key = string | identifier ;
 identifier = id_start , { id_continue } ;
-id_start = letter | "_" ;
+id_start = ? letter or underscore ? ;
 id_continue = id_start | digit ;
 
-(* Indentation and Whitespace *)
-space = " " ;spaces = space , { space } ;  (* one or more spaces *)
+(* Whitespace - flexible indentation validated at runtime *)
+spaces = " " , { " " } ;
+indent = { " " | "\t" } ;
 newline = "\n" | "\r\n" | "\r" ;
-whitespace = { space | newline } ;  (* zero or more spaces or newlines *)
-indent = { space , space } ;  (* zero or more pairs of spaces (0, 2, 4, 6, ...) *)
 
 (* Comments *)
-line_comment = "#" , { ? any character except newline ? } , ( newline | end_of_file ) ;
+comment = "#" , { ? any character except newline ? } ;
 ```
 
-## Type Resolution Rules
+## Document Structure
 
-JAML uses the same type resolution rules as JASN:
+JAML documents consist of lines that form an **implicit root map**. Each line can be:
+- A map entry (`key: value`)
+- A list item (`- value`)
+- An inline value (single value, less common at root)
+- A comment (`# comment`)
+
+The indentation of each line determines the structure hierarchy.
+
+## Type Resolution Rules
 
 ### Integer Type (64-bit signed integer)
 - Decimal digits only: `42`, `-123`, `+99`, `1_000_000`
@@ -327,45 +290,45 @@ key123: "value"
 
 ## Avoiding "The Norway Problem"
 
-YAML 1.1 has a famous issue where certain unquoted strings are implicitly converted to booleans. For example, `no`, `NO`, `yes`, `YES`, `on`, `off`, etc. are treated as booleans rather than strings. This causes problems with country codes:
+YAML 1.1 has a famous issue where certain unquoted strings are implicitly converted to booleans. Country codes like `no` (Norway), `on`, `off`, and `yes` become boolean values instead of strings.
 
 **YAML 1.1 (problematic):**
 ```yaml
 countries:
   NO: Norway    # NO becomes false!
   yes: Yemen    # yes becomes true!
-  off: "a country"  # off becomes false!
 ```
 
 **JAML (explicit):**
 ```jaml
 countries:
-  NO: "Norway"     # NO is a string key, "Norway" is a string value
-  yes: "Yemen"     # yes is a string key, "Yemen" is a string value  
-  off: "a country" # off is a string key, value is explicitly quoted
+  NO: "Norway"    # NO is unquoted key (identifier), "Norway" is quoted string
+  yes: "Yemen"    # yes is unquoted key, "Yemen" is quoted string
+  "off": "a country"  # Can also quote keys for special characters
 ```
 
-JAML completely avoids this issue by requiring all non-primitive values to be explicitly quoted. The only unquoted values allowed are: `null`, `true`, `false`, `inf`, `-inf`, `+inf`, `nan`, and numeric literals.
+JAML avoids this by requiring **all string values to be quoted**. Only these keywords are recognized: `null`, `true`, `false`, `inf`, `-inf`, `+inf`, `nan`, and numeric literals. Everything else must be quoted.
 
 ## Differences from YAML
 
-1. **Explicit strings**: All string values must be quoted (keys can be unquoted identifiers)
-2. **Integer/Float distinction**: `42` and `42.0` are different types
-3. **Binary type**: Native `b64"..."` and `hex"..."` literals
-4. **Timestamp type**: Native `ts"..."` literals
-5. **No implicit conversion**: Values are never converted to strings automatically
-6. **Strict indentation**: First indented line determines the style for entire document
+1. **Explicit string values**: All string values must be quoted (keys can be unquoted identifiers)
+2. **Integer/Float distinction**: `42` and `42.0` are different types (int vs float)
+3. **Binary type**: Native `b64"..."` and `hex"..."` literals for byte arrays
+4. **Timestamp type**: Native `ts"..."` literals for ISO8601/RFC3339 timestamps
+5. **No implicit type conversion**: No boolean conversion for yes/no/on/off
+6. **Flexible indentation**: First indent defines base unit (any size, validated at runtime)
 7. **Single document**: No multi-document support (no `---` or `...`)
 8. **No anchors/aliases**: No `&anchor` or `*alias` support
 9. **No tags**: No `!!type` support
-10. **Simpler syntax**: Focused subset of YAML with explicit types
+10. **Simpler syntax**: Focused subset of YAML with explicit types and clearer rules
 
 ## Differences from JASN
 
-1. **Indentation-based**: Primary syntax uses indentation; inline `{}` and `[]` are single-line only
-2. **Comments**: Uses `#` instead of `/* */`
-3. **No trailing commas in block syntax**: Trailing commas only needed/allowed in inline syntax
-4. **Explicit strings**: All string values must be quoted (avoids YAML's type coercion issues)
+1. **Indentation-based structure**: Primary syntax uses indentation for hierarchy
+2. **Inline syntax**: `{}` and `[]` restricted to single-line compact form
+3. **Line comments**: Uses `#` instead of block comments `/* */`
+4. **Explicit string values**: All string values must be quoted (same data model, stricter syntax)
+5. **No trailing commas in block form**: Only needed/allowed in inline `[]` and `{}`
 
 ## Future Considerations
 

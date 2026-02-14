@@ -11,14 +11,14 @@ use jaml::parse;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let value = parse(r#"
-name: Alice
+name: "Alice"
 age: 30
 balance: 1234.56
 data: b64"SGVsbG8="
 tags:
-  - rust
-  - yaml
-  - parser
+  - "rust"
+  - "yaml"
+  - "parser"
     "#)?;
     
     println!("{:#?}", value);
