@@ -1,5 +1,5 @@
 [workspace]
-members = ["jasn", "jasn-core"]
+members = ["jasn", "jasn-core", "jaml"]
 resolver = "2"
 
 [workspace.package]

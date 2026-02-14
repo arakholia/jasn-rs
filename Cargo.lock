@@ -381,6 +381,26 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "92ecc6618181def0457392ccd0ee51198e065e016d1d527a7ac1b6dc7c1f09d2"
 
 [[package]]
+name = "jaml"
+version = "0.2.0"
+dependencies = [
+ "anyhow",
+ "assert_cmd",
+ "base64",
+ "clap",
+ "clap_complete",
+ "jasn-core",
+ "pest",
+ "pest_derive",
+ "predicates",
+ "rstest",
+ "serde",
+ "serde_bytes",
+ "thiserror",
+ "time",
+]
+
+[[package]]
 name = "jasn"
 version = "0.2.0"
 dependencies = [

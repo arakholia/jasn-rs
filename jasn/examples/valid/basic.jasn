@@ -72,7 +72,7 @@
   // Lists
   numbers: [1, 2, 3, 4, 5],
   mixed: [42, "hello", true, null],
-  empty: [],
+  empty_list: [],
   
   // Nested lists
   matrix: [
@@ -87,6 +87,7 @@
     retries: 5,
     enabled: true,
   },
+  empty_map: {},
   
   // Unquoted keys
   unquoted_key: "value",
