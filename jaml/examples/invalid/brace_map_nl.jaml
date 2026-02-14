@@ -1,4 +1,6 @@
 # Brace maps with newlines are allowed in YAML, but not JAML.
+# We may reconsider this.
+# Oddly enough, as permissive as YAML is, it rejects trailing commas.
 brace_map_nl: {
   a: 1, 
   b: 2, 

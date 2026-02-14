@@ -1,4 +1,6 @@
 # Brace lists with newlines are allowed in YAML, but not JAML.
+# We may reconsider this.
+# Oddly enough, as permissive as YAML is, it rejects trailing commas.
 brace_list_nl: [
   1,
   2,

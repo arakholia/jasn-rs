@@ -5,3 +5,6 @@ block_map:
 
 brace_map: {a: 1, b: 2, c: 3}
 brace_map_trailing: {a: 1, b: 2, c: 3,}
+
+"quoted_key": "quoted_value"
+'single_quote': 'single_quote'
