@@ -1,12 +1,12 @@
 use std::{
     fs,
     io::{self, Read, Write},
-    path::PathBuf,
+    path::{Path, PathBuf},
     process,
 };
 
 use anyhow::{Context, Result};
-use clap::{Parser, Subcommand, ValueEnum};
+use clap::{CommandFactory, Parser, Subcommand, ValueEnum};
 use jasn::{
     formatter::{BinaryEncoding, Options, QuoteStyle, format_with_opts},
     parse,
@@ -81,6 +81,17 @@ enum Commands {
         /// Show detailed parse tree on success
         #[arg(short, long)]
         verbose: bool,
+
+        /// Suppress success messages, only show errors
+        #[arg(short, long)]
+        quiet: bool,
+    },
+
+    /// Generate shell completions
+    Completions {
+        /// Shell to generate completions for
+        #[arg(value_enum)]
+        shell: clap_complete::Shell,
     },
 }
 
@@ -145,7 +156,15 @@ fn main() {
             escape_unicode,
             check_format,
         ),
-        Commands::Check { files, verbose } => cmd_valid(files, verbose),
+        Commands::Check {
+            files,
+            verbose,
+            quiet,
+        } => cmd_valid(files, verbose, quiet),
+        Commands::Completions { shell } => {
+            cmd_completions(shell);
+            Ok(())
+        }
     };
 
     if let Err(e) = result {
@@ -210,10 +229,10 @@ fn cmd_fmt(
     Ok(())
 }
 
-fn cmd_valid(files: Vec<PathBuf>, verbose: bool) -> Result<()> {
+fn cmd_valid(files: Vec<PathBuf>, verbose: bool, quiet: bool) -> Result<()> {
     if files.is_empty() {
         // Read from stdin
-        return validate_file(None, verbose);
+        return validate_file(None, verbose, quiet);
     }
 
     let mut all_valid = true;
@@ -226,9 +245,11 @@ fn cmd_valid(files: Vec<PathBuf>, verbose: bool) -> Result<()> {
             Some(file.as_path())
         };
 
-        match validate_file(file_arg, verbose) {
+        match validate_file(file_arg, verbose, quiet) {
             Ok(()) => {
-                println!("✓ {}", file.display());
+                if !quiet {
+                    println!("✓ {}", file.display());
+                }
             }
             Err(e) => {
                 eprintln!("✗ {}: {:#}", file.display(), e);
@@ -241,27 +262,27 @@ fn cmd_valid(files: Vec<PathBuf>, verbose: bool) -> Result<()> {
     if !all_valid {
         eprintln!("\n{} file(s) failed validation", error_count);
         process::exit(1);
-    } else if files.len() > 1 {
+    } else if files.len() > 1 && !quiet {
         println!("\nAll {} file(s) are valid", files.len());
     }
 
     Ok(())
 }
 
-fn validate_file(path: Option<&std::path::Path>, verbose: bool) -> Result<()> {
+fn validate_file(path: Option<&Path>, verbose: bool, quiet: bool) -> Result<()> {
     let content = read_input(path)?;
     let value = parse(&content).context("Invalid JASN syntax")?;
 
     if verbose {
         println!("Valid JASN: {:#?}", value);
-    } else if path.is_none() {
+    } else if path.is_none() && !quiet {
         println!("Valid JASN");
     }
 
     Ok(())
 }
 
-fn read_input(path: Option<&std::path::Path>) -> Result<String> {
+fn read_input(path: Option<&Path>) -> Result<String> {
     match path {
         Some(p) if p.to_str() == Some("-") => {
             let mut content = String::new();
@@ -282,14 +303,10 @@ fn read_input(path: Option<&std::path::Path>) -> Result<String> {
     }
 }
 
-fn write_output(path: Option<&std::path::Path>, content: &str) -> Result<()> {
+fn write_output(path: Option<&Path>, content: &str) -> Result<()> {
     match path {
         Some(p) if p.to_str() == Some("-") => {
-            io::stdout()
-                .write_all(content.as_bytes())
-                .context("Failed to write to stdout")?;
-            // Add newline for better terminal output
-            println!();
+            writeln!(io::stdout(), "{}", content).context("Failed to write to stdout")?;
             Ok(())
         }
         Some(path) => {
@@ -298,12 +315,14 @@ fn write_output(path: Option<&std::path::Path>, content: &str) -> Result<()> {
             Ok(())
         }
         None => {
-            io::stdout()
-                .write_all(content.as_bytes())
-                .context("Failed to write to stdout")?;
-            // Add newline for better terminal output
-            println!();
+            writeln!(io::stdout(), "{}", content).context("Failed to write to stdout")?;
             Ok(())
         }
     }
+}
+
+fn cmd_completions(shell: clap_complete::Shell) {
+    let mut cmd = Cli::command();
+    let bin_name = cmd.get_name().to_string();
+    clap_complete::generate(shell, &mut cmd, bin_name, &mut io::stdout());
 }
