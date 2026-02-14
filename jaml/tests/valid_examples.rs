@@ -120,3 +120,30 @@ fn test_mixed_list() {
     let result = parse("- 42\n- \"hello\"\n- true\n- null").unwrap();
     assert!(matches!(result, jaml::Value::List(ref v) if v.len() == 4));
 }
+
+#[test]
+fn test_trailing_whitespace() {
+    // Trailing spaces
+    let result = parse("name: \"Alice\"   \nage: 30  ").unwrap();
+    assert!(matches!(result, jaml::Value::Map(_)));
+
+    // Trailing tabs
+    let result = parse("name: \"Bob\"\t\t\nage: 25\t").unwrap();
+    assert!(matches!(result, jaml::Value::Map(_)));
+
+    // Mixed trailing whitespace
+    let result = parse("key: 42  \t  \nother: true\t  ").unwrap();
+    assert!(matches!(result, jaml::Value::Map(_)));
+
+    // Trailing whitespace in lists
+    let result = parse("- 1  \n- 2\t\n- 3  \t").unwrap();
+    assert!(matches!(result, jaml::Value::List(ref v) if v.len() == 3));
+
+    // Trailing whitespace after comments
+    let result = parse("key: 42 # comment  \nother: true # another\t").unwrap();
+    assert!(matches!(result, jaml::Value::Map(_)));
+
+    // Empty lines with whitespace
+    let result = parse("a: 1\n   \nb: 2\n\t\t\nc: 3").unwrap();
+    assert!(matches!(result, jaml::Value::Map(ref m) if m.len() == 3));
+}

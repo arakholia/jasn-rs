@@ -6,10 +6,11 @@ jaml = { SOI ~ document ~ EOI }
 document = { ((non_empty_line | empty_line) ~ NEWLINE)* ~ (non_empty_line | empty_line)? }
 
 // A line must have content (comments are content for parsing purposes)
-non_empty_line = { indent ~ (content | comment) }
+// Trailing whitespace (spaces and tabs) is allowed before the newline
+non_empty_line = { indent ~ (content | comment) ~ trailing_ws* }
 
 // Empty line = just whitespace
-empty_line = { " "* }
+empty_line = { trailing_ws* }
 
 // Indentation - always even number of spaces (0, 2, 4, 6, ...)
 indent = @{ " "* }
@@ -20,10 +21,10 @@ content = { map_entry | inline_value | list_item }
 
 // List item: "- " (dash + space) followed by value or newline for nested
 // Must have space or end after dash to distinguish from negative numbers
-list_item = { "-" ~ (&(" " | NEWLINE | EOI) ~ (" " ~ inline_value ~ trailing_comment?)?) }
+list_item = { "-" ~ (&(" " | NEWLINE | EOI) ~ (" " ~ inline_value ~ (trailing_ws* ~ comment)?)?) }
 
 // Map entry: "key: " followed by value or newline for nested
-map_entry = { key ~ ":" ~ (" " ~ inline_value ~ trailing_comment?)? }
+map_entry = { key ~ ":" ~ (" " ~ inline_value ~ (trailing_ws* ~ comment)?)? }
 
 // Inline values - values that can appear on the same line
 inline_value = {
@@ -116,7 +117,9 @@ id_continue = { id_start | digit }
 
 // Comments
 comment = { "#" ~ (!NEWLINE ~ ANY)* }
-trailing_comment = { " "* ~ comment }
+
+// Trailing whitespace (spaces and tabs only, not newlines)
+trailing_ws = { " " | "\t" }
 
 // Newline
 NEWLINE = _{ "\r\n" | "\n" | "\r" }

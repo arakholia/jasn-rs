@@ -218,8 +218,10 @@ fn test_format_custom_options() {
         .arg("--binary")
         .arg("hex")
         .arg("--quote-keys")
-        .write_stdin(r#"test: "value"
-data: b64"SGVsbG8=""#)
+        .write_stdin(
+            r#"test: "value"
+data: b64"SGVsbG8=""#,
+        )
         .assert()
         .success()
         .stdout(predicate::str::contains("'test'"))
@@ -339,15 +341,15 @@ fn test_format_sort_keys_default() {
         .write_stdin("zebra: 1\napple: 2\nbanana: 3")
         .output()
         .unwrap();
-    
+
     assert!(output.status.success());
-    
+
     // Output should be sorted alphabetically (apple, banana, zebra)
     let output_str = String::from_utf8_lossy(&output.stdout);
     let apple_pos = output_str.find("apple").unwrap();
     let banana_pos = output_str.find("banana").unwrap();
     let zebra_pos = output_str.find("zebra").unwrap();
-    
+
     assert!(apple_pos < banana_pos);
     assert!(banana_pos < zebra_pos);
 }
