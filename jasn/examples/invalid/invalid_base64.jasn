@@ -1,4 +1,4 @@
-// Invalid base64 characters
+/* Invalid base64 characters */
 {
   bad_b64: b64"Hello!"
 }

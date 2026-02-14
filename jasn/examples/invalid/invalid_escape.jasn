@@ -1,4 +1,4 @@
-// Invalid escape sequence
+/* Invalid escape sequence */
 {
   bad_escape: "invalid \x escape"
 }

@@ -1,4 +1,4 @@
-// Uppercase NULL (should be lowercase)
+/* Uppercase NULL (should be lowercase) */
 {
   bad: NULL
 }

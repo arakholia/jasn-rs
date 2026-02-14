@@ -1,10 +1,10 @@
 // JASN Grammar for Pest Parser
 // Whitespace and comments are automatically skipped between tokens
+// JASN is completely whitespace-agnostic (all whitespace is interchangeable)
 
 WHITESPACE = _{ " " | "\t" | "\r" | "\n" }
 
-COMMENT = _{ line_comment | block_comment }
-line_comment = { "//" ~ (!"\n" ~ ANY)* }
+COMMENT = _{ block_comment }
 block_comment = { "/*" ~ (!"*/" ~ ANY)* ~ "*/" }
 
 // Root value

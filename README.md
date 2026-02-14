@@ -9,7 +9,7 @@ JASN addresses these issues by introducing distinct integer and binary types and
 - **Distinct Types**: Separate `i64` integers and `f64` floats (not everything is a float!)
 - **Raw Binary Data**: Native support for binary data with `b64"..."` (base64) and `hex"..."` (hex) literals
 - **Timestamps**: ISO8601/RFC3339 timestamps with `ts"..."` syntax
-- **Comments**: Line (`//`) and block (`/* */`) comments
+- **Comments**: Block comments (`/* */`) only (whitespace-agnostic design)
 - **Flexible Syntax**: Trailing commas, single quotes, unquoted object keys
 - **Multiple Radixes**: Support for hexadecimal (`0x`), binary (`0b`), and octal (`0o`) integer literals
 - **Permissive Numbers**: Leading/trailing decimal points (`.5`, `5.`), underscores (`1_000_000`), `inf`, `-inf`, `nan` support
@@ -19,15 +19,14 @@ A comprehensive example showing all supported value types:
 
 ```jasn
 {
-  // Comments are supported
-  /* Block comments are supported */
+  /* Comments are supported */
   null_value: null,
   
-  // Booleans
+  /* Booleans */
   bool_true: true,
   bool_false: false,
   
-  // Integers (explicit type, no decimal point)
+  /* Integers (explicit type, no decimal point) */
   integer: 42,
   negative: -123,
   hex: 0xFF,
@@ -35,38 +34,38 @@ A comprehensive example showing all supported value types:
   octal: 0o755,
   with_underscores: 1_000_000,
   
-  // Floats (always have decimal point or exponent)
+  /* Floats (always have decimal point or exponent) */
   float: 3.14,
   scientific: 1.5e10,
   special_inf: inf,
   special_neg_inf: -inf,
   special_nan: nan,
   
-  // Strings (double or single quotes)
+  /* Strings (double or single quotes) */
   string_double: "Hello, World!",
   string_single: 'Hello, World!',
-  string_unicode: "Hello \u4E16\u754C",  // Unicode escapes
+  string_unicode: "Hello \u4E16\u754C",  /* Unicode escapes */
   
-  // Binary data
-  binary_hex: hex"48656c6c6f",           // Hex encoding
-  binary_base64: b64"SGVsbG8gV29ybGQ=", // Base64 encoding
+  /* Binary data */
+  binary_hex: hex"48656c6c6f",           /* Hex encoding */
+  binary_base64: b64"SGVsbG8gV29ybGQ=", /* Base64 encoding */
   
-  // Timestamps (RFC3339/ISO8601)
+  /* Timestamps (RFC3339/ISO8601) */
   timestamp: ts"2024-01-15T12:30:45Z",
   timestamp_offset: ts"2024-01-15T12:30:45-05:00",
   
-  // Lists
+  /* Lists */
   list: [1, 2, 3, "mixed", true, null],
   nested_list: [[1, 2], [3, 4]],
   
-  // Maps (objects)
+  /* Maps (objects) */
   map: {
     unquoted_key: "value",
     "quoted key": "also works",
     nested: { a: 1, b: 2 },
   },
   
-  // Trailing commas allowed
+  /* Trailing commas allowed */
   trailing: [1, 2, 3,],
 }
 ```

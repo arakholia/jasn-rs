@@ -97,9 +97,9 @@ fn test_maps() {
 
 #[test]
 fn test_comments() {
-    let result = parse("// comment\n42").unwrap();
-    assert!(matches!(result, jasn::Value::Int(42)));
-
     let result = parse("/* block comment */ 42").unwrap();
+    assert!(matches!(result, jasn::Value::Int(42)));
+    
+    let result = parse("/* multi-line\n       comment */ 42").unwrap();
     assert!(matches!(result, jasn::Value::Int(42)));
 }

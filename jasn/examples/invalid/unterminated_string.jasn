@@ -1,4 +1,4 @@
-// Unterminated string
+/* Unterminated string */
 {
   bad: "unterminated
 }

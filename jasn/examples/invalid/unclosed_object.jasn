@@ -1,4 +1,4 @@
-// Unclosed object
+/* Unclosed object */
 {
   key: "value",
   nested: {

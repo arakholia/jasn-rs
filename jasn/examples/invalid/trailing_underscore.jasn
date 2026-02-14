@@ -1,4 +1,4 @@
-// Trailing underscores in numbers are forbidden
+/* Trailing underscores in numbers are forbidden */
 {
   bad_number: 1000_
 }
