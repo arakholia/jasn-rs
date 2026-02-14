@@ -295,3 +295,23 @@ fn test_check_alias() {
         .success()
         .stdout(predicate::str::contains("✓"));
 }
+
+#[test]
+fn test_format_nonexistent_file() {
+    let mut cmd = jasn_cmd();
+    cmd.arg("format")
+        .arg("/nonexistent/file.jasn")
+        .assert()
+        .failure()
+        .stderr(predicate::str::contains("Failed to read file"));
+}
+
+#[test]
+fn test_check_nonexistent_file() {
+    let mut cmd = jasn_cmd();
+    cmd.arg("check")
+        .arg("/nonexistent/file.jasn")
+        .assert()
+        .failure()
+        .stderr(predicate::str::contains("Failed to read file"));
+}
