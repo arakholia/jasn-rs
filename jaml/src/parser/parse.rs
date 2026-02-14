@@ -94,11 +94,11 @@ fn parse_lines(pairs: pest::iterators::Pairs<Rule>) -> Result<Vec<Line>> {
     Ok(lines)
 }
 
-fn parse_line_content(pair: Pair<Rule>, line_num: usize) -> Result<LineContent> {
+fn parse_line_content(pair: Pair<Rule>, _line_num: usize) -> Result<LineContent> {
     match pair.as_rule() {
         Rule::content => {
             let inner = pair.into_inner().next().unwrap();
-            parse_line_content(inner, line_num)
+            parse_line_content(inner, _line_num)
         }
         Rule::list_item => {
             let value = pair
@@ -278,11 +278,8 @@ fn parse_inline_list(pair: Pair<Rule>) -> Result<Value> {
     let mut items = Vec::new();
 
     for inner in pair.into_inner() {
-        match inner.as_rule() {
-            Rule::inline_value => {
-                items.push(parse_inline_value(inner)?);
-            }
-            _ => {}
+        if inner.as_rule() == Rule::inline_value {
+            items.push(parse_inline_value(inner)?);
         }
     }
 
@@ -395,14 +392,13 @@ fn parse_unicode_escape(chars: &mut std::str::Chars) -> Result<char> {
         let saved_chars = chars.clone();
         if chars.next() == Some('\\') && chars.next() == Some('u') {
             let low_hex: String = chars.take(4).collect();
-            if low_hex.len() == 4 {
-                if let Ok(low_code) = u32::from_str_radix(&low_hex, 16) {
-                    if (0xDC00..=0xDFFF).contains(&low_code) {
-                        let codepoint = 0x10000 + ((code - 0xD800) << 10) + (low_code - 0xDC00);
-                        return char::from_u32(codepoint)
-                            .ok_or(Error::InvalidUnicodeCodepoint(codepoint));
-                    }
-                }
+            if low_hex.len() == 4
+                && let Ok(low_code) = u32::from_str_radix(&low_hex, 16)
+                && (0xDC00..=0xDFFF).contains(&low_code)
+            {
+                let codepoint = 0x10000 + ((code - 0xD800) << 10) + (low_code - 0xDC00);
+                return char::from_u32(codepoint)
+                    .ok_or(Error::InvalidUnicodeCodepoint(codepoint));
             }
         }
         *chars = saved_chars;
@@ -423,7 +419,7 @@ fn parse_binary(pair: Pair<Rule>) -> Result<Value> {
         }
         Rule::hex_binary => {
             let content = rule.into_inner().next().unwrap().as_str();
-            if content.len() % 2 != 0 {
+            if !content.len().is_multiple_of(2) {
                 return Err(Error::OddHexDigits);
             }
             let bytes = (0..content.len())

@@ -89,7 +89,7 @@ impl Tracker {
                 }
 
                 let count = indent_str.len();
-                if count % style.count != 0 {
+                if !count.is_multiple_of(style.count) {
                     return Err(Error::InvalidIndentCount(style.count, count));
                 }
 

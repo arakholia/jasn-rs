@@ -339,7 +339,7 @@ fn test_roundtrip_advanced() {
         bool_field: true,
         int_field: 123456789,
         negative_int: -987,
-        float_field: 3.14159,
+        float_field: 123.456,
         scientific: 1.23e-10,
         float_inf: f64::INFINITY,
         float_nan: f64::NAN,
