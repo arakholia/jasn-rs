@@ -151,7 +151,7 @@ ts"2024-01-15T12:30:45-05:00"      // with timezone offset
 **Flexible Syntax**:
 ```jasn
 {
-  // Comments are supported
+  /* Comments are supported */
   unquoted_key: "value",
   'single-quotes': "work too",
   "trailing-commas": [1, 2, 3,],
@@ -163,7 +163,7 @@ JASN is a superset of JSON with the following enhancements:
 1. **Integer Type**: Numbers without decimal points are `i64`, not `f64`
 2. **Binary Type**: New `b64"..."` and `hex"..."` literals for byte arrays
 3. **Timestamp Type**: New `ts"..."` literals for ISO8601/RFC3339 timestamps
-4. **Comments**: `//` and `/* */` are supported
+4. **Comments**: Block comments `/* */` only (whitespace-agnostic design)
 5. **Trailing Commas**: Allowed in arrays and objects
 6. **Unquoted Keys**: Object keys can be identifiers, including reserved words (`null`, `true`, `false`, `inf`, `nan`)
 7. **Multiple Radixes**: `0x`, `0b`, `0o` integer literals (case-insensitive prefixes)

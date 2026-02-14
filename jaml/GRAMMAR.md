@@ -354,7 +354,7 @@ JAML completely avoids this issue by requiring all non-primitive values to be ex
 ## Differences from JASN
 
 1. **Indentation-based**: Primary syntax uses indentation; inline `{}` and `[]` are single-line only
-2. **Comments**: Uses `#` instead of `//` and `/* */`
+2. **Comments**: Uses `#` instead of `/* */`
 3. **No trailing commas in block syntax**: Trailing commas only needed/allowed in inline syntax
 4. **Explicit strings**: All string values must be quoted (avoids YAML's type coercion issues)
 
