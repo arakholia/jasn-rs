@@ -2,32 +2,32 @@
 
 # Null
 nothing: null
-  
+
 # Booleans
 active: true
 disabled: false
-  
+
 # Integers (decimal)
 count: 42
 negative: -123
 positive: +99
 with_underscores: 1_000_000
-  
+
 # Integers (hex)
 hex_value: 0xFF
 hex_upper: 0XDEADBEEF
 hex_with_underscores: 0xDEAD_BEEF
-  
+
 # Integers (binary)
 binary_value: 0b1010
 binary_upper: 0B11111111
 binary_with_underscores: 0b1111_1111
-  
+
 # Integers (octal)
 octal_value: 0o755
 octal_upper: 0O644
 octal_with_underscores: 0o100_000
-  
+
 # Floats
 pi: 3.14159
 negative_float: -2.5
@@ -36,39 +36,39 @@ trailing_dot: 5.
 with_exponent: 1e10
 negative_exponent: 2.5e-3
 positive_exponent: 5E+2
-  
+
 # Special floats
 infinity: inf
 negative_infinity: -inf
 positive_infinity: +inf
 not_a_number: nan
-  
+
 # Strings (double quotes)
 name: "Alice"
 message: "Hello, World!"
-  
+
 # Strings (single quotes)
 'single-quoted': 'value'
-  
+
 # Strings with escapes
 escaped: "quote: \" backslash: \\ newline: \n"
 unicode: "\u0041\u0042\u0043"
-  
+
 # Binary (base64)
 data_b64: b64"SGVsbG8gV29ybGQh"
 empty_b64: b64""
 padded_b64: b64"AQIDBA=="
-  
+
 # Binary (hex)
 data_hex: hex"48656c6c6f20576f726c6421"
 empty_hex: hex""
 mixed_case_hex: hex"DeadBeef"
-  
+
 # Timestamps
 timestamp_utc: ts"2024-01-15T12:30:45Z"
 timestamp_millis: ts"2024-01-15T12:30:45.123Z"
 timestamp_offset: ts"2024-01-15T12:30:45-05:00"
-  
+
 # Lists
 numbers:
   - 1
@@ -81,31 +81,34 @@ mixed:
   - "hello"
   - true
   - null
-  
+
 # Nested lists
 matrix:
-  - - 1
+  -
+    - 1
     - 2
     - 3
-  - - 4
+  -
+    - 4
     - 5
     - 6
-  - - 7
+  -
+    - 7
     - 8
     - 9
-  
+
 # Maps
 config:
   timeout: 30
   retries: 5
   enabled: true
-  
+
 # Unquoted keys
 unquoted_key: "value"
 _private: "underscore prefix"
 camelCase: "mixed case"
 snake_case: "with underscore"
-  
+
 # Quoted keys (when special characters or reserved words as keys)
 "quoted-key": "double quotes allow dashes"
 'single-quoted-key': "single quotes also work"

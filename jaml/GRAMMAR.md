@@ -16,17 +16,25 @@ JAML (Just Another Markup Language) is a YAML-inspired serialization format with
 
 ## Indentation Rules
 
-JAML uses **strict, Python-like indentation rules**:
+JAML uses **strict 2-space indentation**:
 
-### 1. First Indented Line Determines Style
-The first line containing indentation establishes two properties for the entire document:
-- **Character type**: Either spaces OR tabs (exclusively)
-- **Base unit**: The number of that character (e.g., 2 spaces, 4 spaces, 1 tab)
+### 1. Fixed Indentation
+- **Exactly 2 spaces** per indentation level
+- **No tabs allowed** - only spaces
+- **No mixing**: Every indent must be exactly 0, 2, 4, 6, 8... spaces
 
-### 2. Consistency Requirements
-- **No mixing**: All indentation must use the same character type (spaces or tabs)
-- **Exact multiples**: All indentation levels must be exact multiples of the base unit
-- **No variation**: Cannot use different indent sizes at the same nesting level
+### 2. Whitespace Requirements
+- **No trailing whitespace**: Lines must not have spaces or tabs after the last non-whitespace character
+- **Blank lines**: May contain only a newline, no spaces
+- **After `-`**: Exactly one space required, or immediate newline for nested content
+- **After `:`**: Exactly one space required before inline value, or immediate newline for block value
+
+### 3. Whitespace Significance
+- **Line start**: Indentation (spaces or tabs) determines structure depth
+- **After `-`**: Exactly one space required before the list item value
+- **After `:`**: Exactly one space required before inline value (or newline for block value)
+- **Blank lines**: May contain only a newline, no spaces or tabs
+- **Comments**: `#` can appear after indentation or inline (with space before `#`)
 
 ### 3. Examples
 
@@ -42,29 +50,24 @@ nested:
     grandchild: "value"
 ```
 
-**Valid (1-tab indentation):**
+**Invalid (tabs):**
 ```jaml
 key: "value"
 nested:
-	child: "value"
-	deeper:
-		grandchild: "value"
+	child: "value"    # tab - ERROR! Must use spaces
 ```
 
-**Invalid (mixed spaces and tabs):**
+**Invalid (wrong indent amount):**
 ```jaml
 key: "value"
 nested:
-  child: "value"    # 2 spaces
-	bad: "value"      # tab - ERROR!
+   child: "value"    # 3 spaces - ERROR! Must be exactly 2
 ```
 
-**Invalid (inconsistent amount):**
+**Invalid (trailing whitespace):**
 ```jaml
-key: "value"
-nested:
-  child: "value"    # 2 spaces (establishes base unit of 2)
-   bad: "value"     # 3 spaces - not a multiple of 2!
+key: "value"    
+# ERROR: spaces after "value"
 ```
 
 ## EBNF Grammar
@@ -131,7 +134,7 @@ iso8601_datetime = ? ISO 8601 / RFC 3339 formatted datetime string ? ;
 
 (* Block Lists *)
 block_list = list_item , { newline , indent , list_item } ;
-list_item = "-" , space , ( inline_value | newline , indent , value ) ;
+list_item = "-" , ( space , inline_value | newline , indent , value ) ;
 
 (* Block Maps *)
 block_map = map_entry , { newline , indent , map_entry } ;
@@ -147,11 +150,10 @@ id_start = letter | "_" ;
 id_continue = id_start | digit ;
 
 (* Indentation and Whitespace *)
-indent = ( n * space_char ) | ( n * tab_char ) ;
-  (* where n is a multiple of the base indentation unit *)
+indent = { space_char , space_char } ;
+  (* indentation is always an even number of spaces: 0, 2, 4, 6, ... *)
 space_char = " " ;
-tab_char = "\t" ;
-space = " " | "\t" ;
+space = " " ;
 newline = "\n" | "\r\n" | "\r" ;
 whitespace = { space | newline } ;
 
@@ -179,7 +181,7 @@ JAML uses the same type resolution rules as JASN:
 ### String Type
 - **MUST be quoted**: `"string"` or `'string'`
 - **Exception**: Map keys can be unquoted if they are valid identifiers
-- No implicit string conversion (avoids YAML's "The Norway Problem")
+- No implicit string conversion (avoids YAML's "Norway Problem")
 
 ## Examples
 
@@ -223,26 +225,20 @@ mixed:
 
 ### Nested Lists
 ```jaml
-# Compact nested list style
+# Nested list (value on next indented line)
 matrix:
-  - - 1
+  -
+    - 1
     - 2
     - 3
-  - - 4
+  -
+    - 4
     - 5
     - 6
-  - - 7
+  -
+    - 7
     - 8
     - 9
-
-# Explicit nested list style
-nested:
-  -
-    - "a"
-    - "b"
-  -
-    - "c"
-    - "d"
 ```
 
 ### Lists of Maps
