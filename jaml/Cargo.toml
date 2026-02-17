@@ -6,7 +6,7 @@ authors.workspace = true
 license.workspace = true
 repository.workspace = true
 description = "A Rust library for parsing and formatting JAML (Just Another Markup Language)"
-keywords = ["yaml", "parser", "serialization", "deserialization", "format"]
+keywords = ["yaml", "parser", "serialization", "deserialization"]
 categories = ["encoding"]
 
 [[bin]]
